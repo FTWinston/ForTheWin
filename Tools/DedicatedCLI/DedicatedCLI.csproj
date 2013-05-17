@@ -61,10 +61,9 @@
       <Project>{F581DCBF-2511-42E2-B9B1-9D8DD5264D1D}</Project>
       <Name>Game.Server</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Game\Game.Shared\Game.Shared.csproj">
-      <Project>{6F14B3A7-69D3-42B6-BD9D-0CD40D0F2902}</Project>
-      <Name>Game.Shared</Name>
-    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="settings.yml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
