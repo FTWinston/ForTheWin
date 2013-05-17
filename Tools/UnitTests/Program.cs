@@ -13,7 +13,8 @@ namespace UnitTests
             Config config = Config.ReadFile("sample.yml");
             TestResult("Config reader",
                 () => config.Find("ship-to").Find("state").Value == "KS",
-                () => config.Find("items").Children[1].Find("quantity").Value == "1"
+                () => config.Find("items").Children[1].Find("quantity").Value == "1",
+                () => config.FindValueOrDefault("notPresent", "default") == "default"
                 );
 
             Console.WriteLine("Press any key to continue...");

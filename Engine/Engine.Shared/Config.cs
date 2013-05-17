@@ -11,17 +11,36 @@ namespace FTW.Engine.Shared
     {
         public static Config ReadFile(string path)
         {
-            if ( !File.Exists(path) )
-                return null; // how should we fail?
+            if (!File.Exists(path))
+            {
+                Console.Error.WriteLine("Config file not found: " + path);
+                return null;
+            }
 
             var yaml = new YamlStream();
             using ( StreamReader reader = File.OpenText(path) )
             {
-                yaml.Load(reader);
+                try
+                {
+                    yaml.Load(reader);
+                }
+                catch (Exception)
+                {
+                    Console.Error.WriteLine("Error parsing config file: " + path);
+                    return null;
+                }
             }
 
-            YamlMappingNode mapping = yaml.Documents[0].RootNode as YamlMappingNode;
-            return AddToConfig(mapping, null, string.Empty);
+            try
+            {
+                YamlMappingNode mapping = yaml.Documents[0].RootNode as YamlMappingNode;
+                return AddToConfig(mapping, null, string.Empty);
+            }
+            catch (Exception)
+            {
+                Console.Error.WriteLine("Error loading config from file: " + path);
+                return null;
+            }
         }
 
         private static Config AddToConfig(YamlNode yamlNode, Config parent, string nodeName)
@@ -80,6 +99,14 @@ namespace FTW.Engine.Shared
                     return child;
 
             return null;
+        }
+
+        public string FindValueOrDefault(string name, string defaultValue)
+        {
+            Config node = Find(name);
+            if (node != null && node.HasValue)
+                return node.Value;
+            return defaultValue;
         }
     }
 }
