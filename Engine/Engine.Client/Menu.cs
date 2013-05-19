@@ -51,6 +51,24 @@ namespace FTW.Engine.Client
         public Font ItemFont { get; set; }
         public int ValueXOffset { get; set; }
 
+        public void CopyStyling(Menu other)
+        {
+            ItemXPos = other.ItemXPos;
+            ItemYPos = other.ItemYPos;
+            ItemXSpacing = other.ItemXSpacing;
+            ItemYSpacing = other.ItemYSpacing;
+            ItemTextSize = other.ItemTextSize;
+            ItemColor = other.ItemColor;
+            HoverItemColor = other.HoverItemColor;
+            PressedItemColor = other.PressedItemColor;
+            ItemStyle = other.ItemStyle;
+            HoverItemStyle = other.HoverItemStyle;
+            HoverItemStyle = other.HoverItemStyle;
+            PressedItemStyle = other.PressedItemStyle;
+            ItemFont = other.ItemFont;
+            ValueXOffset = other.ValueXOffset;
+        }
+
         public ItemActivatedFunction EscapePressed { get; set; }
 
         public int CurrentIndex { get; protected set; }
@@ -60,7 +78,8 @@ namespace FTW.Engine.Client
         private Window window;
         private List<Item> Items = new List<Item>();
 
-        public delegate void ItemActivatedFunction(string value);
+        public delegate void ItemActivatedFunction();
+        public delegate void ValueChangedFunction(string value);
 
         public void AddItem(Item item)
         {
@@ -98,7 +117,7 @@ namespace FTW.Engine.Client
             if (e.Code == Keyboard.Key.Escape)
             {
                 if (EscapePressed != null)
-                    EscapePressed(null);
+                    EscapePressed();
             }
             else if (e.Code == Keyboard.Key.Up)
             {
@@ -179,7 +198,7 @@ namespace FTW.Engine.Client
                 CurrentItem.Style = HoverItemStyle;
 
                 if (CurrentItem is LinkItem)
-                    CurrentItem.Activated(null);
+                    (CurrentItem as LinkItem).Activated();
             }
         }
 
@@ -264,7 +283,6 @@ namespace FTW.Engine.Client
             protected internal abstract void AddTo(Menu menu);
             public abstract Color Color { get; set; }
             public abstract Text.Styles Style { get; set; }
-            public ItemActivatedFunction Activated { get; protected set; }
             public abstract void Draw(RenderTarget target, RenderStates states);
             public abstract bool Contains(int x, int y);
         }
@@ -272,6 +290,7 @@ namespace FTW.Engine.Client
         public class LinkItem : Item
         {
             private Text Text;
+            public ItemActivatedFunction Activated { get; protected set; }
 
             public LinkItem(string label, ItemActivatedFunction itemClicked)
             {
@@ -316,14 +335,14 @@ namespace FTW.Engine.Client
             private int selectedIndex = 0;
             private string[] Values;
             private Menu menu;
+            public ValueChangedFunction ValueChanged { get; protected set; }
 
-            public ListItem(string label, IList<string> values, ItemActivatedFunction valueChanged)
+            public ListItem(string label, IList<string> values, ValueChangedFunction valueChanged)
             {
                 Values = values.ToArray();
                 Label = new Text(label, null);
                 Value = new Text();
-
-                Activated = valueChanged;
+                ValueChanged = valueChanged;
             }
 
             protected internal override void AddTo(Menu menu)
@@ -419,8 +438,8 @@ namespace FTW.Engine.Client
 
                 Value.DisplayedString = Values[selectedIndex];
 
-                if ( Activated != null )
-                    Activated(Values[selectedIndex]);
+                if ( ValueChanged != null )
+                    ValueChanged(Value.DisplayedString);
             }
 
             internal void CheckButtonPress(int x, int y, bool keyDown)
@@ -449,14 +468,15 @@ namespace FTW.Engine.Client
             private Text Label, Value, Cursor;
             private int MaxLength;
             private Menu menu;
+            public ValueChangedFunction ValueChanged { get; protected set; }
 
-            public TextEntryItem(string label, string value, int maxLength, ItemActivatedFunction valueChanged)
+            public TextEntryItem(string label, string value, int maxLength, ValueChangedFunction valueChanged)
             {
                 Label = new Text(label, null);
                 Value = new Text(value, null);
                 Cursor = new Text();
                 MaxLength = maxLength;
-                Activated = valueChanged;
+                ValueChanged = valueChanged;
             }
 
             protected internal override void AddTo(Menu menu)
@@ -548,6 +568,9 @@ namespace FTW.Engine.Client
                 FloatRect bounds = Value.GetGlobalBounds();
                 Cursor.Position = new Vector2f(bounds.Left + bounds.Width, Label.Position.Y);
                 Cursor.DisplayedString = Value.DisplayedString.Length == MaxLength ? "|" : "_";
+
+                if ( ValueChanged != null )
+                    ValueChanged(Value.DisplayedString);
             }
         }
     }

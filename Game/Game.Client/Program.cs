@@ -21,7 +21,9 @@ namespace Game.Client
             window.KeyPressed += new EventHandler<KeyEventArgs>(OnKeyPressed);
             window.Resized += new EventHandler<SizeEventArgs>(OnResized);
 
-            Menu mainMenu = CreateMainMenu(window);
+            CreateMainMenu(window);
+            CreateOptionsMenu(window);
+            SetCurrentMenu(mainMenu);
 
             while (window.IsOpen())
             {
@@ -29,15 +31,26 @@ namespace Game.Client
 
                 window.Clear();
 
-                window.Draw(mainMenu);
+                window.Draw(currentMenu);
 
                 window.Display();
             }
         }
 
-        private static Menu CreateMainMenu(RenderWindow window)
+        private static void SetCurrentMenu(Menu menu)
         {
-            Menu mainMenu = new Menu(window);
+            if (currentMenu != null)
+                currentMenu.DisableInput();
+
+            currentMenu = menu;
+            currentMenu.EnableInput();
+        }
+
+        static Menu currentMenu, mainMenu, optionsMenu;
+
+        private static void CreateMainMenu(RenderWindow window)
+        {
+            mainMenu = new Menu(window);
             mainMenu.ItemFont = new Font("Resources/arial.ttf");
             mainMenu.ItemYPos = 96;
             mainMenu.ValueXOffset = 256;
@@ -45,16 +58,24 @@ namespace Game.Client
             mainMenu.HoverItemColor = Color.Yellow;
             mainMenu.HoverItemStyle = Text.Styles.Underlined;
 
-            mainMenu.EscapePressed = (string value) => { window.Close(); Console.WriteLine("escape pressed"); };
+            mainMenu.EscapePressed = () => { window.Close(); Console.WriteLine("escape pressed"); };
 
-            mainMenu.AddItem(new Menu.LinkItem("Host game", (string value) => Console.WriteLine("host clicked")));
-            mainMenu.AddItem(new Menu.LinkItem("Join game", (string value) => Console.WriteLine("join clicked")));
-            mainMenu.AddItem(new Menu.ListItem("Choice:", new string[] { "Option 1", "Option 2", "Option 3" }, (string value) => Console.WriteLine("Selected: " + value)));
-            mainMenu.AddItem(new Menu.TextEntryItem("Name:", "Player", 12, (string value) => Console.WriteLine("name changed")));
-            mainMenu.AddItem(new Menu.LinkItem("Quit", (string value) => { window.Close(); Console.WriteLine("close clicked"); }));
+            mainMenu.AddItem(new Menu.LinkItem("Host game", () => Console.WriteLine("host clicked")));
+            mainMenu.AddItem(new Menu.LinkItem("Join game", () => Console.WriteLine("join clicked")));
+            mainMenu.AddItem(new Menu.LinkItem("Options", () => SetCurrentMenu(optionsMenu)));
+            mainMenu.AddItem(new Menu.LinkItem("Quit", () => { window.Close(); Console.WriteLine("close clicked"); }));
+        }
 
-            mainMenu.EnableInput();
-            return mainMenu;
+        private static void CreateOptionsMenu(RenderWindow window)
+        {
+            optionsMenu = new Menu(window);
+            optionsMenu.CopyStyling(mainMenu);
+
+            optionsMenu.AddItem(new Menu.ListItem("Choice:", new string[] { "Option 1", "Option 2", "Option 3" }, (string value) => Console.WriteLine(value + " selected")));
+            optionsMenu.AddItem(new Menu.TextEntryItem("Name:", "Player", 12, (string value) => Console.WriteLine("Name changed: " + value)));
+            optionsMenu.AddItem(new Menu.LinkItem("Back", () => SetCurrentMenu(mainMenu)));
+
+            optionsMenu.EscapePressed = () => { SetCurrentMenu(mainMenu); };
         }
 
         /// <summary>
