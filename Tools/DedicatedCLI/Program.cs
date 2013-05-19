@@ -13,41 +13,19 @@ namespace DedicatedCLI
     class Program
     {
         const string settingsFilename = "settings.yml";
-        const int defaultPort = 24680, defaultMaxClients = 8;
-        const string defaultServerName = "Some FTW server";
-
-        static Config GetOrCreateConfig(out int port, out int maxClients, out string serverName)
-        {
-            if (!File.Exists(settingsFilename))
-            {
-                Assembly a = Assembly.GetExecutingAssembly();
-                Stream defaultSettings = a.GetManifestResourceStream(typeof(Program), settingsFilename);
-                byte[] buf = new byte[defaultSettings.Length];
-                defaultSettings.Read(buf, 0, buf.Length);
-                File.WriteAllBytes(settingsFilename, buf);
-            }
-
-            Config settings = Config.ReadFile(settingsFilename);
-            string strPort = settings.FindValueOrDefault("port", defaultPort.ToString());
-            string strMaxClients = settings.FindValueOrDefault("max-clients", defaultPort.ToString());
-            serverName = settings.FindValueOrDefault("name", defaultServerName);
-
-            if (!int.TryParse(strPort, out port))
-                port = defaultPort;
-            if (!int.TryParse(strMaxClients, out maxClients))
-                maxClients = defaultMaxClients;
-            
-            return settings;
-        }
-
+        
         static void Main(string[] args)
         {
-            int port, maxClients;
-            string serverName;
-            GetOrCreateConfig(out port, out maxClients, out serverName);
-            GameServer game = new GameServer(true, port, maxClients, serverName);
+            GameServer game = new GameServer(true, true);
 
-            game.Start();
+            Config config = Config.ReadFile(settingsFilename);
+            if (config == null)
+            {
+                config = game.CreateDefaultConfig();
+                config.SaveToFile(settingsFilename);
+            }
+
+            game.Start(config);
             while (game.IsRunning)
             {
                 /*game.ServerCommand(*/Console.ReadLine()/*)*/;

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using YamlDotNet.RepresentationModel;
 using System.IO;
+using YamlDotNet.RepresentationModel.Serialization;
 
 namespace FTW.Engine.Shared
 {
@@ -34,7 +35,7 @@ namespace FTW.Engine.Shared
             try
             {
                 YamlMappingNode mapping = yaml.Documents[0].RootNode as YamlMappingNode;
-                return AddToConfig(mapping, null, string.Empty);
+                return AddToConfig(mapping, null);
             }
             catch (Exception)
             {
@@ -43,9 +44,9 @@ namespace FTW.Engine.Shared
             }
         }
 
-        private static Config AddToConfig(YamlNode yamlNode, Config parent, string nodeName)
+        private static Config AddToConfig(YamlNode yamlNode, Config parent)
         {
-            Config node = new Config(nodeName);
+            Config node = new Config();
             if (yamlNode is YamlMappingNode)
             {
                 YamlMappingNode mapping = yamlNode as YamlMappingNode;
@@ -54,7 +55,7 @@ namespace FTW.Engine.Shared
 #if DEBUG
                     if (child.Key is YamlScalarNode)
 #endif
-                        AddToConfig(child.Value, node, (child.Key as YamlScalarNode).Value);
+                        AddToConfig(child.Value, node).Name = (child.Key as YamlScalarNode).Value;
 #if DEBUG
                     else // going on the assumption that a Key is *always* a string. Can't wrap my head around how it wouldn't be.
                         throw new InvalidCastException("YamlMappingNode's key is NOT a YamlScalarNode: " + child.Key.GetType().FullName);
@@ -65,7 +66,7 @@ namespace FTW.Engine.Shared
                 YamlSequenceNode sequence = yamlNode as YamlSequenceNode;
                 node.Children = new List<Config>();
                 foreach( var child in sequence.Children )
-                    AddToConfig(child, node, child.Tag);
+                    AddToConfig(child, node);
             }
             else if (yamlNode is YamlScalarNode)
             {
@@ -80,11 +81,58 @@ namespace FTW.Engine.Shared
             return node;
         }
 
+        public void SaveToFile(string path)
+        {
+            YamlNode root = ConvertToYaml();
+            YamlDocument doc = new YamlDocument(root);
+            YamlStream ys = new YamlStream(doc);
 
-        internal Config(string name) { Name = name; Value = null; Children = null; }
-        public string Name { get; internal set; }
-        public string Value { get; internal set; }
-        public List<Config> Children { get; internal set; }
+            try
+            {
+                using (StreamWriter sw = new StreamWriter(path))
+                {
+                    ys.Save(sw);
+                }
+            }
+            catch (Exception)
+            {
+                Console.Error.WriteLine("Error saving config file: " + path);
+            }
+        }
+
+        private YamlNode ConvertToYaml()
+        {
+            if (HasChildren)
+            {
+                if (string.IsNullOrEmpty(Children[0].Name)) // sequence node
+                {
+                    YamlSequenceNode node = new YamlSequenceNode();
+                    foreach (Config child in Children)
+                        node.Children.Add(child.ConvertToYaml());
+                    return node;
+                }
+                else // mapping node
+                {
+                    YamlMappingNode node = new YamlMappingNode();
+                    foreach (Config child in Children)
+                    {
+                        node.Children.Add(
+                            new YamlScalarNode(child.Name),
+                            child.ConvertToYaml()
+                        );
+                    }
+                    return node;
+                }
+            }
+            else
+                return new YamlScalarNode(Value);
+        }
+
+        public Config() : this(null) { }
+        public Config(string name) { Name = name; Value = null; Children = null; }
+        public string Name { get; set; }
+        public string Value { get; set; }
+        public List<Config> Children { get; set; }
 
         public bool HasValue { get { return Value != null; } }
         public bool HasChildren { get { return Children != null && Children.Count > 0;} }

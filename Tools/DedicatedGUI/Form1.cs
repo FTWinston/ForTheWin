@@ -25,12 +25,17 @@ namespace DedicatedGUI
             Console.SetOut(tw);
             Console.SetError(tw);
 
-            int port, maxClients;
-            string serverName;
-            GetOrCreateConfig(out port, out maxClients, out serverName);
-            game = new GameServer(true, port, maxClients, serverName);
+            game = new GameServer(true, true);
 
-            game.Start();
+            Config config = Config.ReadFile(settingsFilename);
+            if (config == null)
+            {
+                config = game.CreateDefaultConfig();
+                config.SaveToFile(settingsFilename);
+            }
+
+            game.Start(config);
+
             this.Text = game.Name;
         }
 

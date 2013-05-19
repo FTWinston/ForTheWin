@@ -3,24 +3,60 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using FTW.Engine.Shared;
 
 namespace FTW.Engine.Server
 {
-    public class GameServer
+    public abstract class GameServer
     {
         internal static GameServer Instance { get; private set; }
 
-        protected GameServer(bool isDedicated, int port, int maxClients, string name)
+        protected GameServer(bool isMultiplayer, bool isDedicated)
         {
             if (Instance != null)
                 Console.Error.WriteLine("GameServer.Create called, but Instance is not null: server is already running!");
 
             Instance = this;
-            
             IsDedicated = isDedicated;
+        }
+
+        const int defaultPort = 24680, defaultMaxClients = 8;
+        const string defaultServerName = "Some server";
+
+        public virtual Config CreateDefaultConfig()
+        {
+            Config config = new Config(null);
+            config.Children = new List<Config>();
+
+            Config value = new Config("name");
+            value.Value = defaultServerName;
+            config.Children.Add(value);
+
+            value = new Config("port");
+            value.Value = defaultPort.ToString();
+            config.Children.Add(value);
+
+            value = new Config("max-clients");
+            value.Value = defaultMaxClients.ToString();
+            config.Children.Add(value);
+
+            return config;
+        }
+
+        public virtual void ApplyConfig(Config settings)
+        {
+            string strPort = settings.FindValueOrDefault("port", defaultPort.ToString());
+            string strMaxClients = settings.FindValueOrDefault("max-clients", defaultPort.ToString());
+            Name = settings.FindValueOrDefault("name", defaultServerName);
+
+            int port, maxClients;
+            if (!int.TryParse(strPort, out port))
+                port = defaultPort;
+            if (!int.TryParse(strMaxClients, out maxClients))
+                maxClients = defaultMaxClients;
+
             NetworkPort = port;
             MaxClients = maxClients;
-            Name = name;
         }
 
         private Thread gameThread;
@@ -34,8 +70,10 @@ namespace FTW.Engine.Server
         public bool IsRunning { get; private set; }
         public bool Paused { get; private set; }
 
-        public void Start()
+        public void Start(Config config)
         {
+            ApplyConfig(config);
+
             IsRunning = true;
             gameThread = new Thread(ThreadStart);
             gameThread.Start();

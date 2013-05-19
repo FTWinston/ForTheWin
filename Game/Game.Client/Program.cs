@@ -43,25 +43,29 @@ namespace Game.Client
                 currentMenu.DisableInput();
 
             currentMenu = menu;
-            currentMenu.EnableInput();
+
+            if ( currentMenu != null )
+                currentMenu.EnableInput();
         }
 
         static Menu currentMenu, mainMenu, optionsMenu;
 
         private static void CreateMainMenu(RenderWindow window)
         {
-            mainMenu = new Menu(window);
-            mainMenu.ItemFont = new Font("Resources/arial.ttf");
-            mainMenu.ItemYPos = 96;
-            mainMenu.ValueXOffset = 256;
-            mainMenu.ItemColor = Color.Green;
-            mainMenu.HoverItemColor = Color.Yellow;
-            mainMenu.HoverItemStyle = Text.Styles.Underlined;
+            mainMenu = new Menu(window)
+            {
+                ItemFont = new Font("Resources/arial.ttf"),
+                ItemYPos = 96,
+                ValueXOffset = 256,
+                ItemColor = Color.Green,
+                HoverItemColor = Color.Yellow,
+                HoverItemStyle = Text.Styles.Underlined
+            };
 
             mainMenu.EscapePressed = () => { window.Close(); Console.WriteLine("escape pressed"); };
 
-            mainMenu.AddItem(new Menu.LinkItem("Host game", () => Console.WriteLine("host clicked")));
-            mainMenu.AddItem(new Menu.LinkItem("Join game", () => Console.WriteLine("join clicked")));
+            mainMenu.AddItem(new Menu.LinkItem("Host game", HostGame));
+            mainMenu.AddItem(new Menu.LinkItem("Join game", JoinGame));
             mainMenu.AddItem(new Menu.LinkItem("Options", () => SetCurrentMenu(optionsMenu)));
             mainMenu.AddItem(new Menu.LinkItem("Quit", () => { window.Close(); Console.WriteLine("close clicked"); }));
         }
@@ -76,6 +80,16 @@ namespace Game.Client
             optionsMenu.AddItem(new Menu.LinkItem("Back", () => SetCurrentMenu(mainMenu)));
 
             optionsMenu.EscapePressed = () => { SetCurrentMenu(mainMenu); };
+        }
+
+        private static void HostGame()
+        {
+            Console.WriteLine("host clicked");
+        }
+
+        private static void JoinGame()
+        {
+            Console.WriteLine("join clicked");
         }
 
         /// <summary>
