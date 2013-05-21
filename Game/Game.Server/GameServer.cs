@@ -8,10 +8,9 @@ namespace Game.Server
 {
     public class GameServer : FTW.Engine.Server.GameServer
     {
-        public GameServer(bool isMultiplayer, bool isDedicated)
-            : base(isDedicated, isMultiplayer)
+        public GameServer()
         {
-
+            ;
         }
     }
 }

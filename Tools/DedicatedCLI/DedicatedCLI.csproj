@@ -13,6 +13,7 @@
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <StartupObject>DedicatedCLI.Program</StartupObject>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
@@ -57,10 +58,6 @@
       <Project>{48DB214A-092C-46FC-8DE9-B8292A238786}</Project>
       <Name>Engine.Shared</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Game\Game.Server\Game.Server.csproj">
-      <Project>{F581DCBF-2511-42E2-B9B1-9D8DD5264D1D}</Project>
-      <Name>Game.Server</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
@@ -70,4 +67,7 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <PropertyGroup>
+    <PostBuildEvent>xcopy "$(ProjectDir)..\..\Game\Game.Server\$(OutDir)Game.Server.dll" "$(TargetDir)" /Y</PostBuildEvent>
+  </PropertyGroup>
 </Project>

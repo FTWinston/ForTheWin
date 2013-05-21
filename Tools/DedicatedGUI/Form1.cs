@@ -7,7 +7,6 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using FTW.Engine.Shared;
-using Game.Server;
 using System.Threading;
 using System.IO;
 using System.Reflection;
@@ -16,7 +15,7 @@ namespace DedicatedGUI
 {
     public partial class Form1 : Form
     {
-        GameServer game;
+        ServerBase server;
         public Form1()
         {
             InitializeComponent();
@@ -25,47 +24,21 @@ namespace DedicatedGUI
             Console.SetOut(tw);
             Console.SetError(tw);
 
-            game = new GameServer(true, true);
+            server = ServerBase.CreateReflection();
 
             Config config = Config.ReadFile(settingsFilename);
             if (config == null)
             {
-                config = game.CreateDefaultConfig();
+                config = server.CreateDefaultConfig();
                 config.SaveToFile(settingsFilename);
             }
 
-            game.Start(config);
+            server.Start(true, config);
 
-            this.Text = game.Name;
+            this.Text = server.Name;
         }
 
         const string settingsFilename = "settings.yml";
-        const int defaultPort = 24680, defaultMaxClients = 8;
-        const string defaultServerName = "Some FTW server";
-
-        static Config GetOrCreateConfig(out int port, out int maxClients, out string serverName)
-        {
-            if (!File.Exists(settingsFilename))
-            {
-                Assembly a = Assembly.GetExecutingAssembly();
-                Stream defaultSettings = a.GetManifestResourceStream(typeof(Program), settingsFilename);
-                byte[] buf = new byte[defaultSettings.Length];
-                defaultSettings.Read(buf, 0, buf.Length);
-                File.WriteAllBytes(settingsFilename, buf);
-            }
-
-            Config settings = Config.ReadFile(settingsFilename);
-            string strPort = settings.FindValueOrDefault("port", defaultPort.ToString());
-            string strMaxClients = settings.FindValueOrDefault("max-clients", defaultPort.ToString());
-            serverName = settings.FindValueOrDefault("name", defaultServerName);
-
-            if (!int.TryParse(strPort, out port))
-                port = defaultPort;
-            if (!int.TryParse(strMaxClients, out maxClients))
-                maxClients = defaultMaxClients;
-
-            return settings;
-        }
 
         public class TextBoxStreamWriter : TextWriter
         {
@@ -102,9 +75,9 @@ namespace DedicatedGUI
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
-            if (game != null && game.IsRunning)
+            if (server != null && server.IsRunning)
             {// Closing right away would prevent the "server shutting down" disconnect message from being sent out, so delay slightly
-                game.Stop();
+                server.Stop();
                 Thread.Sleep(100);
             }
         }

@@ -176,6 +176,7 @@
     <Compile Include="Raknet\uint24_t.cs" />
     <Compile Include="Raknet\UnsignedIntPointer.cs" />
     <Compile Include="Raknet\UnsignedShortPointer.cs" />
+    <Compile Include="ServerBase.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\..\Libraries\RakNet.dll">

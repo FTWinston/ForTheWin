@@ -7,23 +7,22 @@ using FTW.Engine.Shared;
 
 namespace FTW.Engine.Server
 {
-    public abstract class GameServer
+    public abstract class GameServer : ServerBase
     {
         internal static GameServer Instance { get; private set; }
 
-        protected GameServer(bool isMultiplayer, bool isDedicated)
+        protected GameServer()
         {
             if (Instance != null)
                 Console.Error.WriteLine("GameServer.Create called, but Instance is not null: server is already running!");
 
             Instance = this;
-            IsDedicated = isDedicated;
         }
 
         const int defaultPort = 24680, defaultMaxClients = 8;
         const string defaultServerName = "Some server";
 
-        public virtual Config CreateDefaultConfig()
+        public override Config CreateDefaultConfig()
         {
             Config config = new Config(null);
             config.Children = new List<Config>();
@@ -64,17 +63,19 @@ namespace FTW.Engine.Server
         public bool IsDedicated { get; private set; }
         public int MaxClients { get; set; }
         public int NetworkPort { get; private set; }
-        public string Name { get; private set; }
-        public bool IsMultiplayer { get { return MaxClients != 1; } }
+        public override string Name { get; protected set; }
+        public bool IsMultiplayer { get { return IsDedicated || MaxClients > 1; } }
 
-        public bool IsRunning { get; private set; }
-        public bool Paused { get; private set; }
+        private bool isRunning, isPaused;
+        public override bool IsRunning { get { return isRunning; } }
+        public override bool Paused { get { return isPaused; } }
 
-        public void Start(Config config)
+        public override void Start(bool isDedicated, Config config)
         {
+            IsDedicated = isDedicated;
             ApplyConfig(config);
 
-            IsRunning = true;
+            isRunning = true;
             gameThread = new Thread(ThreadStart);
             gameThread.Start();
         }
@@ -84,7 +85,7 @@ namespace FTW.Engine.Server
             if ( Initialize() )
                 RunMainLoop();
             else
-                IsRunning = false;
+                isRunning = false;
         }
 
         protected virtual bool Initialize()
@@ -93,23 +94,23 @@ namespace FTW.Engine.Server
             return true;
         }
 
-        public void Pause()
+        public override void Pause()
         {
             if (!Paused)
                 Console.WriteLine("Game paused");
-            Paused = true;
+            isPaused = true;
         }
 
-        public void Resume()
+        public override void Resume()
         {
             if (Paused)
                 Console.WriteLine("Game resumed");
-            Paused = false;
+            isPaused = false;
         }
 
-        public void Stop()
+        public override void Stop()
         {
-            IsRunning = false;
+            isRunning = false;
         }
 
         protected virtual void ShutDown()
@@ -128,7 +129,7 @@ namespace FTW.Engine.Server
 
         private void RunMainLoop()
         {
-            Paused = false;
+            isPaused = false;
 
             dt = 0.1;
             lastFrameTime = DateTime.Now.AddSeconds(-dt);
