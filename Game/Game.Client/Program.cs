@@ -62,12 +62,12 @@ namespace Game.Client
                 HoverItemStyle = Text.Styles.Underlined
             };
 
-            mainMenu.EscapePressed = () => { window.Close(); Console.WriteLine("escape pressed"); };
+            mainMenu.EscapePressed = () => { CloseGameWindow(window); Console.WriteLine("escape pressed"); };
 
             mainMenu.AddItem(new Menu.LinkItem("Host game", HostGame));
             mainMenu.AddItem(new Menu.LinkItem("Join game", JoinGame));
             mainMenu.AddItem(new Menu.LinkItem("Options", () => SetCurrentMenu(optionsMenu)));
-            mainMenu.AddItem(new Menu.LinkItem("Quit", () => { window.Close(); Console.WriteLine("close clicked"); }));
+            mainMenu.AddItem(new Menu.LinkItem("Quit", () => { CloseGameWindow(window); Console.WriteLine("close clicked"); }));
         }
 
         private static void CreateOptionsMenu(RenderWindow window)
@@ -82,14 +82,28 @@ namespace Game.Client
             optionsMenu.EscapePressed = () => { SetCurrentMenu(mainMenu); };
         }
 
+        static ServerConnection connection = null;
+
         private static void HostGame()
         {
+            if (connection != null)
+                return;
+
             Console.WriteLine("host clicked");
+
+            connection = new ListenServerConnection();
+            connection.Connect();
         }
 
         private static void JoinGame()
         {
+            if (connection != null)
+                return;
+
             Console.WriteLine("join clicked");
+
+            connection = new RemoteClientConnection("127.0.0.1", 24680);
+            connection.Connect();
         }
 
         /// <summary>
@@ -97,8 +111,18 @@ namespace Game.Client
         /// </summary>
         static void OnClosed(object sender, EventArgs e)
         {
-            Window window = (Window)sender;
+            CloseGameWindow(sender as RenderWindow);
+        }
+
+        static void CloseGameWindow(RenderWindow window)
+        {   
             window.Close();
+
+            if (connection != null)
+            {
+                connection.Disconnect();
+                connection = null;
+            }
         }
 
         /// <summary>

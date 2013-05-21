@@ -10,15 +10,17 @@ namespace FTW.Engine.Client
     public abstract class ServerConnection
     {
         public abstract void Connect();
+        public abstract void Disconnect();
     }
 
     public class ListenServerConnection : ServerConnection
     {
         const string settingsFilename = "settings.yml";
+        ServerBase server;
 
         public override void Connect()
         {
-            ServerBase server = ServerBase.CreateReflection();
+            server = ServerBase.CreateReflection();
 
             Config config = Config.ReadFile(settingsFilename);
             if (config == null)
@@ -28,6 +30,11 @@ namespace FTW.Engine.Client
             }
 
             server.Start(false, config);
+        }
+
+        public override void Disconnect()
+        {
+            server.Stop();
         }
     }
 
@@ -41,12 +48,20 @@ namespace FTW.Engine.Client
 
         private string hostname;
         private ushort hostPort;
+        RakPeerInterface connection;
 
         public override void Connect()
         {
-            var peer = RakPeerInterface.GetInstance();
-            peer.Startup(1, new SocketDescriptor(), 1);
-            peer.Connect(hostname, hostPort, string.Empty, 0);
+            connection = RakPeerInterface.GetInstance();
+            connection.Startup(1, new SocketDescriptor(), 1);
+            connection.Connect(hostname, hostPort, string.Empty, 0);
+        }
+
+        public override void Disconnect()
+        {
+            connection.Shutdown(300);
+            RakPeerInterface.DestroyInstance(connection);
+            connection = null;
         }
     }
 }
