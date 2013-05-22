@@ -6,7 +6,7 @@ using FTW.Engine.Shared;
 
 namespace UnitTests
 {
-    class Program
+    class Tests
     {
         static void Main(string[] args)
         {

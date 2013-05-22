@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using FTW.Engine.Shared;
+using RakNet;
 
 namespace FTW.Engine.Server
 {
@@ -48,11 +49,14 @@ namespace FTW.Engine.Server
             string strMaxClients = settings.FindValueOrDefault("max-clients", defaultPort.ToString());
             Name = settings.FindValueOrDefault("name", defaultServerName);
 
-            int port, maxClients;
-            if (!int.TryParse(strPort, out port))
+            ushort port, maxClients;
+            if (!ushort.TryParse(strPort, out port))
                 port = defaultPort;
-            if (!int.TryParse(strMaxClients, out maxClients))
+            if (!ushort.TryParse(strMaxClients, out maxClients))
                 maxClients = defaultMaxClients;
+
+            if (maxClients == 0)
+                maxClients = 1;
 
             NetworkPort = port;
             MaxClients = maxClients;
@@ -61,8 +65,8 @@ namespace FTW.Engine.Server
         private Thread gameThread;
 
         public bool IsDedicated { get; private set; }
-        public int MaxClients { get; set; }
-        public int NetworkPort { get; private set; }
+        public ushort MaxClients { get; set; }
+        public ushort NetworkPort { get; private set; }
         public override string Name { get; protected set; }
         public bool IsMultiplayer { get { return IsDedicated || MaxClients > 1; } }
 
@@ -82,15 +86,30 @@ namespace FTW.Engine.Server
 
         private void ThreadStart()
         {
-            if ( Initialize() )
+            if (Initialize())
+            {
+                if (!IsDedicated)
+                    LocalClient.Create("player name");
                 RunMainLoop();
+            }
             else
                 isRunning = false;
         }
 
+        private RakPeerInterface rakNet = null;
         protected virtual bool Initialize()
         {
             Console.WriteLine("Initializing...");
+
+            if (IsMultiplayer)
+            {
+                rakNet = RakPeerInterface.GetInstance();
+                ushort numRemoteClients = IsDedicated ? (ushort)(MaxClients - 1) : MaxClients;
+
+                rakNet.Startup(numRemoteClients, new SocketDescriptor(NetworkPort, null), 1);
+                rakNet.SetMaximumIncomingConnections(numRemoteClients);
+            }
+
             return true;
         }
 
@@ -116,6 +135,14 @@ namespace FTW.Engine.Server
         protected virtual void ShutDown()
         {
             Console.WriteLine("Server is shutting down");
+
+            if (rakNet != null)
+            {
+                rakNet.Shutdown(300);
+                RakPeerInterface.DestroyInstance(rakNet);
+                rakNet = null;
+            }
+
             Instance = null;
         }
 
@@ -158,6 +185,8 @@ namespace FTW.Engine.Server
                     lastFrameTime = FrameTime - duration;
                 }
 
+                ReceiveMessages();
+
                 GameFrame(dt);
 
                 TimeSpan frameTimeRemaining = FrameTime.AddSeconds(TargetFrameInterval) - DateTime.Now;
@@ -168,6 +197,18 @@ namespace FTW.Engine.Server
             ShutDown();
         }
 
+        private void ReceiveMessages()
+        {
+            if (rakNet == null)
+                return;
+
+            Packet packet;
+            for (packet = rakNet.Receive(); packet != null; rakNet.DeallocatePacket(packet), packet = rakNet.Receive())
+            {
+                Console.WriteLine("Received a packet, " + packet.length + " bytes long");
+            }
+        }
+
         /// <summary>
         /// Runs a single frame of the game
         /// </summary>
@@ -176,5 +217,7 @@ namespace FTW.Engine.Server
         {
             
         }
+
+        public virtual string ValidatePlayerName(string name) { return name.Trim(); }
     }
 }

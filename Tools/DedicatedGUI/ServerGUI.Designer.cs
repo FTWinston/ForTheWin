@@ -1,6 +1,6 @@
 ﻿namespace DedicatedGUI
 {
-    partial class Form1
+    partial class ServerGUI
     {
         /// <summary>
         /// Required designer variable.

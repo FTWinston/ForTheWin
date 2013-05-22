@@ -13,10 +13,21 @@ using System.Reflection;
 
 namespace DedicatedGUI
 {
-    public partial class Form1 : Form
+    public partial class ServerGUI : Form
     {
+        /// <summary>
+        /// The main entry point for the application.
+        /// </summary>
+        [STAThread]
+        static void Main()
+        {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new ServerGUI());
+        }
+
         ServerBase server;
-        public Form1()
+        public ServerGUI()
         {
             InitializeComponent();
 
@@ -76,10 +87,7 @@ namespace DedicatedGUI
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             if (server != null && server.IsRunning)
-            {// Closing right away would prevent the "server shutting down" disconnect message from being sent out, so delay slightly
                 server.Stop();
-                Thread.Sleep(100);
-            }
         }
 
         private void txtInput_KeyPress(object sender, KeyPressEventArgs e)

@@ -9,7 +9,7 @@ using System.Reflection;
 
 namespace DedicatedCLI
 {
-    class Program
+    class ServerCLI
     {
         const string settingsFilename = "settings.yml";
         
@@ -29,9 +29,6 @@ namespace DedicatedCLI
             {
                 /*game.ServerCommand(*/Console.ReadLine()/*)*/;
             }
-
-            // this was needed with the old networking system. See if we can do without it now.
-            Thread.Sleep(100);
         }
     }
 }
