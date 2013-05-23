@@ -496,7 +496,7 @@ namespace FTW.Engine.Client
                 Cursor.Font = menu.ItemFont;
                 Cursor.CharacterSize = menu.ItemTextSize;
                 Cursor.Color = menu.PressedItemColor;
-                UpdateCursor();
+                UpdateCursor(false);
             }
 
             public override Color Color
@@ -540,7 +540,7 @@ namespace FTW.Engine.Client
                 if (Value.DisplayedString.Length > 0)
                 {
                     Value.DisplayedString = Value.DisplayedString.Substring(0, Value.DisplayedString.Length - 1);
-                    UpdateCursor();
+                    UpdateCursor(true);
                 }
             }
 
@@ -560,16 +560,16 @@ namespace FTW.Engine.Client
                 }
 
                 Value.DisplayedString = val;
-                UpdateCursor();
+                UpdateCursor(true);
             }
 
-            private void UpdateCursor()
+            private void UpdateCursor(bool fireChange)
             {
                 FloatRect bounds = Value.GetGlobalBounds();
                 Cursor.Position = new Vector2f(bounds.Left + bounds.Width, Label.Position.Y);
                 Cursor.DisplayedString = Value.DisplayedString.Length == MaxLength ? "|" : "_";
 
-                if ( ValueChanged != null )
+                if (fireChange && ValueChanged != null)
                     ValueChanged(Value.DisplayedString);
             }
         }
