@@ -104,7 +104,7 @@ namespace FTW.Engine.Server
             if (IsMultiplayer)
             {
                 rakNet = RakPeerInterface.GetInstance();
-                ushort numRemoteClients = IsDedicated ? (ushort)(MaxClients - 1) : MaxClients;
+                ushort numRemoteClients = IsDedicated ? MaxClients : (ushort)(MaxClients - 1);
 
                 rakNet.Startup(numRemoteClients, new SocketDescriptor(NetworkPort, null), 1);
                 rakNet.SetMaximumIncomingConnections(numRemoteClients);
@@ -142,6 +142,11 @@ namespace FTW.Engine.Server
                 RakPeerInterface.DestroyInstance(rakNet);
                 rakNet = null;
             }
+
+            if (Client.LocalClient != null)
+                Client.LocalClient = null;
+
+            Client.AllClients.Clear();
 
             Instance = null;
         }
@@ -207,20 +212,29 @@ namespace FTW.Engine.Server
             {
                 DefaultMessageIDTypes messageType = (DefaultMessageIDTypes)packet.data[0];
 
-                if (packet.guid == RakNet.RakNet.UNASSIGNED_RAKNET_GUID)
+                Client c = Client.GetByUniqueID(packet.guid);
+                switch (messageType)
                 {
-                    Console.WriteLine("Received a " + messageType + " packet, " + packet.length + " bytes long");
-                }
-                else
-                {
-                    Client c = Client.GetByUniqueID(packet.guid);
-                    if (c == null)
-                    {
-                        Console.WriteLine("Received a " + messageType + " packet from a new client, " + packet.length + " bytes long");
-                        RemoteClient.Create("unknown", packet.guid);
-                    }
-                    else
-                        Console.WriteLine("Received a " + messageType + " packet from " + c.Name + ", " + packet.length + " bytes long");
+                    case DefaultMessageIDTypes.ID_NEW_INCOMING_CONNECTION:
+                        if (c == null)
+                            c = RemoteClient.Create("unknown", packet.guid);
+
+                        Console.WriteLine("Incoming connection...");
+
+                        // do we need to send them anything at this point?
+                        // or do we wait for them to send us stuff first?
+                        break;
+                    case DefaultMessageIDTypes.ID_DISCONNECTION_NOTIFICATION:
+                        Console.WriteLine(c.Name + " disconnected");
+                        Client.AllClients.Remove(packet.guid.g);
+                        break;
+                    case DefaultMessageIDTypes.ID_CONNECTION_LOST:
+                        Console.WriteLine(c.Name + "timed out");
+                        Client.AllClients.Remove(packet.guid.g);
+                        break;
+                    default:
+                        Console.WriteLine(string.Format("Received a {0} packet from {1}, {2} bytes long", messageType, c == null ? "a new client" : c.Name, packet.length));
+                        break;
                 }
             }
         }

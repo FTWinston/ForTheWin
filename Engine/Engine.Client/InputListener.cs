@@ -13,12 +13,12 @@ namespace FTW.Engine.Client
         {
             this.window = window;
 
-            keyPressed = new EventHandler<KeyEventArgs>(OnKeyPressed);
-            keyReleased = new EventHandler<KeyEventArgs>(OnKeyReleased);
-            textEntered = new EventHandler<TextEventArgs>(OnTextEntered);
-            mousePressed = new EventHandler<MouseButtonEventArgs>(OnMousePressed);
-            mouseReleased = new EventHandler<MouseButtonEventArgs>(OnMouseReleased);
-            mouseMoved = new EventHandler<MouseMoveEventArgs>(OnMouseMoved);
+            keyPressed = OnKeyPressed;
+            keyReleased = OnKeyReleased;
+            textEntered = OnTextEntered;
+            mousePressed = OnMousePressed;
+            mouseReleased = OnMouseReleased;
+            mouseMoved = OnMouseMoved;
         }
 
         protected RenderWindow window { get; private set; }

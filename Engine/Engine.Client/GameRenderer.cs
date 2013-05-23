@@ -12,27 +12,42 @@ namespace FTW.Engine.Client
     {
         public static GameRenderer Instance;
         public ServerConnection Connection { get; private set; }
+        public bool FullyConnected { get; internal set; }
 
         public GameRenderer(RenderWindow window, ServerConnection connection, Config config)
             : base(window)
         {
             Instance = this;
             Connection = connection;
-        }
-
-        ~GameRenderer()
-        {
-            Instance = null;
+            FullyConnected = false;
+            
+            Connection.Connect();
         }
 
         public void Disconnect()
         {
             Connection.Disconnect();
+
+            if (Disconnected != null)
+                Disconnected(this, EventArgs.Empty);
+
+            Instance = null;
         }
+
+        public event EventHandler Disconnected;
 
         public override void Draw(RenderTarget target, RenderStates states)
         {
             Connection.RetrieveUpdates();
+
+            if (!FullyConnected)
+            {
+                // draw a "connecting" thingamy
+            }
+            else
+            {
+                // draw an "in game" thingamy
+            }
         }
 
         public event EventHandler ShowMenu;

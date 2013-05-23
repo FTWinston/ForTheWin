@@ -26,7 +26,7 @@ namespace Game.Client
             SetVerticalSyncEnabled(true);
             
             // Setup event handlers
-            Closed += new EventHandler(OnClosed);
+            Closed += OnClosed;
 
             CreateMenus();
             SetCurrentInput(mainMenu);
@@ -89,10 +89,9 @@ namespace Game.Client
 
         private void CreateRenderer(ServerConnection connection)
         {
-            connection.Connect();
-
             renderer = new GameRenderer(this, connection, new Config());
-            renderer.ShowMenu += new EventHandler((object o, EventArgs e) => SetCurrentInput(inGameMenu));
+            renderer.ShowMenu += (object o, EventArgs e) => SetCurrentInput(inGameMenu);
+            renderer.Disconnected += (object o, EventArgs e) => { renderer = null; SetCurrentInput(mainMenu); };
             SetCurrentInput(renderer);
         }
 

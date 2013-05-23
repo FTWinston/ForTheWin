@@ -68,7 +68,7 @@ namespace FTW.Engine.Server
             return cl;
         }
 
-        public static Client LocalClient { get; protected set; }
+        public static Client LocalClient { get; internal set; }
 
         public static Client GetByName(string name)
         {
