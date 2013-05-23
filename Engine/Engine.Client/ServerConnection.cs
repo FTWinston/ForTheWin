@@ -80,7 +80,11 @@ namespace FTW.Engine.Client
             Packet packet;
             for (packet = rakNet.Receive(); packet != null; rakNet.DeallocatePacket(packet), packet = rakNet.Receive())
             {
-                Console.WriteLine("Received a packet, " + packet.length + " bytes long");
+                DefaultMessageIDTypes messageType = (DefaultMessageIDTypes)packet.data[0];
+                Console.WriteLine("Received a " + messageType + " packet, " + packet.length + " bytes long");
+
+                // ID_CONNECTION_REQUEST_ACCEPTED - now properly connected. send my name & info?
+                // ID_DISCONNECTION_NOTIFICATION - server disconnected (shutting down?)
             }
         }
     }

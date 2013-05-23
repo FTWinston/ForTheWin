@@ -7,18 +7,11 @@ using SFML.Window;
 
 namespace FTW.Engine.Client
 {
-    public class Menu : Drawable
+    public class Menu : InputListener, Drawable
     {
-        public Menu(Window window)
+        public Menu(RenderWindow window)
+            : base(window)
         {
-            this.window = window;
-            keyPressed = new EventHandler<KeyEventArgs>(OnKeyPressed);
-            keyReleased = new EventHandler<KeyEventArgs>(OnKeyReleased);
-            textEntered = new EventHandler<TextEventArgs>(OnTextEntered);
-            mousePressed = new EventHandler<MouseButtonEventArgs>(OnMousePressed);
-            mouseReleased = new EventHandler<MouseButtonEventArgs>(OnMouseReleased);
-            mouseMoved = new EventHandler<MouseMoveEventArgs>(OnMouseMoved);
-
             ItemXPos = ItemYPos = 128;
 
             ItemXSpacing = 0;
@@ -31,7 +24,7 @@ namespace FTW.Engine.Client
             CurrentIndex = -1;
         }
 
-        public void Draw(RenderTarget target, RenderStates states)
+        public override void Draw(RenderTarget target, RenderStates states)
         {
             foreach (Drawable item in Items)
                 target.Draw(item, states);
@@ -75,7 +68,6 @@ namespace FTW.Engine.Client
         public Item CurrentItem { get; protected set; }
         public bool CurrentPressed { get; protected set; }
 
-        private Window window;
         private List<Item> Items = new List<Item>();
 
         public delegate void ItemActivatedFunction();
@@ -87,32 +79,7 @@ namespace FTW.Engine.Client
             Items.Add(item);
         }
 
-        public void EnableInput()
-        {
-            window.KeyPressed += keyPressed;
-            window.KeyReleased += keyReleased;
-            window.TextEntered += textEntered;
-            window.MouseButtonPressed += mousePressed;
-            window.MouseButtonReleased += mouseReleased;
-            window.MouseMoved += mouseMoved;
-        }
-
-        public void DisableInput()
-        {
-            window.KeyPressed -= keyPressed;
-            window.KeyReleased -= keyReleased;
-            window.TextEntered -= textEntered;
-            window.MouseButtonPressed -= mousePressed;
-            window.MouseButtonReleased -= mouseReleased;
-            window.MouseMoved -= mouseMoved;
-        }
-
-        private EventHandler<KeyEventArgs> keyPressed, keyReleased;
-        private EventHandler<TextEventArgs> textEntered;
-        private EventHandler<MouseButtonEventArgs> mousePressed, mouseReleased;
-        private EventHandler<MouseMoveEventArgs> mouseMoved;
-
-        private void OnKeyPressed(object sender, KeyEventArgs e)
+        protected override void OnKeyPressed(object sender, KeyEventArgs e)
         {
             if (e.Code == Keyboard.Key.Escape)
             {
@@ -163,7 +130,7 @@ namespace FTW.Engine.Client
             }
         }
 
-        private void OnKeyReleased(object sender, KeyEventArgs e)
+        protected override void OnKeyReleased(object sender, KeyEventArgs e)
         {
             if (e.Code == Keyboard.Key.Return)
             {
@@ -202,7 +169,7 @@ namespace FTW.Engine.Client
             }
         }
 
-        private void OnTextEntered(object sender, TextEventArgs e)
+        protected override void OnTextEntered(object sender, TextEventArgs e)
         {
             if (CurrentItem == null)
                 return;
@@ -211,7 +178,7 @@ namespace FTW.Engine.Client
                 (CurrentItem as TextEntryItem).Type(e.Unicode);
         }
 
-        private void OnMousePressed(object sender, MouseButtonEventArgs e)
+        protected override void OnMousePressed(object sender, MouseButtonEventArgs e)
         {
             if (e.Button != Mouse.Button.Left)
                 return;
@@ -225,7 +192,7 @@ namespace FTW.Engine.Client
                 (CurrentItem as ListItem).CheckButtonPress(e.X, e.Y, true);
         }
 
-        private void OnMouseReleased(object sender, MouseButtonEventArgs e)
+        protected override void OnMouseReleased(object sender, MouseButtonEventArgs e)
         {
             if (e.Button != Mouse.Button.Left)
                 return;
@@ -242,7 +209,7 @@ namespace FTW.Engine.Client
             }
         }
 
-        private void OnMouseMoved(object sender, MouseMoveEventArgs e)
+        protected override void OnMouseMoved(object sender, MouseMoveEventArgs e)
         {
             int index = GetHoveredItemIndex(e.X, e.Y);
             if (index != CurrentIndex)
