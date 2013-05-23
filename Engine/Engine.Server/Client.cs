@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RakNet;
 
 namespace FTW.Engine.Server
 {
@@ -11,8 +12,8 @@ namespace FTW.Engine.Server
 
         public string Name { get; set; }
         public abstract bool IsLocal { get; }
-        
-        internal static SortedList<string, Client> AllClients = new SortedList<string, Client>();
+
+        internal static SortedList<ulong, Client> AllClients = new SortedList<ulong, Client>();
         public IList<Client> GetAll() { return AllClients.Values; }
 
         public static List<Client> GetAllExcept(params Client[] exclude)
@@ -71,8 +72,16 @@ namespace FTW.Engine.Server
 
         public static Client GetByName(string name)
         {
-            if (AllClients.ContainsKey(name))
-                return AllClients[name];
+            foreach (Client c in AllClients.Values)
+                if (c.Name == name)
+                    return c;
+            return null;
+        }
+
+        internal static Client GetByUniqueID(RakNetGUID uniqueID)
+        {
+            if (AllClients.ContainsKey(uniqueID.g))
+                return AllClients[uniqueID.g];
             return null;
         }
 
@@ -106,7 +115,7 @@ namespace FTW.Engine.Server
             string name = GetUniqueName(c, desiredName);
             c.Name = name;
 
-            AllClients.Add(c.Name, c);
+            AllClients.Add(RakNet.RakNet.UNASSIGNED_RAKNET_GUID.g, c);
             LocalClient = c;
             return c;
         }
@@ -116,16 +125,14 @@ namespace FTW.Engine.Server
     {
         private RemoteClient() { }
         public override bool IsLocal { get { return false; } }
-        private string RemoteAddress;
-        private uint RemotePort;
 
-        public static Client Create(string desiredName, string remoteAddress, uint remotePort)
+        public static Client Create(string desiredName, RakNetGUID uniqueID)
         {
-            RemoteClient c = new RemoteClient() { RemoteAddress = remoteAddress, RemotePort = remotePort };
+            RemoteClient c = new RemoteClient();
             string name = GetUniqueName(c, desiredName);
             c.Name = name;
 
-            AllClients.Add(c.Name, c);
+            AllClients.Add(uniqueID.g, c);
             return c;
         }
     }

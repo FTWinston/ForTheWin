@@ -205,7 +205,23 @@ namespace FTW.Engine.Server
             Packet packet;
             for (packet = rakNet.Receive(); packet != null; rakNet.DeallocatePacket(packet), packet = rakNet.Receive())
             {
-                Console.WriteLine("Received a packet, " + packet.length + " bytes long");
+                DefaultMessageIDTypes messageType = (DefaultMessageIDTypes)packet.data[0];
+
+                if (packet.guid == RakNet.RakNet.UNASSIGNED_RAKNET_GUID)
+                {
+                    Console.WriteLine("Received a " + messageType + " packet, " + packet.length + " bytes long");
+                }
+                else
+                {
+                    Client c = Client.GetByUniqueID(packet.guid);
+                    if (c == null)
+                    {
+                        Console.WriteLine("Received a " + messageType + " packet from a new client, " + packet.length + " bytes long");
+                        RemoteClient.Create("unknown", packet.guid);
+                    }
+                    else
+                        Console.WriteLine("Received a " + messageType + " packet from " + c.Name + ", " + packet.length + " bytes long");
+                }
             }
         }
 

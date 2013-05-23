@@ -11,6 +11,7 @@ namespace FTW.Engine.Client
     {
         public abstract void Connect();
         public abstract void Disconnect();
+        public abstract void RetrieveUpdates();
     }
 
     public class ListenServerConnection : ServerConnection
@@ -36,6 +37,11 @@ namespace FTW.Engine.Client
         {
             server.Stop();
         }
+
+        public override void RetrieveUpdates()
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class RemoteClientConnection : ServerConnection
@@ -48,20 +54,34 @@ namespace FTW.Engine.Client
 
         private string hostname;
         private ushort hostPort;
-        RakPeerInterface connection;
+        RakPeerInterface rakNet;
 
         public override void Connect()
         {
-            connection = RakPeerInterface.GetInstance();
-            connection.Startup(1, new SocketDescriptor(), 1);
-            connection.Connect(hostname, hostPort, string.Empty, 0);
+            rakNet = RakPeerInterface.GetInstance();
+            rakNet.Startup(1, new SocketDescriptor(), 1);
+            rakNet.Connect(hostname, hostPort, string.Empty, 0);
+
+            BitStream bs = new BitStream();
+            bs.Write("hello, my name is SOMETHING");
+
+            rakNet.Send(bs, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, (char)0, RakNet.RakNet.UNASSIGNED_RAKNET_GUID, true);
         }
 
         public override void Disconnect()
         {
-            connection.Shutdown(300);
-            RakPeerInterface.DestroyInstance(connection);
-            connection = null;
+            rakNet.Shutdown(300);
+            RakPeerInterface.DestroyInstance(rakNet);
+            rakNet = null;
+        }
+
+        public override void RetrieveUpdates()
+        {
+            Packet packet;
+            for (packet = rakNet.Receive(); packet != null; rakNet.DeallocatePacket(packet), packet = rakNet.Receive())
+            {
+                Console.WriteLine("Received a packet, " + packet.length + " bytes long");
+            }
         }
     }
 }
