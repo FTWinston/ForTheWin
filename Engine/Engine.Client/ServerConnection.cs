@@ -41,7 +41,7 @@ namespace FTW.Engine.Client
 
         public override void RetrieveUpdates()
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
     }
 
@@ -79,37 +79,78 @@ namespace FTW.Engine.Client
             Packet packet;
             for (packet = rakNet.Receive(); packet != null; rakNet.DeallocatePacket(packet), packet = rakNet.Receive())
             {
-                DefaultMessageIDTypes messageType = (DefaultMessageIDTypes)packet.data[0];
 
-                switch (messageType)
-                {
-                    case DefaultMessageIDTypes.ID_CONNECTION_REQUEST_ACCEPTED: // now properly connected. send client info? (e.g. name)
-                        Console.WriteLine("Connected to server");
+                byte type = packet.data[0];
+                if (type <= (byte)DefaultMessageIDTypes.ID_USER_PACKET_ENUM)
+                    switch ((DefaultMessageIDTypes)type)
+                    {
+                        case DefaultMessageIDTypes.ID_CONNECTION_REQUEST_ACCEPTED: // now properly connected. send client info? (e.g. name)
+                            Console.WriteLine("Connected to server");
 
-                        BitStream bs = new BitStream();
-                        bs.Write("hello, my name is SOMETHING");
+                            BitStream bs = new BitStream();
+                            bs.Write((byte)EngineMessage.NewClientInfo);
+                            bs.Write("ClientName");
 
-                        rakNet.Send(bs, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, (char)0, RakNet.RakNet.UNASSIGNED_RAKNET_GUID, true);
+                            // server will respond to this with a NewClientInfo message of its own
+                            rakNet.Send(bs, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, (char)0, RakNet.RakNet.UNASSIGNED_RAKNET_GUID, true);
+                            break;
+                        case DefaultMessageIDTypes.ID_NO_FREE_INCOMING_CONNECTIONS:
+                            Console.WriteLine("Unable to connect: the server is full");
+                            GameRenderer.Instance.Disconnect();
+                            return;
+                        case DefaultMessageIDTypes.ID_DISCONNECTION_NOTIFICATION: // server disconnected me. kicked, shutdown, or what?
+                            Console.WriteLine("You have been kicked from the server");
+                            GameRenderer.Instance.Disconnect();
+                            return;
+                        case DefaultMessageIDTypes.ID_CONNECTION_LOST:
+                            Console.WriteLine("Lost connection to the server");
+                            GameRenderer.Instance.Disconnect();
+                            return;
+#if DEBUG
+                        default:
+                            Console.WriteLine("Received a " + (DefaultMessageIDTypes)type + " packet, " + packet.length + " bytes long");
+                            break;
+#endif
+                    }
+                else if (type <= (byte)EngineMessage.FirstGameMessageID)
+                    switch ((EngineMessage)type)
+                    {
+                        case EngineMessage.NewClientInfo:
+                            {
+                                BitStream bs = new BitStream(packet.data, packet.length, false);
+                                bs.IgnoreBytes(1);
 
-                        // we actually need to wait for the server's response to packet we just sent, but go ahead for now
-                        GameRenderer.Instance.FullyConnected = true;
-                        break;
-                    case DefaultMessageIDTypes.ID_NO_FREE_INCOMING_CONNECTIONS:
-                        Console.WriteLine("Unable to connect: the server is full");
-                        GameRenderer.Instance.Disconnect();
-                        return;
-                    case DefaultMessageIDTypes.ID_DISCONNECTION_NOTIFICATION: // server disconnected me. kicked, shutdown, or what?
-                        Console.WriteLine("You have been kicked from the server");
-                        GameRenderer.Instance.Disconnect();
-                        return;
-                    case DefaultMessageIDTypes.ID_CONNECTION_LOST:
-                        Console.WriteLine("Lost connection to the server");
-                        GameRenderer.Instance.Disconnect();
-                        return;
-                    default:
-                        Console.WriteLine("Received a " + messageType + " packet, " + packet.length + " bytes long");
-                        break;
-                }
+                                string clientName;
+                                bs.Read(out clientName);
+                                Console.WriteLine("My name, corrected by server: " + clientName);
+
+                                byte numOthers;
+                                bs.Read(out numOthers);
+
+                                Console.WriteLine("There are " + numOthers + " other clients connected to this server:");
+
+                                for (int i = 0; i < numOthers; i++)
+                                {
+                                    string otherName;
+                                    bs.Read(out otherName);
+                                    Console.WriteLine(" * " + otherName);
+                                }
+
+                                GameRenderer.Instance.FullyConnected = true;
+                                break;
+                            }
+                        case EngineMessage.ClientConnected:
+                            {
+                                BitStream bs = new BitStream(packet.data, packet.length, false);
+                                bs.IgnoreBytes(1);
+
+                                string clientName;
+                                bs.Read(out clientName);
+
+                                Console.WriteLine(clientName + " joined the game");
+                                break;
+                            }
+                    }
             }
         }
     }

@@ -57,6 +57,8 @@ namespace FTW.Engine.Server
 
             if (maxClients == 0)
                 maxClients = 1;
+            if (maxClients > byte.MaxValue)
+                maxClients = byte.MaxValue;
 
             NetworkPort = port;
             MaxClients = maxClients;
@@ -210,31 +212,91 @@ namespace FTW.Engine.Server
             Packet packet;
             for (packet = rakNet.Receive(); packet != null; rakNet.DeallocatePacket(packet), packet = rakNet.Receive())
             {
-                DefaultMessageIDTypes messageType = (DefaultMessageIDTypes)packet.data[0];
-
                 Client c = Client.GetByUniqueID(packet.guid);
-                switch (messageType)
+                byte type = packet.data[0];
+                if (type <= (byte)DefaultMessageIDTypes.ID_USER_PACKET_ENUM)
                 {
-                    case DefaultMessageIDTypes.ID_NEW_INCOMING_CONNECTION:
-                        if (c == null)
-                            c = RemoteClient.Create("unknown", packet.guid);
+                    switch ((DefaultMessageIDTypes)type)
+                    {
+                        case DefaultMessageIDTypes.ID_NEW_INCOMING_CONNECTION:
+                            if (c == null)
+                                c = RemoteClient.Create(packet.guid);
 
-                        Console.WriteLine("Incoming connection...");
+                            Console.WriteLine("Incoming connection...");
 
-                        // do we need to send them anything at this point?
-                        // or do we wait for them to send us stuff first?
-                        break;
-                    case DefaultMessageIDTypes.ID_DISCONNECTION_NOTIFICATION:
-                        Console.WriteLine(c.Name + " disconnected");
-                        Client.AllClients.Remove(packet.guid.g);
-                        break;
-                    case DefaultMessageIDTypes.ID_CONNECTION_LOST:
-                        Console.WriteLine(c.Name + "timed out");
-                        Client.AllClients.Remove(packet.guid.g);
-                        break;
-                    default:
-                        Console.WriteLine(string.Format("Received a {0} packet from {1}, {2} bytes long", messageType, c == null ? "a new client" : c.Name, packet.length));
-                        break;
+                            // do we need to send them anything at this point?
+                            // or do we wait for them to send us stuff first?
+                            break;
+                        case DefaultMessageIDTypes.ID_DISCONNECTION_NOTIFICATION:
+                            Console.WriteLine(c.Name + " disconnected");
+                            Client.AllClients.Remove(packet.guid.g);
+                            break;
+                        case DefaultMessageIDTypes.ID_CONNECTION_LOST:
+                            Console.WriteLine(c.Name + "timed out");
+                            Client.AllClients.Remove(packet.guid.g);
+                            break;
+#if DEBUG
+                        default:
+                            Console.WriteLine(string.Format("Received a {0} packet from {1}, {2} bytes long", (DefaultMessageIDTypes)type, c == null ? "a new client" : c.Name, packet.length));
+                            break;
+#endif
+                    }
+                }
+                else if (type < (byte)EngineMessage.FirstGameMessageID)
+                {
+                    switch ((EngineMessage)type)
+                    {
+                        case EngineMessage.NewClientInfo:
+                            {
+                                BitStream bs = new BitStream(packet.data, packet.length, false);
+                                bs.IgnoreBytes(1);
+
+                                string newName;
+                                bs.Read(out newName);
+                                c.Name = newName;
+
+                                Console.WriteLine(c.Name + " joined the game");
+
+                                // send a NewClientInfo message to all non-local clients, apart from the current client
+                                bs = new BitStream();
+                                bs.Write((byte)EngineMessage.ClientConnected);
+                                bs.Write(c.Name);
+
+                                rakNet.Send(bs, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, (char)0, packet.guid, true);
+
+
+                                // send a PlayerList to the newly-connected client, telling them how/if we've modified their name
+                                // and the names of everyone else on the server
+                                bs = new BitStream();
+                                bs.Write((byte)EngineMessage.NewClientInfo);
+                                bs.Write(c.Name);
+                                
+                                List<Client> otherClients = Client.GetAllExcept(c);
+                                bs.Write((byte)otherClients.Count);
+                                foreach (Client other in otherClients)
+                                    bs.Write(other.Name);
+
+                                rakNet.Send(bs, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, (char)0, packet.guid, false);
+
+                                break;
+                            }
+                        case EngineMessage.ClientNameChange:
+                            {
+                                BitStream bs = new BitStream(packet.data, packet.length, false);
+                                bs.IgnoreBytes(1);
+
+                                string newName, oldName = c.Name;
+                                bs.Read(out newName);
+                                c.Name = newName;
+
+                                Console.WriteLine(oldName + " changed name to " + c.Name);
+                                break;
+                            }
+                    }
+                }
+                else
+                {
+
                 }
             }
         }

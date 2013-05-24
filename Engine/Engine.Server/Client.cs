@@ -10,7 +10,18 @@ namespace FTW.Engine.Server
     {
         protected Client() { }
 
-        public string Name { get; set; }
+        private string name;
+        public string Name
+        {
+            get { return name; }
+            set
+            {
+                if (name != null)
+                    name = GetUniqueName(value);
+                else
+                    name = value;
+            }
+        }
         public abstract bool IsLocal { get; }
 
         internal static SortedList<ulong, Client> AllClients = new SortedList<ulong, Client>();
@@ -85,7 +96,7 @@ namespace FTW.Engine.Server
             return null;
         }
 
-        protected static string GetUniqueName(Client c, string desiredName)
+        protected string GetUniqueName(string desiredName)
         {
             desiredName = GameServer.Instance.ValidatePlayerName(desiredName);
 
@@ -93,7 +104,7 @@ namespace FTW.Engine.Server
             int i = 1;
 
             Client matchingName = Client.GetByName(newName);
-            while (matchingName != null && matchingName != c)
+            while (matchingName != null && matchingName != this)
             {
                 newName = string.Format("{0} ({1})", desiredName, i);
                 i++;
@@ -112,8 +123,7 @@ namespace FTW.Engine.Server
         public static Client Create(string desiredName)
         {
             LocalClient c = new LocalClient();
-            string name = GetUniqueName(c, desiredName);
-            c.Name = name;
+            c.Name = desiredName;
 
             AllClients.Add(RakNet.RakNet.UNASSIGNED_RAKNET_GUID.g, c);
             LocalClient = c;
@@ -126,11 +136,10 @@ namespace FTW.Engine.Server
         private RemoteClient() { }
         public override bool IsLocal { get { return false; } }
 
-        public static Client Create(string desiredName, RakNetGUID uniqueID)
+        public static Client Create(RakNetGUID uniqueID)
         {
             RemoteClient c = new RemoteClient();
-            string name = GetUniqueName(c, desiredName);
-            c.Name = name;
+            c.Name = "unknown";
 
             AllClients.Add(uniqueID.g, c);
             return c;
