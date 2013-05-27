@@ -12,6 +12,8 @@ namespace FTW.Engine.Client
         public abstract void Connect();
         public abstract void Disconnect();
         public abstract void RetrieveUpdates();
+
+        public abstract void Send(Message m);
     }
 
     public class ListenServerConnection : ServerConnection
@@ -40,6 +42,17 @@ namespace FTW.Engine.Client
         }
 
         public override void RetrieveUpdates()
+        {
+            //throw new NotImplementedException();
+
+            // i was gonna have this message just copy the contents from a List<Message> on the server, which contains all those to be sent to the local client
+            // but server and client messages have diverged now.
+
+            // if we do away with reusing the same message for client -> server AND server -> client, and replace the .Read functions with things in the Connection / Server classes, that might work.
+            // alternatively, if it's just a list of MessageBase, we can perhaps still get away with reusing the same message IDs. Read functions would still have to be outwith the message classes.
+        }
+
+        public override void Send(Message m)
         {
             //throw new NotImplementedException();
         }
@@ -81,18 +94,14 @@ namespace FTW.Engine.Client
             {
 
                 byte type = packet.data[0];
-                if (type <= (byte)DefaultMessageIDTypes.ID_USER_PACKET_ENUM)
+                if (type < (byte)DefaultMessageIDTypes.ID_USER_PACKET_ENUM)
                     switch ((DefaultMessageIDTypes)type)
                     {
                         case DefaultMessageIDTypes.ID_CONNECTION_REQUEST_ACCEPTED: // now properly connected. send client info? (e.g. name)
                             Console.WriteLine("Connected to server");
 
-                            BitStream bs = new BitStream();
-                            bs.Write((byte)EngineMessage.NewClientInfo);
-                            bs.Write("ClientName");
-
                             // server will respond to this with a NewClientInfo message of its own
-                            rakNet.Send(bs, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, (char)0, RakNet.RakNet.UNASSIGNED_RAKNET_GUID, true);
+                            Send(new NewClientInfoMessage("ClientName"));
                             break;
                         case DefaultMessageIDTypes.ID_NO_FREE_INCOMING_CONNECTIONS:
                             Console.WriteLine("Unable to connect: the server is full");
@@ -117,6 +126,8 @@ namespace FTW.Engine.Client
                     {
                         case EngineMessage.NewClientInfo:
                             {
+                                //NewClientInfoMessage.Read(packet);
+
                                 BitStream bs = new BitStream(packet.data, packet.length, false);
                                 bs.IgnoreBytes(1);
 
@@ -152,6 +163,11 @@ namespace FTW.Engine.Client
                             }
                     }
             }
+        }
+
+        public override void Send(Message m)
+        {
+            rakNet.Send(m.Stream, m.Priority, m.Reliability, (char)0, RakNet.RakNet.UNASSIGNED_RAKNET_GUID, true);
         }
     }
 }

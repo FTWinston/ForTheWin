@@ -54,6 +54,7 @@
   <ItemGroup>
     <Compile Include="Config.cs" />
     <Compile Include="Constants.cs" />
+    <Compile Include="MessageBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Raknet\AddressOrGUID.cs" />
     <Compile Include="Raknet\BitStream.cs" />

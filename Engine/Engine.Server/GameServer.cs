@@ -98,7 +98,7 @@ namespace FTW.Engine.Server
                 isRunning = false;
         }
 
-        private RakPeerInterface rakNet = null;
+        internal RakPeerInterface rakNet = null;
         protected virtual bool Initialize()
         {
             Console.WriteLine("Initializing...");
@@ -110,6 +110,7 @@ namespace FTW.Engine.Server
 
                 rakNet.Startup(numRemoteClients, new SocketDescriptor(NetworkPort, null), 1);
                 rakNet.SetMaximumIncomingConnections(numRemoteClients);
+                rakNet.SetOccasionalPing(true);
             }
 
             return true;
@@ -214,7 +215,7 @@ namespace FTW.Engine.Server
             {
                 Client c = Client.GetByUniqueID(packet.guid);
                 byte type = packet.data[0];
-                if (type <= (byte)DefaultMessageIDTypes.ID_USER_PACKET_ENUM)
+                if (type < (byte)DefaultMessageIDTypes.ID_USER_PACKET_ENUM)
                 {
                     switch ((DefaultMessageIDTypes)type)
                     {
@@ -223,13 +224,12 @@ namespace FTW.Engine.Server
                                 c = RemoteClient.Create(packet.guid);
 
                             Console.WriteLine("Incoming connection...");
-
-                            // do we need to send them anything at this point?
-                            // or do we wait for them to send us stuff first?
+                            // the only response the client needs here is the automatic ID_CONNECTION_REQUEST_ACCEPTED packet
                             break;
                         case DefaultMessageIDTypes.ID_DISCONNECTION_NOTIFICATION:
                             Console.WriteLine(c.Name + " disconnected");
                             Client.AllClients.Remove(packet.guid.g);
+
                             break;
                         case DefaultMessageIDTypes.ID_CONNECTION_LOST:
                             Console.WriteLine(c.Name + "timed out");
@@ -248,48 +248,27 @@ namespace FTW.Engine.Server
                     {
                         case EngineMessage.NewClientInfo:
                             {
-                                BitStream bs = new BitStream(packet.data, packet.length, false);
-                                bs.IgnoreBytes(1);
+                                NewClientInfoMessage.Read(c, packet);
 
-                                string newName;
-                                bs.Read(out newName);
-                                c.Name = newName;
-
+                                // tell all other clients about this new client
+                                new ClientConnectedMessage(c).SendToAllExcept(c);
                                 Console.WriteLine(c.Name + " joined the game");
-
-                                // send a NewClientInfo message to all non-local clients, apart from the current client
-                                bs = new BitStream();
-                                bs.Write((byte)EngineMessage.ClientConnected);
-                                bs.Write(c.Name);
-
-                                rakNet.Send(bs, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, (char)0, packet.guid, true);
-
 
                                 // send a PlayerList to the newly-connected client, telling them how/if we've modified their name
                                 // and the names of everyone else on the server
-                                bs = new BitStream();
-                                bs.Write((byte)EngineMessage.NewClientInfo);
-                                bs.Write(c.Name);
-                                
-                                List<Client> otherClients = Client.GetAllExcept(c);
-                                bs.Write((byte)otherClients.Count);
-                                foreach (Client other in otherClients)
-                                    bs.Write(other.Name);
-
-                                rakNet.Send(bs, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, (char)0, packet.guid, false);
-
+                                new NewClientInfoMessage(c).SendTo(c);
                                 break;
                             }
                         case EngineMessage.ClientNameChange:
                             {
-                                BitStream bs = new BitStream(packet.data, packet.length, false);
+                                /*BitStream bs = new BitStream(packet.data, packet.length, false);
                                 bs.IgnoreBytes(1);
 
                                 string newName, oldName = c.Name;
                                 bs.Read(out newName);
                                 c.Name = newName;
 
-                                Console.WriteLine(oldName + " changed name to " + c.Name);
+                                Console.WriteLine(oldName + " changed name to " + c.Name);*/
                                 break;
                             }
                     }

@@ -22,6 +22,7 @@ namespace FTW.Engine.Server
                     name = value;
             }
         }
+        internal RakNetGUID UniqueID { get; set; }
         public abstract bool IsLocal { get; }
 
         internal static SortedList<ulong, Client> AllClients = new SortedList<ulong, Client>();
@@ -117,7 +118,7 @@ namespace FTW.Engine.Server
 
     internal class LocalClient : Client
     {
-        private LocalClient() { }
+        private LocalClient() { UniqueID = RakNet.RakNet.UNASSIGNED_RAKNET_GUID; }
         public override bool IsLocal { get { return true; } }
 
         public static Client Create(string desiredName)
@@ -133,12 +134,12 @@ namespace FTW.Engine.Server
 
     internal class RemoteClient : Client
     {
-        private RemoteClient() { }
+        private RemoteClient(RakNetGUID id) { UniqueID = id; }
         public override bool IsLocal { get { return false; } }
 
         public static Client Create(RakNetGUID uniqueID)
         {
-            RemoteClient c = new RemoteClient();
+            RemoteClient c = new RemoteClient(uniqueID);
             c.Name = "unknown";
 
             AllClients.Add(uniqueID.g, c);
