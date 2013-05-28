@@ -91,7 +91,7 @@ namespace FTW.Engine.Server
             if (Initialize())
             {
                 if (!IsDedicated)
-                    LocalClient.Create("player name");
+                    LocalClient.Create("ClientName");
                 RunMainLoop();
             }
             else
@@ -207,76 +207,99 @@ namespace FTW.Engine.Server
 
         private void ReceiveMessages()
         {
-            if (rakNet == null)
-                return;
-
-            Packet packet;
-            for (packet = rakNet.Receive(); packet != null; rakNet.DeallocatePacket(packet), packet = rakNet.Receive())
+            if (rakNet != null)
             {
-                Client c = Client.GetByUniqueID(packet.guid);
-                byte type = packet.data[0];
-                if (type < (byte)DefaultMessageIDTypes.ID_USER_PACKET_ENUM)
+                Packet packet;
+                for (packet = rakNet.Receive(); packet != null; rakNet.DeallocatePacket(packet), packet = rakNet.Receive())
                 {
-                    switch ((DefaultMessageIDTypes)type)
+                    Client c = Client.GetByUniqueID(packet.guid);
+                    byte type = packet.data[0];
+                    if (type < (byte)DefaultMessageIDTypes.ID_USER_PACKET_ENUM)
                     {
-                        case DefaultMessageIDTypes.ID_NEW_INCOMING_CONNECTION:
-                            if (c == null)
-                                c = RemoteClient.Create(packet.guid);
+                        switch ((DefaultMessageIDTypes)type)
+                        {
+                            case DefaultMessageIDTypes.ID_NEW_INCOMING_CONNECTION:
+                                if (c == null)
+                                    c = RemoteClient.Create(packet.guid);
 
-                            Console.WriteLine("Incoming connection...");
-                            // the only response the client needs here is the automatic ID_CONNECTION_REQUEST_ACCEPTED packet
-                            break;
-                        case DefaultMessageIDTypes.ID_DISCONNECTION_NOTIFICATION:
-                            Console.WriteLine(c.Name + " disconnected");
-                            Client.AllClients.Remove(packet.guid.g);
+                                Console.WriteLine("Incoming connection...");
+                                // the only response the client needs here is the automatic ID_CONNECTION_REQUEST_ACCEPTED packet
+                                break;
+                            case DefaultMessageIDTypes.ID_DISCONNECTION_NOTIFICATION:
+                                Console.WriteLine(c.Name + " disconnected");
+                                Client.AllClients.Remove(packet.guid.g);
 
-                            break;
-                        case DefaultMessageIDTypes.ID_CONNECTION_LOST:
-                            Console.WriteLine(c.Name + "timed out");
-                            Client.AllClients.Remove(packet.guid.g);
-                            break;
+                                break;
+                            case DefaultMessageIDTypes.ID_CONNECTION_LOST:
+                                Console.WriteLine(c.Name + "timed out");
+                                Client.AllClients.Remove(packet.guid.g);
+                                break;
 #if DEBUG
-                        default:
-                            Console.WriteLine(string.Format("Received a {0} packet from {1}, {2} bytes long", (DefaultMessageIDTypes)type, c == null ? "a new client" : c.Name, packet.length));
-                            break;
+                            default:
+                                Console.WriteLine(string.Format("Received a {0} packet from {1}, {2} bytes long", (DefaultMessageIDTypes)type, c == null ? "a new client" : c.Name, packet.length));
+                                break;
 #endif
+                        }
                     }
+                    else
+                        MessageReceived(c, new Message(packet));
                 }
-                else if (type < (byte)EngineMessage.FirstGameMessageID)
+            }
+
+            if (Client.LocalClient != null)
+            {
+                Message[] messages;
+                lock (Message.ToLocalServer)
                 {
-                    switch ((EngineMessage)type)
+                    messages = Message.ToLocalClient.ToArray();
+                    Message.ToLocalClient.Clear();
+                }
+
+                foreach (Message m in messages)
+                    MessageReceived(Client.LocalClient, m);
+            }
+        }
+
+        protected void MessageReceived(Client c, Message m)
+        {
+            switch ((EngineMessage)m.Type)
+            {
+                case EngineMessage.ClientConnecting:
                     {
-                        case EngineMessage.NewClientInfo:
-                            {
-                                NewClientInfoMessage.Read(c, packet);
+                        c.Name = m.ReadString();
 
-                                // tell all other clients about this new client
-                                new ClientConnectedMessage(c).SendToAllExcept(c);
-                                Console.WriteLine(c.Name + " joined the game");
+                        // tell all other clients about this new client
+                        m = new Message((byte)EngineMessage.ClientConnected, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE);
+                        m.Write(c.Name);
+                        Client.SendToAllExcept(m, c);
 
-                                // send a PlayerList to the newly-connected client, telling them how/if we've modified their name
-                                // and the names of everyone else on the server
-                                new NewClientInfoMessage(c).SendTo(c);
-                                break;
-                            }
-                        case EngineMessage.ClientNameChange:
-                            {
-                                /*BitStream bs = new BitStream(packet.data, packet.length, false);
-                                bs.IgnoreBytes(1);
+                        Console.WriteLine(c.Name + " joined the game");
 
-                                string newName, oldName = c.Name;
-                                bs.Read(out newName);
-                                c.Name = newName;
+                        // send a PlayerList to the newly-connected client, telling them how/if we've modified their name
+                        // and the names of everyone else on the server
+                        m = new Message((byte)EngineMessage.PlayerList, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE);
+                        m.Write(c.Name);
 
-                                Console.WriteLine(oldName + " changed name to " + c.Name);*/
-                                break;
-                            }
+		                List<Client> otherClients = Client.GetAllExcept(c);
+		                m.Write((byte)otherClients.Count);
+		                foreach (Client other in otherClients)
+                            m.Write(other.Name);
+
+                        c.Send(m);
+                        break;
                     }
-                }
-                else
-                {
+                case EngineMessage.ClientNameChange:
+                    {
+                        /*BitStream bs = new BitStream(packet.data, packet.length, false);
+                        bs.IgnoreBytes(1);
 
-                }
+                        string newName, oldName = c.Name;
+                        bs.Read(out newName);
+                        c.Name = newName;
+
+                        Console.WriteLine(oldName + " changed name to " + c.Name);*/
+                        break;
+                    }
             }
         }
 

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
+    <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{6B793212-9A32-429F-935B-03F53675B36F}</ProjectGuid>
     <OutputType>WinExe</OutputType>
@@ -63,6 +63,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="ServerGUI.resx">
       <DependentUpon>ServerGUI.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

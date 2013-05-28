@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RakNet;
+using FTW.Engine.Shared;
 
 namespace FTW.Engine.Server
 {
@@ -114,6 +115,22 @@ namespace FTW.Engine.Server
             }
             return newName;
         }
+
+        public abstract void Send(Message m);
+
+        public static void SendToAll(Message m)
+        {
+            GameServer.Instance.rakNet.Send(m.Stream, m.Priority, m.Reliability, (char)0, RakNet.RakNet.UNASSIGNED_RAKNET_GUID, true);
+            if (LocalClient != null)
+                LocalClient.Send(m);
+        }
+
+        public static void SendToAllExcept(Message m, Client c)
+        {
+            GameServer.Instance.rakNet.Send(m.Stream, m.Priority, m.Reliability, (char)0, c.UniqueID, true);
+            if (c != LocalClient && LocalClient != null)
+                LocalClient.Send(m);
+        }
     }
 
     internal class LocalClient : Client
@@ -130,6 +147,12 @@ namespace FTW.Engine.Server
             LocalClient = c;
             return c;
         }
+
+        public override void Send(Message m)
+        {
+            lock (Message.ToLocalClient)
+                Message.ToLocalClient.Add(m);
+        }
     }
 
     internal class RemoteClient : Client
@@ -144,6 +167,11 @@ namespace FTW.Engine.Server
 
             AllClients.Add(uniqueID.g, c);
             return c;
+        }
+
+        public override void Send(Message m)
+        {
+            GameServer.Instance.rakNet.Send(m.Stream, m.Priority, m.Reliability, (char)0, UniqueID, false);
         }
     }
 }

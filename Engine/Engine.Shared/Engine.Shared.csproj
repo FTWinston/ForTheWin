@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
+    <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{48DB214A-092C-46FC-8DE9-B8292A238786}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -54,7 +54,7 @@
   <ItemGroup>
     <Compile Include="Config.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="MessageBase.cs" />
+    <Compile Include="Message.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Raknet\AddressOrGUID.cs" />
     <Compile Include="Raknet\BitStream.cs" />

@@ -14,6 +14,37 @@ namespace FTW.Engine.Client
         public abstract void RetrieveUpdates();
 
         public abstract void Send(Message m);
+        public void MessageReceived(Message m)
+        {
+            switch ((EngineMessage)m.Type)
+            {
+                case EngineMessage.ClientConnected:
+                    {
+                        string clientName = m.ReadString();
+
+                        Console.WriteLine(clientName + " joined the game");
+                        break;
+                    }
+                case EngineMessage.PlayerList:
+                    {
+                        string clientName = m.ReadString();
+                        Console.WriteLine("My name, corrected by server: " + clientName);
+
+                        byte numOthers = m.ReadByte();
+
+                        Console.WriteLine("There are " + numOthers + " other clients connected to this server:");
+
+                        for (int i = 0; i < numOthers; i++)
+                        {
+                            string otherName = m.ReadString();
+                            Console.WriteLine(" * " + otherName);
+                        }
+
+                        GameRenderer.Instance.FullyConnected = true;
+                        break;
+                    }
+            }
+        }
     }
 
     public class ListenServerConnection : ServerConnection
@@ -34,6 +65,10 @@ namespace FTW.Engine.Client
 
             server.Start(false, config);
             GameRenderer.Instance.FullyConnected = true;
+
+            Message m = new Message((byte)EngineMessage.ClientConnecting, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE);
+            m.Write("ClientName");
+            Send(m);
         }
 
         public override void Disconnect()
@@ -43,18 +78,21 @@ namespace FTW.Engine.Client
 
         public override void RetrieveUpdates()
         {
-            //throw new NotImplementedException();
+            Message[] messages;
+            lock (Message.ToLocalClient)
+            {
+                messages = Message.ToLocalClient.ToArray();
+                Message.ToLocalClient.Clear();
+            }
 
-            // i was gonna have this message just copy the contents from a List<Message> on the server, which contains all those to be sent to the local client
-            // but server and client messages have diverged now.
-
-            // if we do away with reusing the same message for client -> server AND server -> client, and replace the .Read functions with things in the Connection / Server classes, that might work.
-            // alternatively, if it's just a list of MessageBase, we can perhaps still get away with reusing the same message IDs. Read functions would still have to be outwith the message classes.
+            foreach (Message m in messages)
+                MessageReceived(m);
         }
 
         public override void Send(Message m)
         {
-            //throw new NotImplementedException();
+            lock (Message.ToLocalServer)
+                Message.ToLocalServer.Add(m);
         }
     }
 
@@ -92,7 +130,6 @@ namespace FTW.Engine.Client
             Packet packet;
             for (packet = rakNet.Receive(); packet != null; rakNet.DeallocatePacket(packet), packet = rakNet.Receive())
             {
-
                 byte type = packet.data[0];
                 if (type < (byte)DefaultMessageIDTypes.ID_USER_PACKET_ENUM)
                     switch ((DefaultMessageIDTypes)type)
@@ -101,7 +138,9 @@ namespace FTW.Engine.Client
                             Console.WriteLine("Connected to server");
 
                             // server will respond to this with a NewClientInfo message of its own
-                            Send(new NewClientInfoMessage("ClientName"));
+                            Message m = new Message((byte)EngineMessage.ClientConnecting, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE);
+                            m.Write("ClientName");
+                            Send(m);
                             break;
                         case DefaultMessageIDTypes.ID_NO_FREE_INCOMING_CONNECTIONS:
                             Console.WriteLine("Unable to connect: the server is full");
@@ -121,47 +160,8 @@ namespace FTW.Engine.Client
                             break;
 #endif
                     }
-                else if (type <= (byte)EngineMessage.FirstGameMessageID)
-                    switch ((EngineMessage)type)
-                    {
-                        case EngineMessage.NewClientInfo:
-                            {
-                                //NewClientInfoMessage.Read(packet);
-
-                                BitStream bs = new BitStream(packet.data, packet.length, false);
-                                bs.IgnoreBytes(1);
-
-                                string clientName;
-                                bs.Read(out clientName);
-                                Console.WriteLine("My name, corrected by server: " + clientName);
-
-                                byte numOthers;
-                                bs.Read(out numOthers);
-
-                                Console.WriteLine("There are " + numOthers + " other clients connected to this server:");
-
-                                for (int i = 0; i < numOthers; i++)
-                                {
-                                    string otherName;
-                                    bs.Read(out otherName);
-                                    Console.WriteLine(" * " + otherName);
-                                }
-
-                                GameRenderer.Instance.FullyConnected = true;
-                                break;
-                            }
-                        case EngineMessage.ClientConnected:
-                            {
-                                BitStream bs = new BitStream(packet.data, packet.length, false);
-                                bs.IgnoreBytes(1);
-
-                                string clientName;
-                                bs.Read(out clientName);
-
-                                Console.WriteLine(clientName + " joined the game");
-                                break;
-                            }
-                    }
+                else
+                    MessageReceived(new Message(packet));
             }
         }
 

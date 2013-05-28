@@ -8,8 +8,9 @@ namespace FTW.Engine.Shared
 {
     public enum EngineMessage : byte
     {
-        NewClientInfo = DefaultMessageIDTypes.ID_USER_PACKET_ENUM,
+        ClientConnecting = DefaultMessageIDTypes.ID_USER_PACKET_ENUM,
         ClientConnected,
+        PlayerList,
         ClientNameChange,
         //ClientCommand,
         //Chat,
