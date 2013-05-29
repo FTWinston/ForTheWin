@@ -13,40 +13,7 @@ namespace FTW.Engine.Client
         public abstract void Disconnect();
         public abstract void RetrieveUpdates();
 
-        public abstract void Send(Message m);
-        public bool MessageReceived(Message m)
-        {
-            switch ((EngineMessage)m.Type)
-            {
-                case EngineMessage.ClientConnected:
-                    {
-                        string clientName = m.ReadString();
-
-                        Console.WriteLine(clientName + " joined the game");
-                        return true;
-                    }
-                case EngineMessage.PlayerList:
-                    {
-                        string clientName = m.ReadString();
-                        Console.WriteLine("My name, corrected by server: " + clientName);
-
-                        byte numOthers = m.ReadByte();
-
-                        Console.WriteLine("There are " + numOthers + " other clients connected to this server:");
-
-                        for (int i = 0; i < numOthers; i++)
-                        {
-                            string otherName = m.ReadString();
-                            Console.WriteLine(" * " + otherName);
-                        }
-
-                        GameRenderer.Instance.FullyConnected = true;
-                        return true;
-                    }
-                default:
-                    return false;
-            }
-        }
+        internal abstract void Send(Message m);
     }
 
     public class ListenServerConnection : ServerConnection
@@ -66,7 +33,7 @@ namespace FTW.Engine.Client
             }
 
             server.Start(false, config);
-            GameRenderer.Instance.FullyConnected = true;
+            GameClient.Instance.FullyConnected = true;
 
             Message m = new Message((byte)EngineMessage.ClientConnecting, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE);
             m.Write("ClientName");
@@ -88,10 +55,10 @@ namespace FTW.Engine.Client
             }
 
             foreach (Message m in messages)
-                MessageReceived(m);
+                GameClient.Instance.HandleMessage(m);
         }
 
-        public override void Send(Message m)
+        internal override void Send(Message m)
         {
             lock (Message.ToLocalServer)
                 Message.ToLocalServer.Add(m);
@@ -146,15 +113,15 @@ namespace FTW.Engine.Client
                             break;
                         case DefaultMessageIDTypes.ID_NO_FREE_INCOMING_CONNECTIONS:
                             Console.WriteLine("Unable to connect: the server is full");
-                            GameRenderer.Instance.Disconnect();
+                            GameClient.Instance.Disconnect();
                             return;
                         case DefaultMessageIDTypes.ID_DISCONNECTION_NOTIFICATION: // server disconnected me. kicked, shutdown, or what?
                             Console.WriteLine("You have been kicked from the server");
-                            GameRenderer.Instance.Disconnect();
+                            GameClient.Instance.Disconnect();
                             return;
                         case DefaultMessageIDTypes.ID_CONNECTION_LOST:
                             Console.WriteLine("Lost connection to the server");
-                            GameRenderer.Instance.Disconnect();
+                            GameClient.Instance.Disconnect();
                             return;
 #if DEBUG
                         default:
@@ -163,11 +130,11 @@ namespace FTW.Engine.Client
 #endif
                     }
                 else
-                    MessageReceived(new Message(packet));
+                    GameClient.Instance.HandleMessage(new Message(packet));
             }
         }
 
-        public override void Send(Message m)
+        internal override void Send(Message m)
         {
             rakNet.Send(m.Stream, m.Priority, m.Reliability, (char)0, RakNet.RakNet.UNASSIGNED_RAKNET_GUID, true);
         }

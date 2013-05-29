@@ -8,13 +8,13 @@ using SFML.Window;
 
 namespace FTW.Engine.Client
 {
-    public class GameRenderer : InputListener, Drawable
+    public class GameClient : InputListener, Drawable
     {
-        public static GameRenderer Instance;
+        public static GameClient Instance;
         public ServerConnection Connection { get; private set; }
         public bool FullyConnected { get; internal set; }
 
-        public GameRenderer(RenderWindow window, ServerConnection connection, Config config)
+        public GameClient(RenderWindow window, ServerConnection connection, Config config)
             : base(window)
         {
             Instance = this;
@@ -48,6 +48,51 @@ namespace FTW.Engine.Client
             {
                 // draw an "in game" thingamy
             }
+        }
+
+        internal void HandleMessage(Message m)
+        {
+            if (!MessageReceived(m))
+                Console.Error.WriteLine("Received an unrecognised message of Type " + m.Type);
+        }
+
+        protected internal virtual bool MessageReceived(Message m)
+        {
+            switch ((EngineMessage)m.Type)
+            {
+                case EngineMessage.ClientConnected:
+                    {
+                        string clientName = m.ReadString();
+
+                        Console.WriteLine(clientName + " joined the game");
+                        return true;
+                    }
+                case EngineMessage.PlayerList:
+                    {
+                        string clientName = m.ReadString();
+                        Console.WriteLine("My name, corrected by server: " + clientName);
+
+                        byte numOthers = m.ReadByte();
+
+                        Console.WriteLine("There are " + numOthers + " other clients connected to this server:");
+
+                        for (int i = 0; i < numOthers; i++)
+                        {
+                            string otherName = m.ReadString();
+                            Console.WriteLine(" * " + otherName);
+                        }
+
+                        GameClient.Instance.FullyConnected = true;
+                        return true;
+                    }
+                default:
+                    return false;
+            }
+        }
+
+        public void SendMessage(Message m)
+        {
+            Connection.Send(m);
         }
 
         public event EventHandler ShowMenu;

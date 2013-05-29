@@ -74,7 +74,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ClientList.cs" />
-    <Compile Include="GameRenderer.cs" />
+    <Compile Include="GameClient.cs" />
     <Compile Include="InputListener.cs" />
     <Compile Include="Menu.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

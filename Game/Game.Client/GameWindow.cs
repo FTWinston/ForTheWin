@@ -18,7 +18,7 @@ namespace Game.Client
 
         InputListener currentInput;
         Menu mainMenu, inGameMenu, optionsMenu;
-        GameRenderer renderer;
+        GameClient renderer;
 
         public GameWindow() :
             base(new VideoMode(800, 600, 32), "FTW Example", Styles.Default, new ContextSettings(32, 0))
@@ -89,7 +89,7 @@ namespace Game.Client
 
         private void CreateRenderer(ServerConnection connection)
         {
-            renderer = new GameRenderer(this, connection, new Config());
+            renderer = new GameClient(this, connection, new Config());
             renderer.ShowMenu += (object o, EventArgs e) => SetCurrentInput(inGameMenu);
             renderer.Disconnected += (object o, EventArgs e) => { renderer = null; SetCurrentInput(mainMenu); };
             SetCurrentInput(renderer);
