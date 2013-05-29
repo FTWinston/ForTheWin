@@ -242,7 +242,7 @@ namespace FTW.Engine.Server
                         }
                     }
                     else
-                        MessageReceived(c, new Message(packet));
+                        HandleMessage(c, new Message(packet));
                 }
             }
 
@@ -256,11 +256,17 @@ namespace FTW.Engine.Server
                 }
 
                 foreach (Message m in messages)
-                    MessageReceived(Client.LocalClient, m);
+                    HandleMessage(Client.LocalClient, m);
             }
         }
 
-        protected void MessageReceived(Client c, Message m)
+        private void HandleMessage(Client c, Message m)
+        {
+            if (!MessageReceived(c, m))
+                Console.Error.WriteLine("Received an unrecognised message from " + c.Name + " of Type " + m.Type);
+        }
+
+        protected virtual bool MessageReceived(Client c, Message m)
         {
             switch ((EngineMessage)m.Type)
             {
@@ -286,7 +292,7 @@ namespace FTW.Engine.Server
                             m.Write(other.Name);
 
                         c.Send(m);
-                        break;
+                        return true;
                     }
                 case EngineMessage.ClientNameChange:
                     {
@@ -298,8 +304,10 @@ namespace FTW.Engine.Server
                         c.Name = newName;
 
                         Console.WriteLine(oldName + " changed name to " + c.Name);*/
-                        break;
+                        return true;
                     }
+                default:
+                    return false;
             }
         }
 

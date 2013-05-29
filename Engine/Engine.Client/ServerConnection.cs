@@ -14,7 +14,7 @@ namespace FTW.Engine.Client
         public abstract void RetrieveUpdates();
 
         public abstract void Send(Message m);
-        public void MessageReceived(Message m)
+        public bool MessageReceived(Message m)
         {
             switch ((EngineMessage)m.Type)
             {
@@ -23,7 +23,7 @@ namespace FTW.Engine.Client
                         string clientName = m.ReadString();
 
                         Console.WriteLine(clientName + " joined the game");
-                        break;
+                        return true;
                     }
                 case EngineMessage.PlayerList:
                     {
@@ -41,8 +41,10 @@ namespace FTW.Engine.Client
                         }
 
                         GameRenderer.Instance.FullyConnected = true;
-                        break;
+                        return true;
                     }
+                default:
+                    return false;
             }
         }
     }
