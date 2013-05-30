@@ -10,16 +10,16 @@ namespace Game.Client
 {
     class GameClient : FTW.Engine.Client.GameClient, Drawable, InputListener
     {   
-        const string settingsFilename = "client.yml";
+        public const string settingsFilename = "client.yml";
 
         GameWindow window;
-        public GameClient(GameWindow window)
-            : base(Config.ReadFile(settingsFilename) ?? CreateDefaultConfig())
+        public GameClient(GameWindow window, Config config)
+            : base(config)
         {
             this.window = window;
         }
 
-        const string defaultClientName = "Some Client";
+        public const string defaultClientName = "Some Client";
         public static Config CreateDefaultConfig()
         {
             Config config = new Config(null);

@@ -24,13 +24,14 @@ namespace Game.Client
             set
             {
                 currentMenu = value;
-                currentInput = currentMenu ?? (InputListener)renderer;
+                currentInput = currentMenu ?? (InputListener)gameClient;
             }
         }
 
         Menu currentMenu;
         InputListener currentInput;
-        GameClient renderer;
+        GameClient gameClient;
+        Config config;
 
         public GameWindow() :
             base(new VideoMode(800, 600, 32), "FTW Example", Styles.Default, new ContextSettings(32, 0))
@@ -46,11 +47,13 @@ namespace Game.Client
             MouseMoved += OnMouseMoved;
             Closed += OnClosed;
 
+            LoadConfig();
+
             CreateMenus();
             CurrentMenu = MainMenu;
 
-            renderer = new GameClient(this);
-            renderer.Disconnected += (object o, EventArgs e) => CurrentMenu = MainMenu;
+            gameClient = new GameClient(this, config);
+            gameClient.Disconnected += (object o, EventArgs e) => CurrentMenu = MainMenu;
 
             while (IsOpen())
             {
@@ -61,8 +64,8 @@ namespace Game.Client
                 if ( CurrentMenu != null )
                     Draw(CurrentMenu);
 
-                if (renderer != null && renderer.Connected)
-                    Draw(renderer);
+                if (gameClient != null && gameClient.Connected)
+                    Draw(gameClient);
 
                 Display();
             }
@@ -82,8 +85,8 @@ namespace Game.Client
 
             MainMenu.EscapePressed = () => { CloseGameWindow(); };
 
-            MainMenu.AddItem(new Menu.LinkItem("Host game", () => { renderer.ConnectLocal(); CurrentMenu = null; }));
-            MainMenu.AddItem(new Menu.LinkItem("Join game", () => { renderer.ConnectRemote("127.0.0.1", 24680); CurrentMenu = null; }));
+            MainMenu.AddItem(new Menu.LinkItem("Host game", () => { gameClient.ConnectLocal(); CurrentMenu = null; }));
+            MainMenu.AddItem(new Menu.LinkItem("Join game", () => { gameClient.ConnectRemote("127.0.0.1", 24680); CurrentMenu = null; }));
             MainMenu.AddItem(new Menu.LinkItem("Options", () => CurrentMenu = OptionsMenu));
             MainMenu.AddItem(new Menu.LinkItem("Quit", () => { CloseGameWindow(); }));
 
@@ -101,8 +104,8 @@ namespace Game.Client
             OptionsMenu.CopyStyling(MainMenu);
 
             OptionsMenu.AddItem(new Menu.ListItem("Choice:", new string[] { "Option 1", "Option 2", "Option 3" }, (string value) => Console.WriteLine(value + " selected")));
-            OptionsMenu.AddItem(new Menu.TextEntryItem("Name:", "Player", 12, (string value) => Console.WriteLine("Name changed: " + value)));
-            OptionsMenu.AddItem(new Menu.LinkItem("Back", () => CurrentMenu = MainMenu));
+            OptionsMenu.AddItem(new Menu.TextEntryItem("Name:", config.FindValueOrDefault("name", GameClient.defaultClientName), 12, PlayerNameChanged));
+            OptionsMenu.AddItem(new Menu.LinkItem("Back", () => { config.SaveToFile(GameClient.settingsFilename); CurrentMenu = MainMenu; }));
 
             OptionsMenu.EscapePressed = () => { CurrentMenu = MainMenu; };
         }
@@ -115,6 +118,28 @@ namespace Game.Client
         private void OnMouseMoved(object sender, MouseMoveEventArgs e) { currentInput.MouseMoved(e); }
         private void OnClosed(object sender, EventArgs e) { CloseGameWindow(); }
 
+        private void LoadConfig()
+        {
+            config = Config.ReadFile(GameClient.settingsFilename) ?? GameClient.CreateDefaultConfig();
+
+            // validate the player name, set to default if needed.
+            Config name = config.Find("name");
+            string strName = name == null ? string.Empty : name.Value;
+            if (strName.Trim() == string.Empty)
+                strName = GameClient.defaultClientName;
+
+            name.Value = strName;
+        }
+
+        private void PlayerNameChanged(string name)
+       {
+            if (name.Trim() == string.Empty)
+                name = GameClient.defaultClientName;
+
+            config.Find("name").Value = name;
+            gameClient.Name = name;
+        }
+
         private void CloseGameWindow()
         {
             Close();
@@ -123,8 +148,8 @@ namespace Game.Client
 
         private void EndGame()
         {
-            if ( renderer.Connected )
-                renderer.Disconnect();
+            if ( gameClient.Connected )
+                gameClient.Disconnect();
         }
     }
 }
