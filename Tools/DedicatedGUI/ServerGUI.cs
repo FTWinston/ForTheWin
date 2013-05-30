@@ -53,34 +53,51 @@ namespace DedicatedGUI
 
         public class TextBoxStreamWriter : TextWriter
         {
-            TextBox _output = null;
+            TextBox output;
 
             public TextBoxStreamWriter(TextBox output)
             {
-                _output = output;
+                this.output = output;
             }
 
+            private delegate void charDelegate(char c);
             public override void Write(char value)
             {
-                base.Write(value);
-                WriteText(value);
+                if (output.InvokeRequired)
+                {
+                    output.BeginInvoke(new charDelegate(Write), value);
+                    return;
+                }
+                if (!output.IsDisposed)
+                    output.AppendText(value.ToString()); // When character data is written, append it to the text box.
+            }
+
+            private delegate void stringDelegate(string s);
+            public override void Write(string value)
+            {
+                if (output.InvokeRequired)
+                {
+                    output.BeginInvoke(new stringDelegate(Write), value);
+                    return;
+                }
+                if (!output.IsDisposed)
+                    output.AppendText(value);
+            }
+
+            public override void WriteLine(string value)
+            {
+                if (output.InvokeRequired)
+                {
+                    output.BeginInvoke(new stringDelegate(WriteLine), value);
+                    return;
+                }
+                if (!output.IsDisposed)
+                    output.AppendText(value + Environment.NewLine);
             }
 
             public override Encoding Encoding
             {
                 get { return Encoding.Unicode; }
-            }
-
-            private delegate void writerDelegate(char c);
-            private void WriteText(char c)
-            {
-                if (_output.InvokeRequired)
-                {
-                    _output.BeginInvoke(new writerDelegate(WriteText), c);
-                    return;
-                }
-                if ( !_output.IsDisposed )
-                    _output.AppendText(c.ToString()); // When character data is written, append it to the text box.
             }
         }
 
