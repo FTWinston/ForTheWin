@@ -164,6 +164,7 @@ namespace FTW.Engine.Server
 
         private void RunMainLoop()
         {
+            Console.WriteLine("Server has started");
             isPaused = false;
 
             dt = 0.1;

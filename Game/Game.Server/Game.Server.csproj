@@ -69,4 +69,8 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <PropertyGroup>
+	<PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\Tools\DedicatedCLI\$(OutDir)" /Y</PostBuildEvent>
+	<PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\Tools\DedicatedGUI\$(OutDir)" /Y</PostBuildEvent>
+  </PropertyGroup>
 </Project>

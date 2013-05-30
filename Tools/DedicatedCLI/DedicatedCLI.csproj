@@ -67,7 +67,4 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <PropertyGroup>
-    <PostBuildEvent>xcopy "$(ProjectDir)..\..\Game\Game.Server\$(OutDir)Game.Server.dll" "$(TargetDir)" /Y</PostBuildEvent>
-  </PropertyGroup>
 </Project>
