@@ -276,6 +276,7 @@ namespace FTW.Engine.Server
             {
                 case EngineMessage.ClientConnecting:
                     {
+                        // if it's already in use, this name will be corrected automatically
                         c.Name = m.ReadString();
 
                         // tell all other clients about this new client
@@ -283,7 +284,8 @@ namespace FTW.Engine.Server
                         m.Write(c.Name);
                         Client.SendToAllExcept(m, c);
 
-                        Console.WriteLine(c.Name + " joined the game");
+                        if ( !IsDedicated )
+                            Console.WriteLine(c.Name + " joined the game");
 
                         // send a PlayerList to the newly-connected client, telling them how/if we've modified their name
                         // and the names of everyone else on the server

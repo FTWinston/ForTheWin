@@ -76,7 +76,7 @@ namespace FTW.Engine.Shared
         public static List<Message> ToLocalServer = new List<Message>();
         public void ResetRead()
         {
-            Stream.SetReadOffset(Timestamp.HasValue ? (uint)48 : (uint)8); // 6 bytes, or 1
+            Stream.SetReadOffset(Timestamp.HasValue ? (uint)80 : (uint)8); // if no timestamp, 1 byte. otherwise, 2 bytes + sizeof(ulong), which is 10 bytes total
         }
     }
 }

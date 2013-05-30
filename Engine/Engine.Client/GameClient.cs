@@ -107,12 +107,17 @@ namespace FTW.Engine.Client
                     }
                 case EngineMessage.PlayerList:
                     {
-                        Name = m.ReadString();
+                        name = m.ReadString(); // change name rather than Name, to automatically accept the change. Don't re-send this!
                         Console.WriteLine("My name, corrected by server: " + Name);
 
                         byte numOthers = m.ReadByte();
 
-                        Console.WriteLine("There are " + numOthers + " other clients connected to this server:");
+                        Console.WriteLine(string.Format("There {0} {1} other {2} connected to this server{3}",
+                            numOthers == 1 ? "is" : "are",
+                            numOthers == 0 ? "no" : numOthers.ToString(),
+                            numOthers == 1 ? "client" : "clients",
+                            numOthers == 0 ? string.Empty : ":"
+                            ));
 
                         for (int i = 0; i < numOthers; i++)
                         {
