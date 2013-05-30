@@ -74,5 +74,9 @@ namespace FTW.Engine.Shared
         // used for sending data to/from the local client on a listen server
         public static List<Message> ToLocalClient = new List<Message>();
         public static List<Message> ToLocalServer = new List<Message>();
+        public void ResetRead()
+        {
+            Stream.SetReadOffset(Timestamp.HasValue ? (uint)48 : (uint)8); // 6 bytes, or 1
+        }
     }
 }

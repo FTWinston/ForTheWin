@@ -55,14 +55,13 @@ namespace FTW.Engine.Client
             }
 
             foreach (Message m in messages)
-            {
-                m.Stream.SetReadOffset(0);
                 GameClient.Instance.HandleMessage(m);
-            }
         }
 
         internal override void Send(Message m)
         {
+            m.ResetRead();
+
             lock (Message.ToLocalServer)
                 Message.ToLocalServer.Add(m);
         }
@@ -99,6 +98,7 @@ namespace FTW.Engine.Client
             if (rakNet == null)
                 return;
 
+            GameClient client = GameClient.Instance;
             Packet packet;
             for (packet = rakNet.Receive(); packet != null; rakNet.DeallocatePacket(packet), packet = rakNet.Receive())
             {
@@ -114,20 +114,20 @@ namespace FTW.Engine.Client
 
                             // server will respond to this with a NewClientInfo message of its own
                             Message m = new Message((byte)EngineMessage.ClientConnecting, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE);
-                            m.Write(GameClient.Instance.Name);
+                            m.Write(client.Name);
                             Send(m);
                             break;
                         case DefaultMessageIDTypes.ID_NO_FREE_INCOMING_CONNECTIONS:
                             Console.WriteLine("Unable to connect: the server is full");
-                            GameClient.Instance.Disconnect();
+                            client.Disconnect();
                             return;
                         case DefaultMessageIDTypes.ID_DISCONNECTION_NOTIFICATION: // server disconnected me. kicked, shutdown, or what?
                             Console.WriteLine("You have been kicked from the server");
-                            GameClient.Instance.Disconnect();
+                            client.Disconnect();
                             return;
                         case DefaultMessageIDTypes.ID_CONNECTION_LOST:
                             Console.WriteLine("Lost connection to the server");
-                            GameClient.Instance.Disconnect();
+                            client.Disconnect();
                             return;
 #if DEBUG
                         default:
@@ -136,7 +136,7 @@ namespace FTW.Engine.Client
 #endif
                     }
                 else
-                    GameClient.Instance.HandleMessage(new Message(packet));
+                    client.HandleMessage(new Message(packet));
             }
         }
 

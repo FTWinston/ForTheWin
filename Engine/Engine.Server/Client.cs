@@ -150,6 +150,8 @@ namespace FTW.Engine.Server
 
         public override void Send(Message m)
         {
+            m.ResetRead();
+
             lock (Message.ToLocalClient)
                 Message.ToLocalClient.Add(m);
         }

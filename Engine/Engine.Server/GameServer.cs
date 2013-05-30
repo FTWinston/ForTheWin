@@ -259,10 +259,7 @@ namespace FTW.Engine.Server
                 }
 
                 foreach (Message m in messages)
-                {
-                    m.Stream.SetReadOffset(0);
                     HandleMessage(Client.LocalClient, m);
-                }
             }
         }
 
@@ -279,7 +276,6 @@ namespace FTW.Engine.Server
                 case EngineMessage.ClientConnecting:
                     {
                         c.Name = m.ReadString();
-                        Console.WriteLine("Local client name is " + c.Name);
 
                         // tell all other clients about this new client
                         m = new Message((byte)EngineMessage.ClientConnected, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE);
