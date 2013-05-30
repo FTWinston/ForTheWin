@@ -91,7 +91,7 @@ namespace FTW.Engine.Server
             if (Initialize())
             {
                 if (!IsDedicated)
-                    LocalClient.Create("ClientName");
+                    LocalClient.Create("LocalClientName");
                 RunMainLoop();
             }
             else
@@ -214,6 +214,9 @@ namespace FTW.Engine.Server
                 {
                     Client c = Client.GetByUniqueID(packet.guid);
                     byte type = packet.data[0];
+                    if (type == (byte)DefaultMessageIDTypes.ID_TIMESTAMP)
+                        type = packet.data[5]; // skip the timestamp to get to the REAL "type"
+
                     if (type < (byte)DefaultMessageIDTypes.ID_USER_PACKET_ENUM)
                     {
                         switch ((DefaultMessageIDTypes)type)
@@ -251,12 +254,15 @@ namespace FTW.Engine.Server
                 Message[] messages;
                 lock (Message.ToLocalServer)
                 {
-                    messages = Message.ToLocalClient.ToArray();
-                    Message.ToLocalClient.Clear();
+                    messages = Message.ToLocalServer.ToArray();
+                    Message.ToLocalServer.Clear();
                 }
 
                 foreach (Message m in messages)
+                {
+                    m.Stream.SetReadOffset(0);
                     HandleMessage(Client.LocalClient, m);
+                }
             }
         }
 
@@ -273,6 +279,7 @@ namespace FTW.Engine.Server
                 case EngineMessage.ClientConnecting:
                     {
                         c.Name = m.ReadString();
+                        Console.WriteLine("Local client name is " + c.Name);
 
                         // tell all other clients about this new client
                         m = new Message((byte)EngineMessage.ClientConnected, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE);

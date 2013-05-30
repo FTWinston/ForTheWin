@@ -7,7 +7,7 @@ using RakNet;
 
 namespace FTW.Engine.Client
 {
-    public abstract class ServerConnection
+    internal abstract class ServerConnection
     {
         public abstract void Connect();
         public abstract void Disconnect();
@@ -16,9 +16,9 @@ namespace FTW.Engine.Client
         internal abstract void Send(Message m);
     }
 
-    public class ListenServerConnection : ServerConnection
+    internal class ListenServerConnection : ServerConnection
     {
-        const string settingsFilename = "settings.yml";
+        const string settingsFilename = "server.yml";
         ServerBase server;
 
         public override void Connect()
@@ -36,7 +36,7 @@ namespace FTW.Engine.Client
             GameClient.Instance.FullyConnected = true;
 
             Message m = new Message((byte)EngineMessage.ClientConnecting, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE);
-            m.Write("ClientName");
+            m.Write(GameClient.Instance.Name);
             Send(m);
         }
 
@@ -55,7 +55,10 @@ namespace FTW.Engine.Client
             }
 
             foreach (Message m in messages)
+            {
+                m.Stream.SetReadOffset(0);
                 GameClient.Instance.HandleMessage(m);
+            }
         }
 
         internal override void Send(Message m)
@@ -65,7 +68,7 @@ namespace FTW.Engine.Client
         }
     }
 
-    public class RemoteClientConnection : ServerConnection
+    internal class RemoteClientConnection : ServerConnection
     {
         public RemoteClientConnection(string hostname, ushort port)
         {
@@ -100,6 +103,9 @@ namespace FTW.Engine.Client
             for (packet = rakNet.Receive(); packet != null; rakNet.DeallocatePacket(packet), packet = rakNet.Receive())
             {
                 byte type = packet.data[0];
+                if (type == (byte)DefaultMessageIDTypes.ID_TIMESTAMP)
+                    type = packet.data[5]; // skip the timestamp to get to the REAL "type"
+
                 if (type < (byte)DefaultMessageIDTypes.ID_USER_PACKET_ENUM)
                     switch ((DefaultMessageIDTypes)type)
                     {
@@ -108,7 +114,7 @@ namespace FTW.Engine.Client
 
                             // server will respond to this with a NewClientInfo message of its own
                             Message m = new Message((byte)EngineMessage.ClientConnecting, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE);
-                            m.Write("ClientName");
+                            m.Write(GameClient.Instance.Name);
                             Send(m);
                             break;
                         case DefaultMessageIDTypes.ID_NO_FREE_INCOMING_CONNECTIONS:

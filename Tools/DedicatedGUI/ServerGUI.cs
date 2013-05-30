@@ -49,7 +49,7 @@ namespace DedicatedGUI
             this.Text = server.Name;
         }
 
-        const string settingsFilename = "settings.yml";
+        const string settingsFilename = "server.yml";
 
         public class TextBoxStreamWriter : TextWriter
         {

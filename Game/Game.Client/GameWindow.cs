@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using SFML.Graphics;
 using SFML.Window;
-using FTW.Engine.Client;
 using FTW.Engine.Shared;
 
 namespace Game.Client
@@ -16,8 +15,21 @@ namespace Game.Client
             new GameWindow();
         }
 
+        public Menu MainMenu { get; private set; }
+        public Menu InGameMenu { get; private set; }
+        public Menu OptionsMenu { get; private set; }
+        public Menu CurrentMenu
+        {
+            get { return currentMenu; }
+            set
+            {
+                currentMenu = value;
+                currentInput = currentMenu ?? (InputListener)renderer;
+            }
+        }
+
+        Menu currentMenu;
         InputListener currentInput;
-        Menu mainMenu, inGameMenu, optionsMenu;
         GameClient renderer;
 
         public GameWindow() :
@@ -26,10 +38,19 @@ namespace Game.Client
             SetVerticalSyncEnabled(true);
             
             // Setup event handlers
+            KeyPressed += OnKeyPressed;
+            KeyReleased += OnKeyReleased;
+            TextEntered += OnTextEntered;
+            MouseButtonPressed += OnMousePressed;
+            MouseButtonReleased += OnMouseReleased;
+            MouseMoved += OnMouseMoved;
             Closed += OnClosed;
 
             CreateMenus();
-            SetCurrentInput(mainMenu);
+            CurrentMenu = MainMenu;
+
+            renderer = new GameClient(this);
+            renderer.Disconnected += (object o, EventArgs e) => CurrentMenu = MainMenu;
 
             while (IsOpen())
             {
@@ -37,9 +58,10 @@ namespace Game.Client
 
                 Clear();
 
-                Draw(currentInput);
+                if ( CurrentMenu != null )
+                    Draw(CurrentMenu);
 
-                if (renderer != null && renderer != currentInput) // draw the game behind the menu, if we're in a menu
+                if (renderer != null && renderer.Connected)
                     Draw(renderer);
 
                 Display();
@@ -48,7 +70,7 @@ namespace Game.Client
 
         private void CreateMenus()
         {
-            mainMenu = new Menu(this)
+            MainMenu = new Menu(this)
             {
                 ItemFont = new Font("Resources/arial.ttf"),
                 ItemYPos = 96,
@@ -58,58 +80,40 @@ namespace Game.Client
                 HoverItemStyle = Text.Styles.Underlined
             };
 
-            mainMenu.EscapePressed = () => { CloseGameWindow(); };
+            MainMenu.EscapePressed = () => { CloseGameWindow(); };
 
-            mainMenu.AddItem(new Menu.LinkItem("Host game", () => CreateRenderer(new ListenServerConnection())));
-            mainMenu.AddItem(new Menu.LinkItem("Join game", () => CreateRenderer(new RemoteClientConnection("127.0.0.1", 24680))));
-            mainMenu.AddItem(new Menu.LinkItem("Options", () => SetCurrentInput(optionsMenu)));
-            mainMenu.AddItem(new Menu.LinkItem("Quit", () => { CloseGameWindow(); }));
-
-
-
-            inGameMenu = new Menu(this);
-            inGameMenu.CopyStyling(mainMenu);
-
-            inGameMenu.AddItem(new Menu.LinkItem("Resume", () => { SetCurrentInput(renderer); }));
-            inGameMenu.AddItem(new Menu.LinkItem("Disconnect", () => { EndGame(); SetCurrentInput(mainMenu); }));
-
-            inGameMenu.EscapePressed = () => { SetCurrentInput(renderer); };
+            MainMenu.AddItem(new Menu.LinkItem("Host game", () => { renderer.ConnectLocal(); CurrentMenu = null; }));
+            MainMenu.AddItem(new Menu.LinkItem("Join game", () => { renderer.ConnectRemote("127.0.0.1", 24680); CurrentMenu = null; }));
+            MainMenu.AddItem(new Menu.LinkItem("Options", () => CurrentMenu = OptionsMenu));
+            MainMenu.AddItem(new Menu.LinkItem("Quit", () => { CloseGameWindow(); }));
 
 
 
-            optionsMenu = new Menu(this);
-            optionsMenu.CopyStyling(mainMenu);
+            InGameMenu = new Menu(this);
+            InGameMenu.CopyStyling(MainMenu);
 
-            optionsMenu.AddItem(new Menu.ListItem("Choice:", new string[] { "Option 1", "Option 2", "Option 3" }, (string value) => Console.WriteLine(value + " selected")));
-            optionsMenu.AddItem(new Menu.TextEntryItem("Name:", "Player", 12, (string value) => Console.WriteLine("Name changed: " + value)));
-            optionsMenu.AddItem(new Menu.LinkItem("Back", () => SetCurrentInput(mainMenu)));
+            InGameMenu.AddItem(new Menu.LinkItem("Resume", () => { CurrentMenu = null; }));
+            InGameMenu.AddItem(new Menu.LinkItem("Disconnect", () => { EndGame(); CurrentMenu = MainMenu; }));
 
-            optionsMenu.EscapePressed = () => { SetCurrentInput(mainMenu); };
+            InGameMenu.EscapePressed = () => { CurrentMenu = null; };
+
+            OptionsMenu = new Menu(this);
+            OptionsMenu.CopyStyling(MainMenu);
+
+            OptionsMenu.AddItem(new Menu.ListItem("Choice:", new string[] { "Option 1", "Option 2", "Option 3" }, (string value) => Console.WriteLine(value + " selected")));
+            OptionsMenu.AddItem(new Menu.TextEntryItem("Name:", "Player", 12, (string value) => Console.WriteLine("Name changed: " + value)));
+            OptionsMenu.AddItem(new Menu.LinkItem("Back", () => CurrentMenu = MainMenu));
+
+            OptionsMenu.EscapePressed = () => { CurrentMenu = MainMenu; };
         }
 
-        private void CreateRenderer(ServerConnection connection)
-        {
-            renderer = new GameClient(this, connection, new Config());
-            renderer.ShowMenu += (object o, EventArgs e) => SetCurrentInput(inGameMenu);
-            renderer.Disconnected += (object o, EventArgs e) => { renderer = null; SetCurrentInput(mainMenu); };
-            SetCurrentInput(renderer);
-        }
-
-        private void SetCurrentInput(InputListener item)
-        {
-            if (currentInput != null)
-                currentInput.DisableInput();
-
-            currentInput = item;
-
-            if (currentInput != null)
-                currentInput.EnableInput();
-        }
-
-        private void OnClosed(object sender, EventArgs e)
-        {
-            CloseGameWindow();
-        }
+        private void OnKeyPressed(object sender, KeyEventArgs e) { currentInput.KeyPressed(e); }
+        private void OnKeyReleased(object sender, KeyEventArgs e) { currentInput.KeyReleased(e); }
+        private void OnTextEntered(object sender, TextEventArgs e) { currentInput.TextEntered(e); }
+        private void OnMousePressed(object sender, MouseButtonEventArgs e) { currentInput.MousePressed(e); }
+        private void OnMouseReleased(object sender, MouseButtonEventArgs e) { currentInput.MouseReleased(e); }
+        private void OnMouseMoved(object sender, MouseMoveEventArgs e) { currentInput.MouseMoved(e); }
+        private void OnClosed(object sender, EventArgs e) { CloseGameWindow(); }
 
         private void CloseGameWindow()
         {
@@ -119,11 +123,8 @@ namespace Game.Client
 
         private void EndGame()
         {
-            if (renderer != null)
-            {
+            if ( renderer.Connected )
                 renderer.Disconnect();
-                renderer = null;
-            }
         }
     }
 }

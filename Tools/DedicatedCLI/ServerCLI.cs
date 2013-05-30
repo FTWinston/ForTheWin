@@ -11,7 +11,7 @@ namespace DedicatedCLI
 {
     class ServerCLI
     {
-        const string settingsFilename = "settings.yml";
+        const string settingsFilename = "server.yml";
         
         static void Main(string[] args)
         {

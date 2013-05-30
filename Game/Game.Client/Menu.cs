@@ -5,12 +5,11 @@ using System.Text;
 using SFML.Graphics;
 using SFML.Window;
 
-namespace FTW.Engine.Client
+namespace Game.Client
 {
     public class Menu : InputListener, Drawable
     {
         public Menu(RenderWindow window)
-            : base(window)
         {
             ItemXPos = ItemYPos = 128;
 
@@ -24,7 +23,7 @@ namespace FTW.Engine.Client
             CurrentIndex = -1;
         }
 
-        public override void Draw(RenderTarget target, RenderStates states)
+        public void Draw(RenderTarget target, RenderStates states)
         {
             foreach (Drawable item in Items)
                 target.Draw(item, states);
@@ -79,7 +78,7 @@ namespace FTW.Engine.Client
             Items.Add(item);
         }
 
-        protected override void OnKeyPressed(object sender, KeyEventArgs e)
+        public void KeyPressed(KeyEventArgs e)
         {
             if (e.Code == Keyboard.Key.Escape)
             {
@@ -104,7 +103,7 @@ namespace FTW.Engine.Client
             {
                 if (CurrentItem == null)
                     return;
-                    
+
                 if (CurrentItem is ListItem)
                     (CurrentItem as ListItem).Cycle(false);
             }
@@ -130,7 +129,7 @@ namespace FTW.Engine.Client
             }
         }
 
-        protected override void OnKeyReleased(object sender, KeyEventArgs e)
+        public void KeyReleased(KeyEventArgs e)
         {
             if (e.Code == Keyboard.Key.Return)
             {
@@ -169,7 +168,7 @@ namespace FTW.Engine.Client
             }
         }
 
-        protected override void OnTextEntered(object sender, TextEventArgs e)
+        public void TextEntered(TextEventArgs e)
         {
             if (CurrentItem == null)
                 return;
@@ -178,7 +177,7 @@ namespace FTW.Engine.Client
                 (CurrentItem as TextEntryItem).Type(e.Unicode);
         }
 
-        protected override void OnMousePressed(object sender, MouseButtonEventArgs e)
+        public void MousePressed(MouseButtonEventArgs e)
         {
             if (e.Button != Mouse.Button.Left)
                 return;
@@ -192,12 +191,12 @@ namespace FTW.Engine.Client
                 (CurrentItem as ListItem).CheckButtonPress(e.X, e.Y, true);
         }
 
-        protected override void OnMouseReleased(object sender, MouseButtonEventArgs e)
+        public void MouseReleased(MouseButtonEventArgs e)
         {
             if (e.Button != Mouse.Button.Left)
                 return;
 
-            if ( CurrentItem == null )
+            if (CurrentItem == null)
                 return;
 
             if (CurrentPressed)
@@ -209,7 +208,7 @@ namespace FTW.Engine.Client
             }
         }
 
-        protected override void OnMouseMoved(object sender, MouseMoveEventArgs e)
+        public void MouseMoved(MouseMoveEventArgs e)
         {
             int index = GetHoveredItemIndex(e.X, e.Y);
             if (index != CurrentIndex)
@@ -222,7 +221,7 @@ namespace FTW.Engine.Client
             CurrentIndex = newIndex;
             CurrentPressed = false; // if we change mid-way through a press, forget about that press
 
-            if ( oldIndex < Items.Count && oldIndex >= 0 )
+            if (oldIndex < Items.Count && oldIndex >= 0)
             {
                 Items[oldIndex].Color = ItemColor;
                 Items[oldIndex].Style = ItemStyle;
@@ -405,7 +404,7 @@ namespace FTW.Engine.Client
 
                 Value.DisplayedString = Values[selectedIndex];
 
-                if ( ValueChanged != null )
+                if (ValueChanged != null)
                     ValueChanged(Value.DisplayedString);
             }
 
@@ -454,7 +453,7 @@ namespace FTW.Engine.Client
                 Label.CharacterSize = menu.ItemTextSize;
                 Label.Color = menu.ItemColor;
                 Label.Position = new Vector2f(menu.ItemXPos + menu.Items.Count * menu.ItemXSpacing, menu.ItemYPos + menu.Items.Count * menu.ItemYSpacing);
-                
+
                 Value.Font = menu.ItemFont;
                 Value.CharacterSize = menu.ItemTextSize;
                 Value.Color = menu.ItemColor;
@@ -521,7 +520,7 @@ namespace FTW.Engine.Client
                         break;
 
                     if (char.IsLetterOrDigit(c)
-                        || ( c == ' ' && val.Length > 1 && val[val.Length-1] != ' ')
+                        || (c == ' ' && val.Length > 1 && val[val.Length - 1] != ' ')
                         )
                         val += c;
                 }
