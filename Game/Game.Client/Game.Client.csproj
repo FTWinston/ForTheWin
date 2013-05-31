@@ -59,6 +59,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConsolePanel.cs" />
     <Compile Include="GameClient.cs" />
     <Compile Include="GameWindow.cs" />
     <Compile Include="InputListener.cs" />

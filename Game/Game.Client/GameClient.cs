@@ -15,7 +15,6 @@ namespace Game.Client
         public const string settingsFilename = "client.yml";
 
         GameWindow window;
-        Font font;
         public GameClient(GameWindow window, Config config)
             : base(config)
         {
@@ -37,77 +36,28 @@ namespace Game.Client
             return config;
         }
 
-        Text loading, console, game;
-        RectangleShape consoleBackground;
-        View consoleView;
+        Text loading, game;
+
         public View MainView { get; set; }
+        ConsolePanel console;
         public bool ShowConsole;
 
         public void SetupDisplay()
         {
-            font = new Font("Resources/arial.ttf");
+            Font font = new Font("Resources/arial.ttf");
 
             loading = new Text("Connecting...", font, 64);
             loading.Color = Color.White;
             loading.Position = new Vector2f(window.Size.X / 2 - loading.GetLocalBounds().Width / 2, window.Size.Y / 2 - loading.GetLocalBounds().Height / 2);
 
-            console = new Text("", font, 18);
-            console.Color = Color.White;
-            console.Position = new Vector2f(8, 8);
-
             MainView = window.DefaultView;
-
-            consoleBackground = new RectangleShape();
-            consoleBackground.Position = new Vector2f(0, 0);
-            consoleBackground.Size = new Vector2f(window.Size.X, window.Size.Y);
-            consoleBackground.FillColor = new Color(72, 72, 72, 220);
-
-            consoleView = new View(new FloatRect(0, 0, window.Size.X, window.Size.Y/2));
-            consoleView.Viewport = new FloatRect(0, 0, 1, 0.5f);
 
             game = new Text("This is the game. Blah blah.", font, 48);
             game.Color = Color.Yellow;
             game.Position = new Vector2f(window.Size.X / 2 - game.GetLocalBounds().Width / 2, window.Size.Y / 2 - game.GetLocalBounds().Height / 2);
 
-            TextStreamWriter tw = new TextStreamWriter(console);
-            Console.SetOut(tw);
-            Console.SetError(tw);
+            console = new ConsolePanel(window);
         }
-
-        public class TextStreamWriter : TextWriter
-        {
-            Text output;
-            public TextStreamWriter(Text output)
-            {
-                this.output = output;
-            }
-
-            public override void Write(char value)
-            {
-                output.DisplayedString += value;
-                glFlush();
-            }
-
-            public override void WriteLine(string value)
-            {
-                output.DisplayedString += value + '\n';
-                glFlush();
-            }
-
-            public override void Write(string value)
-            {
-                output.DisplayedString += value;
-                glFlush();
-            }
-
-            public override Encoding Encoding
-            {
-                get { return Encoding.Unicode; }
-            }
-        }
-
-        [DllImport("opengl32.dll")]
-        private static extern void glFlush();
 
         public void Draw(RenderTarget target, RenderStates states)
         {
@@ -118,12 +68,7 @@ namespace Game.Client
                 target.Draw(game);
 
                 if (ShowConsole)
-                {
-                    target.SetView(consoleView);
-                    target.Draw(consoleBackground);
                     target.Draw(console);
-                    target.SetView(MainView);
-                }
             }
             else
                 target.Draw(loading);
