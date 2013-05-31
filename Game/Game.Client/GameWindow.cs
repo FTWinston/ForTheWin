@@ -46,6 +46,7 @@ namespace Game.Client
             MouseButtonReleased += OnMouseReleased;
             MouseMoved += OnMouseMoved;
             Closed += OnClosed;
+            Resized += GameWindow_Resized;
 
             LoadConfig();
 
@@ -69,6 +70,12 @@ namespace Game.Client
 
                 Display();
             }
+        }
+
+        void GameWindow_Resized(object sender, SizeEventArgs e)
+        {// instead of scaling the contents, resize to fit the contents. We probably don't want that, do we?
+            gameClient.MainView = new View(new FloatRect(0, 0, e.Width, e.Height));
+            SetView(gameClient.MainView);
         }
 
         private void CreateMenus()

@@ -38,6 +38,9 @@ namespace Game.Client
         }
 
         Text loading, console, game;
+        RectangleShape consoleBackground;
+        View consoleView;
+        public View MainView { get; set; }
         public bool ShowConsole;
 
         public void SetupDisplay()
@@ -51,6 +54,16 @@ namespace Game.Client
             console = new Text("", font, 18);
             console.Color = Color.White;
             console.Position = new Vector2f(8, 8);
+
+            MainView = window.DefaultView;
+
+            consoleBackground = new RectangleShape();
+            consoleBackground.Position = new Vector2f(0, 0);
+            consoleBackground.Size = new Vector2f(window.Size.X, window.Size.Y);
+            consoleBackground.FillColor = new Color(72, 72, 72, 220);
+
+            consoleView = new View(new FloatRect(0, 0, window.Size.X, window.Size.Y/2));
+            consoleView.Viewport = new FloatRect(0, 0, 1, 0.5f);
 
             game = new Text("This is the game. Blah blah.", font, 48);
             game.Color = Color.Yellow;
@@ -102,10 +115,15 @@ namespace Game.Client
 
             if (FullyConnected)
             {
+                target.Draw(game);
+
                 if (ShowConsole)
+                {
+                    target.SetView(consoleView);
+                    target.Draw(consoleBackground);
                     target.Draw(console);
-                else
-                    target.Draw(game);
+                    target.SetView(MainView);
+                }
             }
             else
                 target.Draw(loading);
