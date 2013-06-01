@@ -84,19 +84,49 @@ namespace Game.Client
                     window.CurrentMenu = window.InGameMenu;
                 return;
             }
+            else if (ShowConsole)
+            {
+                console.KeyPressed(e);
+                return;
+            }
 
             // ...
         }
 
-        public void KeyReleased(KeyEventArgs e) { }
+        public void KeyReleased(KeyEventArgs e)
+        {
+            if (ShowConsole)
+                return;
+
+            // ...
+        }
+
         public void TextEntered(TextEventArgs e)
         {
             // using TextEntered because there's no KeyCode for using backtick in KeyPressed
-            if ( e.Unicode == "`" || e.Unicode == "~" )
+            if (e.Unicode == "`" || e.Unicode == "~")
                 ShowConsole = !ShowConsole;
+            else if (ShowConsole)
+                console.TextEntered(e.Unicode);
         }
-        public void MousePressed(MouseButtonEventArgs e) { }
-        public void MouseReleased(MouseButtonEventArgs e) { }
-        public void MouseMoved(MouseMoveEventArgs e) { }
+
+        public void MousePressed(MouseButtonEventArgs e)
+        {
+            if (ShowConsole)
+            {
+                console.MousePressed(e);
+                return;
+            }
+        }
+
+        public void MouseReleased(MouseButtonEventArgs e)
+        {
+
+        }
+
+        public void MouseMoved(MouseMoveEventArgs e)
+        {
+
+        }
     }
 }
