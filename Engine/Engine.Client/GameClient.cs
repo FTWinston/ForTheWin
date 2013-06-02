@@ -137,5 +137,37 @@ namespace FTW.Engine.Client
         {
             Connection.Send(m);
         }
+
+        static readonly char[] cmdSplit = { ' ', '	' };
+        public void HandleCommand(string cmd)
+        {
+            Console.WriteLine(cmd);
+
+            // split the command into words, for ease of processing
+            string[] words = cmd.Split(cmdSplit, StringSplitOptions.RemoveEmptyEntries);
+
+            if (words.Length == 0)
+                return;
+
+            // for the moment, trying the command on the client before the server (for local listen servers only). May want to swap that.
+            if (!ConsoleCommand(words))
+            {
+                // if this is a listen server, try running the command on the server. That'll report an error if it doesn't recognise the command either.
+                if (FullyConnected && Connection.IsLocal)
+                    (Connection as ListenServerConnection).ConsoleCommand(cmd);
+                else
+                    Console.Error.WriteLine("Command not recognised: " + words[0]);
+            }
+        }
+
+        protected virtual bool ConsoleCommand(string[] words)
+        {
+            switch (words[0])
+            {
+
+                default:
+                    return false;
+            }
+        }
     }
 }

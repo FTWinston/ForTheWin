@@ -27,7 +27,7 @@ namespace DedicatedCLI
             server.Start(true, config);
             while (server.IsRunning)
             {
-                /*game.ServerCommand(*/Console.ReadLine()/*)*/;
+                server.HandleCommand(Console.ReadLine());
             }
         }
     }

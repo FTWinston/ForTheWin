@@ -24,12 +24,12 @@ namespace Game.Client
             set
             {
                 currentMenu = value;
-                currentInput = currentMenu ?? (InputListener)gameClient;
+                CurrentInput = currentMenu ?? (InputListener)gameClient;
             }
         }
 
         Menu currentMenu;
-        InputListener currentInput;
+        public InputListener CurrentInput;
         GameClient gameClient;
         Config config;
 
@@ -117,12 +117,12 @@ namespace Game.Client
             OptionsMenu.EscapePressed = () => { CurrentMenu = MainMenu; };
         }
 
-        private void OnKeyPressed(object sender, KeyEventArgs e) { currentInput.KeyPressed(e); }
-        private void OnKeyReleased(object sender, KeyEventArgs e) { currentInput.KeyReleased(e); }
-        private void OnTextEntered(object sender, TextEventArgs e) { currentInput.TextEntered(e); }
-        private void OnMousePressed(object sender, MouseButtonEventArgs e) { currentInput.MousePressed(e); }
-        private void OnMouseReleased(object sender, MouseButtonEventArgs e) { currentInput.MouseReleased(e); }
-        private void OnMouseMoved(object sender, MouseMoveEventArgs e) { currentInput.MouseMoved(e); }
+        private void OnKeyPressed(object sender, KeyEventArgs e) { CurrentInput.KeyPressed(e); }
+        private void OnKeyReleased(object sender, KeyEventArgs e) { CurrentInput.KeyReleased(e); }
+        private void OnTextEntered(object sender, TextEventArgs e) { CurrentInput.TextEntered(e); }
+        private void OnMousePressed(object sender, MouseButtonEventArgs e) { CurrentInput.MousePressed(e); }
+        private void OnMouseReleased(object sender, MouseButtonEventArgs e) { CurrentInput.MouseReleased(e); }
+        private void OnMouseMoved(object sender, MouseMoveEventArgs e) { CurrentInput.MouseMoved(e); }
         private void OnClosed(object sender, EventArgs e) { CloseGameWindow(); }
 
         private void LoadConfig()

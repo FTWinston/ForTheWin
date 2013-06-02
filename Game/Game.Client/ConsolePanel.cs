@@ -9,11 +9,12 @@ using SFML.Window;
 
 namespace Game.Client
 {
-    class ConsolePanel : TextWriter, Drawable
+    class ConsolePanel : TextWriter, Drawable, InputListener
     {
         [DllImport("opengl32.dll")]
         private static extern void glFlush();
 
+        GameClient client;
         Text text, input;
         RectangleShape background, scrollUp, scrollDown, scrollBar;
         CircleShape buttonUp, buttonDown;
@@ -22,8 +23,12 @@ namespace Game.Client
 
         private float maxDisplayedHeight, maxScroll, scrollX;
         private const float scrollButtonSize = 32, scrollButtonIconRadius = scrollButtonSize * 0.25f, scrollButtonIconOffset = scrollButtonSize / 2f - scrollButtonIconRadius;
-        public ConsolePanel(RenderWindow window)
+
+        public const string ShowKey1 = "`", ShowKey2 = "~";
+
+        public ConsolePanel(RenderWindow window, GameClient client)
         {
+            this.client = client;
             Font font = new Font("Resources/arial.ttf");
             
             text = new Text("", font, 18);
@@ -120,26 +125,19 @@ namespace Game.Client
             target.Draw(buttonDown);
         }
 
-        internal void TextEntered(string text)
+        public void KeyPressed(KeyEventArgs e)
         {
-            if (text != "\r" && text != "\b")
+            if (e.Code == Keyboard.Key.Escape)
             {
-                input.DisplayedString += text;
-                ScrollToEnd();
+                client.ShowConsole = false;
+                return;
             }
-        }
 
-        internal void KeyPressed(KeyEventArgs e)
-        {
             if (e.Code == Keyboard.Key.Return)
             {
                 string text = input.DisplayedString.Trim();
                 if (text.Length > 0)
-                {
-                    // actually send it somewhere ... err ... this isn't really it, is it?
-                    // no, we should use Console.SetIn to get this, somehow
-                    Console.WriteLine(text);
-                }
+                    GameClient.Instance.HandleCommand(text);
 
                 input.DisplayedString = string.Empty;
             }
@@ -154,7 +152,25 @@ namespace Game.Client
             ScrollToEnd();
         }
 
-        internal void MousePressed(MouseButtonEventArgs e)
+        public void KeyReleased(KeyEventArgs e) { }
+
+        public void TextEntered(TextEventArgs e)
+        {
+            // using TextEntered because there's no KeyCode for using backtick in KeyPressed
+            if (e.Unicode == ShowKey1 || e.Unicode == ShowKey2)
+            {
+                client.ShowConsole = false;
+                return;
+            }
+
+            if (e.Unicode != "\r" && e.Unicode != "\b")
+            {
+                input.DisplayedString += e.Unicode;
+                ScrollToEnd();
+            }
+        }
+
+        public void MousePressed(MouseButtonEventArgs e)
         {
             if (e.Button == Mouse.Button.Left)
                 if (upButtonBounds.Contains(e.X, e.Y))
@@ -162,6 +178,10 @@ namespace Game.Client
                 else if (downButtonBounds.Contains(e.X, e.Y))
                     Scroll(false);
         }
+
+        public void MouseReleased(MouseButtonEventArgs e) { }
+
+        public void MouseMoved(MouseMoveEventArgs e) { }
 
         float scrollIncrement = 50;
         void Scroll(bool up)

@@ -40,7 +40,16 @@ namespace Game.Client
 
         public View MainView { get; set; }
         ConsolePanel console;
-        public bool ShowConsole;
+        private bool showConsole;
+        public bool ShowConsole
+        {
+            get { return showConsole; }
+            set
+            {
+                showConsole = value;
+                window.CurrentInput = ShowConsole ? (InputListener)console : (InputListener)this;
+            }
+        }
 
         public void SetupDisplay()
         {
@@ -56,7 +65,7 @@ namespace Game.Client
             game.Color = Color.Yellow;
             game.Position = new Vector2f(window.Size.X / 2 - game.GetLocalBounds().Width / 2, window.Size.Y / 2 - game.GetLocalBounds().Height / 2);
 
-            console = new ConsolePanel(window);
+            console = new ConsolePanel(window, this);
         }
 
         public void Draw(RenderTarget target, RenderStates states)
@@ -78,15 +87,7 @@ namespace Game.Client
         {
             if (e.Code == Keyboard.Key.Escape)
             {
-                if (ShowConsole)
-                    ShowConsole = false;
-                else
-                    window.CurrentMenu = window.InGameMenu;
-                return;
-            }
-            else if (ShowConsole)
-            {
-                console.KeyPressed(e);
+                window.CurrentMenu = window.InGameMenu;
                 return;
             }
 
@@ -95,28 +96,22 @@ namespace Game.Client
 
         public void KeyReleased(KeyEventArgs e)
         {
-            if (ShowConsole)
-                return;
-
-            // ...
+            
         }
 
         public void TextEntered(TextEventArgs e)
         {
             // using TextEntered because there's no KeyCode for using backtick in KeyPressed
-            if (e.Unicode == "`" || e.Unicode == "~")
-                ShowConsole = !ShowConsole;
-            else if (ShowConsole)
-                console.TextEntered(e.Unicode);
+            if (e.Unicode == ConsolePanel.ShowKey1 || e.Unicode == ConsolePanel.ShowKey2)
+            {
+                ShowConsole = true;
+                return;
+            }
         }
 
         public void MousePressed(MouseButtonEventArgs e)
         {
-            if (ShowConsole)
-            {
-                console.MousePressed(e);
-                return;
-            }
+            
         }
 
         public void MouseReleased(MouseButtonEventArgs e)

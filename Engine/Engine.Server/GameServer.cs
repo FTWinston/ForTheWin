@@ -317,6 +317,29 @@ namespace FTW.Engine.Server
             }
         }
 
+        static readonly char[] cmdSplit = { ' ', '	' };
+        public override void HandleCommand(string cmd)
+        {
+            // split the command into words, for ease of processing
+            string[] words = cmd.Split(cmdSplit, StringSplitOptions.RemoveEmptyEntries);
+
+            if (words.Length == 0)
+                return;
+
+            if (!ConsoleCommand(words))
+                Console.Error.WriteLine("Command not recognised: " + words[0]);
+        }
+
+        protected virtual bool ConsoleCommand(string[] words)
+        {
+            switch (words[0])
+            {
+
+                default:
+                    return false;
+            }
+        }
+
         /// <summary>
         /// Runs a single frame of the game
         /// </summary>

@@ -113,7 +113,9 @@ namespace DedicatedGUI
             {
                 if (txtInput.Text.Trim() != string.Empty)
                 {
-                    //server.ServerCommand(txtInput.Text.Trim());
+                    string cmd = txtInput.Text.Trim();
+                    txtOutput.AppendText(cmd + Environment.NewLine);
+                    server.HandleCommand(cmd);
                 }
                 txtInput.Clear();
                 e.Handled = true;

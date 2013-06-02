@@ -22,5 +22,14 @@ namespace Game.Server
             // ...
             return false;
         }
+
+        protected override bool ConsoleCommand(string[] words)
+        {
+            if (base.ConsoleCommand(words))
+                return true;
+
+            // ...
+            return false;
+        }
     }
 }

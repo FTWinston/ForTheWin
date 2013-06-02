@@ -9,17 +9,21 @@ namespace FTW.Engine.Client
 {
     internal abstract class ServerConnection
     {
+        public abstract bool IsLocal { get; }
+
         public abstract void Connect();
         public abstract void Disconnect();
-        public abstract void RetrieveUpdates();
 
-        internal abstract void Send(Message m);
+        public abstract void RetrieveUpdates();
+        public abstract void Send(Message m);
     }
 
     internal class ListenServerConnection : ServerConnection
     {
         const string settingsFilename = "server.yml";
         ServerBase server;
+
+        public override bool IsLocal { get { return true; } }
 
         public override void Connect()
         {
@@ -58,12 +62,17 @@ namespace FTW.Engine.Client
                 GameClient.Instance.HandleMessage(m);
         }
 
-        internal override void Send(Message m)
+        public override void Send(Message m)
         {
             m.ResetRead();
 
             lock (Message.ToLocalServer)
                 Message.ToLocalServer.Add(m);
+        }
+
+        public void ConsoleCommand(string cmd)
+        {
+            server.HandleCommand(cmd);
         }
     }
 
@@ -78,6 +87,8 @@ namespace FTW.Engine.Client
         private string hostname;
         private ushort hostPort;
         RakPeerInterface rakNet;
+
+        public override bool IsLocal { get { return false; } }
 
         public override void Connect()
         {
@@ -140,7 +151,7 @@ namespace FTW.Engine.Client
             }
         }
 
-        internal override void Send(Message m)
+        public override void Send(Message m)
         {
             rakNet.Send(m.Stream, m.Priority, m.Reliability, (char)0, RakNet.RakNet.UNASSIGNED_RAKNET_GUID, true);
         }
