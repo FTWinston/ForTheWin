@@ -144,13 +144,13 @@ namespace FTW.Engine.Client
             Console.WriteLine(cmd);
 
             // split the command into words, for ease of processing
-            string[] words = cmd.Split(cmdSplit, StringSplitOptions.RemoveEmptyEntries);
+            string[] words = cmd.Split(cmdSplit, 2, StringSplitOptions.RemoveEmptyEntries);
 
             if (words.Length == 0)
                 return;
 
             // for the moment, trying the command on the client before the server (for local listen servers only). May want to swap that.
-            if (!ConsoleCommand(words))
+            if (!ConsoleCommand(words[0], words.Length > 1 ? words[1] : null))
             {
                 // if this is a listen server, try running the command on the server. That'll report an error if it doesn't recognise the command either.
                 if (FullyConnected && Connection.IsLocal)
@@ -160,9 +160,9 @@ namespace FTW.Engine.Client
             }
         }
 
-        protected virtual bool ConsoleCommand(string[] words)
+        protected virtual bool ConsoleCommand(string firstWord, string theRest)
         {
-            switch (words[0])
+            switch (firstWord)
             {
 
                 default:

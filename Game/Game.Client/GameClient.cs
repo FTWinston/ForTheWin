@@ -123,5 +123,23 @@ namespace Game.Client
         {
 
         }
+
+        protected override bool MessageReceived(Message m)
+        {
+            if (base.MessageReceived(m))
+                return true;
+
+            // ...
+            return false;
+        }
+
+        protected override bool ConsoleCommand(string firstWord, string theRest)
+        {
+            if (base.ConsoleCommand(firstWord, theRest))
+                return true;
+
+            // ...
+            return false;
+        }
     }
 }

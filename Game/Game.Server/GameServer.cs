@@ -23,9 +23,9 @@ namespace Game.Server
             return false;
         }
 
-        protected override bool ConsoleCommand(string[] words)
+        protected override bool ConsoleCommand(string firstWord, string theRest)
         {
-            if (base.ConsoleCommand(words))
+            if (base.ConsoleCommand(firstWord, theRest))
                 return true;
 
             // ...

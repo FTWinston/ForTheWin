@@ -321,18 +321,19 @@ namespace FTW.Engine.Server
         public override void HandleCommand(string cmd)
         {
             // split the command into words, for ease of processing
-            string[] words = cmd.Split(cmdSplit, StringSplitOptions.RemoveEmptyEntries);
+            string[] words = cmd.Split(cmdSplit, 2, StringSplitOptions.RemoveEmptyEntries);
 
             if (words.Length == 0)
                 return;
 
-            if (!ConsoleCommand(words))
+            // for the moment, trying the command on the client before the server (for local listen servers only). May want to swap that.
+            if (!ConsoleCommand(words[0], words.Length > 1 ? words[1] : null))
                 Console.Error.WriteLine("Command not recognised: " + words[0]);
         }
 
-        protected virtual bool ConsoleCommand(string[] words)
+        protected virtual bool ConsoleCommand(string firstWord, string theRest)
         {
-            switch (words[0])
+            switch (firstWord)
             {
 
                 default:
