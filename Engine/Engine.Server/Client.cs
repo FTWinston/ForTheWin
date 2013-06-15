@@ -24,6 +24,8 @@ namespace FTW.Engine.Server
             }
         }
         internal RakNetGUID UniqueID { get; set; }
+        internal uint LastSnapshotFrame { get; set; }
+
         public abstract bool IsLocal { get; }
 
         internal static SortedList<ulong, Client> AllClients = new SortedList<ulong, Client>();
@@ -130,6 +132,18 @@ namespace FTW.Engine.Server
             GameServer.Instance.rakNet.Send(m.Stream, m.Priority, m.Reliability, (char)0, c.UniqueID, true);
             if (c != LocalClient && LocalClient != null)
                 LocalClient.Send(m);
+        }
+
+        internal static void SendSnapshots()
+        {
+            foreach (Client c in AllClients.Values)
+            {
+                // do we track this using frame numbers, time, or raknet time?
+                //if (c.NextSnapshotFrame > GameServer.Instance.FrameNumber)
+                    //continue;
+
+                throw new NotImplementedException();
+            }
         }
     }
 

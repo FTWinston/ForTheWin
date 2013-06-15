@@ -157,8 +157,10 @@ namespace FTW.Engine.Server
         protected double TargetFrameInterval = 1f / 30f;
 
         const int pauseTickMilliseconds = 100;
-
+        
+        public override uint FrameNumber { get { return frameNumber; } }
         public DateTime FrameTime { get; private set; }
+        private uint frameNumber;
         private DateTime lastFrameTime;
         private double dt;
 
@@ -195,8 +197,8 @@ namespace FTW.Engine.Server
                 }
 
                 ReceiveMessages();
-
                 GameFrame(dt);
+                frameNumber++;
 
                 TimeSpan frameTimeRemaining = FrameTime.AddSeconds(TargetFrameInterval) - DateTime.Now;
                 if (frameTimeRemaining > TimeSpan.Zero)
@@ -347,7 +349,37 @@ namespace FTW.Engine.Server
         /// <param name="dt">Frame duration to simulate, in seconds</param>
         protected virtual void GameFrame(double dt)
         {
-            
+            int i; Entity e;
+            for (i = 0; i < Entity.AllEntities.Count; i++)
+            {
+                e = Entity.AllEntities[i];
+                if (!e.IsDeleted)
+                    e.PreThink(dt);
+            }
+            for (i = 0; i < Entity.AllEntities.Count; i++)
+            {
+                e = Entity.AllEntities[i];
+                if (!e.IsDeleted)
+                    e.Simulate(dt);
+            }
+            for (i = 0; i < Entity.AllEntities.Count; i++)
+            {
+                e = Entity.AllEntities[i];
+                if (!e.IsDeleted)
+                    e.PostThink(dt);
+            }
+
+            Client.SendSnapshots();
+
+            for (i = 0; i < Entity.AllEntities.Count; i++)
+            {
+                e = Entity.AllEntities[i];
+                if (e.IsDeleted)
+                {
+                    Entity.AllEntities.RemoveAt(i);
+                    i--;
+                }
+            }
         }
 
         public virtual string ValidatePlayerName(string name) { return name.Trim(); }
