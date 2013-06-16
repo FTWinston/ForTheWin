@@ -18,11 +18,9 @@ namespace FTW.Engine.Server
         /// Schedules this entity for deletion at the end of the current frame.
         /// Until then, its IsDeleted property will be true.
         /// </summary>
-        public void Delete()
+        public virtual void Delete()
         {
             IsDeleted = true;
-            //if (IsNetworked)
-                //Networking.RemoveNetworkedEntity(GetNetworked());
         }
 
 
@@ -53,6 +51,15 @@ namespace FTW.Engine.Server
                 RelatedClientFields = new List<NetworkField>();
                 OtherClientFields = new List<NetworkField>();
             }
+        }
+
+        public override void Delete()
+        {
+            base.Delete();
+            
+            foreach (Client c in Client.AllClients.Values)
+                if ( ShouldSendToClient(c) )
+                    c.DeletedEntities.Add(EntityID, true);
         }
 
         public ushort EntityID { get; private set; }

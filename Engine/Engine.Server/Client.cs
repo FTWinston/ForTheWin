@@ -12,7 +12,6 @@ namespace FTW.Engine.Server
         protected Client()
         {
             NeedsFullUpdate = true;
-            KnownEntities = new SortedList<ushort, NetworkedEntity>();
         }
 
         private string name;
@@ -31,7 +30,8 @@ namespace FTW.Engine.Server
         internal uint LastSnapshotFrame { get; set; }
         private uint NextSnapshotFrame { get; set; }
         internal bool NeedsFullUpdate { get; set; }
-        private SortedList<ushort, NetworkedEntity> KnownEntities;
+        private SortedList<ushort, bool> KnownEntities = new SortedList<ushort, bool>();
+        internal SortedList<ushort, bool> DeletedEntities = new SortedList<ushort, bool>();
 
         public abstract bool IsLocal { get; }
 
@@ -150,8 +150,9 @@ namespace FTW.Engine.Server
                 if (c.NextSnapshotFrame > GameServer.Instance.FrameNumber)
                     continue;
 
-                m = new Message((byte)EngineMessage.Snapshot, PacketPriority.HIGH_PRIORITY, PacketReliability.UNRELIABLE);
-                m.Write(GameServer.Instance.FrameNumber); // this isn't any use for clients. sod this.
+                m = new Message((byte)DefaultMessageIDTypes.ID_TIMESTAMP, PacketPriority.HIGH_PRIORITY, PacketReliability.UNRELIABLE);
+                m.Write(GameServer.Instance.FrameTime);
+                m.Write((byte)EngineMessage.Snapshot);
 
                 // now step through all entities, decide what to send. Will either be:
                 // No change (sends nothing)
@@ -165,36 +166,47 @@ namespace FTW.Engine.Server
                         continue;
 
                     NetworkedEntity ne = e as NetworkedEntity;
-                    if (!ne.ShouldSendToClient(c))
+                    if (ne.IsDeleted || !ne.HasChanges(c))
                         continue;
+
+                    if (!ne.ShouldSendToClient(c))
+                    {
+                        if (c.KnownEntities.Keys.Contains(ne.EntityID))
+                            c.DeletedEntities.Add(ne.EntityID, false); // the client shouldn't see this entity any more, so delete it on their end
+                        continue;
+                    }
 
                     m.Write(ne.EntityID);
 
-                    if (ne.IsDeleted)
-                    {
-                        m.Write((byte)EntitySnapshotType.Delete);
-                        c.KnownEntities.Remove(ne.EntityID);
-                        continue;
-                    }
-
                     EntitySnapshotType updateType;
-                    NetworkedEntity known = c.KnownEntities[ne.EntityID];
-                    if (known == null)
+                    if (c.KnownEntities.ContainsKey(ne.EntityID))
                     {
-                        updateType = EntitySnapshotType.Full;
-                        c.KnownEntities[ne.EntityID] = ne;
-                    }
-                    else if (known != ne)
-                    {
-                        updateType = EntitySnapshotType.Replace;
-                        c.KnownEntities[ne.EntityID] = ne;
+                        if (c.DeletedEntities.ContainsKey(ne.EntityID))
+                        {
+                            // Reusing an entity ID the client is still using for something else. Ensure it knows the old should be deleted.
+                            // Also, don't include it on the Delete list - the Replace accounts for that.
+                            updateType = EntitySnapshotType.Replace;
+                            c.DeletedEntities.Remove(ne.EntityID);
+                        }
+                        else
+                            updateType = c.NeedsFullUpdate ? EntitySnapshotType.Full : EntitySnapshotType.Partial;
                     }
                     else
-                        updateType = c.NeedsFullUpdate ? EntitySnapshotType.Full : EntitySnapshotType.Partial;
-                    m.Write((byte)updateType);
+                    {
+                        updateType = EntitySnapshotType.Full;
+                        c.KnownEntities[ne.EntityID] = true;
+                    }
 
+                    m.Write((byte)updateType);
                     ne.WriteSnapshot(m, c, updateType == EntitySnapshotType.Partial);
                 }
+
+                foreach (ushort entityID in c.DeletedEntities.Keys)
+                {
+                    m.Write(entityID);
+                    m.Write((byte)EntitySnapshotType.Delete);
+                }
+                c.DeletedEntities.Clear();
 
                 c.Send(m);
                 c.NeedsFullUpdate = false;

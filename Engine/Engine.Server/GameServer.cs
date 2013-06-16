@@ -154,28 +154,25 @@ namespace FTW.Engine.Server
             Instance = null;
         }
 
-        protected double TargetFrameInterval = 1f / 30f;
-
+        protected uint TargetFrameInterval = 33;
         const int pauseTickMilliseconds = 100;
         
         public override uint FrameNumber { get { return frameNumber; } }
-        public DateTime FrameTime { get; private set; }
-        private uint frameNumber;
-        private DateTime lastFrameTime;
-        private double dt;
+        public uint FrameTime { get; private set; }
+        private uint lastFrameTime, frameNumber, dt;
 
         private void RunMainLoop()
         {
             Console.WriteLine("Server has started");
             isPaused = false;
 
-            dt = 0.1;
-            lastFrameTime = DateTime.Now.AddSeconds(-dt);
+            dt = 100;
+            lastFrameTime = RakNet.RakNet.GetTime() - dt;
             DateTime? pauseTime = null;
 
             while (IsRunning)
             {
-                FrameTime = DateTime.Now;
+                FrameTime = RakNet.RakNet.GetTime();
 
                 if (Paused)
                 {
@@ -187,21 +184,20 @@ namespace FTW.Engine.Server
                 else if (pauseTime.HasValue)
                 {
                     pauseTime = null;
-                    lastFrameTime = DateTime.Now.AddSeconds(-dt);
+                    lastFrameTime = RakNet.RakNet.GetTime() - dt;
                 }
                 else
                 {
-                    TimeSpan duration = (FrameTime - lastFrameTime);
-                    dt = duration.TotalSeconds;
-                    lastFrameTime = FrameTime - duration;
+                    dt = FrameTime - lastFrameTime;
+                    lastFrameTime = FrameTime - dt;
                 }
 
                 ReceiveMessages();
                 GameFrame(dt);
                 frameNumber++;
 
-                TimeSpan frameTimeRemaining = FrameTime.AddSeconds(TargetFrameInterval) - DateTime.Now;
-                if (frameTimeRemaining > TimeSpan.Zero)
+                int frameTimeRemaining = (int)(FrameTime + TargetFrameInterval) - (int)RakNet.RakNet.GetTime();
+                if (frameTimeRemaining > 0)
                     Thread.Sleep(frameTimeRemaining);
             }
 
