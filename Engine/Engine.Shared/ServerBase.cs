@@ -22,8 +22,6 @@ namespace FTW.Engine.Shared
         public abstract bool IsRunning { get; }
         public abstract bool Paused { get; }
 
-        public abstract uint FrameNumber { get; }
-
         public abstract void HandleCommand(string cmd);
 
         private const string assemblyFileName = "Game.Server.dll";

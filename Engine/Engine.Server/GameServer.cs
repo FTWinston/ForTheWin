@@ -157,9 +157,8 @@ namespace FTW.Engine.Server
         protected uint TargetFrameInterval = 33;
         const int pauseTickMilliseconds = 100;
         
-        public override uint FrameNumber { get { return frameNumber; } }
         public uint FrameTime { get; private set; }
-        private uint lastFrameTime, frameNumber, dt;
+        private uint lastFrameTime, dt;
 
         private void RunMainLoop()
         {
@@ -194,8 +193,7 @@ namespace FTW.Engine.Server
 
                 ReceiveMessages();
                 GameFrame(dt);
-                frameNumber++;
-
+                
                 int frameTimeRemaining = (int)(FrameTime + TargetFrameInterval) - (int)RakNet.RakNet.GetTime();
                 if (frameTimeRemaining > 0)
                     Thread.Sleep(frameTimeRemaining);

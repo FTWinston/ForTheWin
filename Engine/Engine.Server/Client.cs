@@ -12,6 +12,7 @@ namespace FTW.Engine.Server
         protected Client()
         {
             NeedsFullUpdate = true;
+            SnapshotInterval = 50; // this should be a Variable
         }
 
         private string name;
@@ -27,8 +28,9 @@ namespace FTW.Engine.Server
             }
         }
         internal RakNetGUID UniqueID { get; set; }
-        internal uint LastSnapshotFrame { get; set; }
-        private uint NextSnapshotFrame { get; set; }
+        internal uint LastSnapshotTime { get; set; }
+        private uint NextSnapshotTime { get; set; }
+        private uint SnapshotInterval { get; set; }
         internal bool NeedsFullUpdate { get; set; }
         private SortedList<ushort, bool> KnownEntities = new SortedList<ushort, bool>();
         internal SortedList<ushort, bool> DeletedEntities = new SortedList<ushort, bool>();
@@ -147,7 +149,7 @@ namespace FTW.Engine.Server
             foreach (Client c in AllClients.Values)
             {
                 // do we track this using frame numbers, time, or raknet time?
-                if (c.NextSnapshotFrame > GameServer.Instance.FrameNumber)
+                if (c.NextSnapshotTime > GameServer.Instance.FrameTime)
                     continue;
 
                 m = new Message((byte)DefaultMessageIDTypes.ID_TIMESTAMP, PacketPriority.HIGH_PRIORITY, PacketReliability.UNRELIABLE);
@@ -210,6 +212,8 @@ namespace FTW.Engine.Server
 
                 c.Send(m);
                 c.NeedsFullUpdate = false;
+                c.LastSnapshotTime = GameServer.Instance.FrameTime;
+                c.NextSnapshotTime += c.SnapshotInterval;
             }
         }
     }

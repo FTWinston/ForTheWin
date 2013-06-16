@@ -47,7 +47,7 @@ namespace FTW.Engine.Shared
             set
             {
                 val = value;
-                LastChanged = GameServer.Instance.FrameNumber;
+                LastChanged = GameServer.Instance.FrameTime;
                 if ( entity.RelatedClient == null )
                     entity.LastChanged = LastChanged;
                 else if ( relatedClient )

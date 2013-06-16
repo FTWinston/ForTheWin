@@ -71,13 +71,13 @@ namespace FTW.Engine.Server
         
         internal bool HasChanges(Client c)
         {
-            if (LastChanged >= c.LastSnapshotFrame)
+            if (LastChanged >= c.LastSnapshotTime)
                 return true;
 
             if ( RelatedClient != null )
             {
                 uint field = RelatedClient == c ? LastChangedRelated : LastChangedOther;
-                return field >= c.LastSnapshotFrame;
+                return field >= c.LastSnapshotTime;
             }
 
             return false;
@@ -90,7 +90,7 @@ namespace FTW.Engine.Server
                 for (int i = 0; i < Fields.Count; i++)
                 {
                     var f = Fields[i];
-                    if (f.LastChanged > c.LastSnapshotFrame)
+                    if (f.LastChanged > c.LastSnapshotTime)
                     {
                         m.Write((byte)i);
                         f.WriteTo(m);
@@ -105,7 +105,7 @@ namespace FTW.Engine.Server
                 for (int i = 0; i < list.Count; i++)
                 {
                     var f = list[i];
-                    if (f.LastChanged > c.LastSnapshotFrame)
+                    if (f.LastChanged > c.LastSnapshotTime)
                     {
                         m.Write((byte)(i + offset));
                         f.WriteTo(m);
