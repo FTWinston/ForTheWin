@@ -12,9 +12,18 @@ namespace FTW.Engine.Shared
         ClientConnected,
         PlayerList,
         ClientNameChange,
+        Snapshot,
         //ClientCommand,
         //Chat,
 
         FirstGameMessageID
+    }
+
+    public enum EntitySnapshotType : byte
+    {
+        Full,
+        Partial,
+        Delete,
+        Replace,
     }
 }

@@ -64,25 +64,20 @@ namespace FTW.Engine.Server
         
         internal bool HasChanges(Client c)
         {
-            if (LastChanged > c.LastSnapshotFrame)
+            if (LastChanged >= c.LastSnapshotFrame)
                 return true;
 
             if ( RelatedClient != null )
             {
                 uint field = RelatedClient == c ? LastChangedRelated : LastChangedOther;
-                return field > c.LastSnapshotFrame;
+                return field >= c.LastSnapshotFrame;
             }
 
             return false;
         }
 
-        internal void Write(Message m, Client c, bool incremental)
+        internal void WriteSnapshot(Message m, Client c, bool incremental)
         {
-            // these ought to be written by the calling method.
-            // the "type" should indicate if this is an update, a new entity, a replacement, or a deletion (though this woudln't be called for deletions)
-            //m.Write(EntityID);
-            //m.Write(incremental);
-
             if (incremental)
             {
                 for (int i = 0; i < Fields.Count; i++)

@@ -9,7 +9,11 @@ namespace FTW.Engine.Server
 {
     public abstract class Client
     {
-        protected Client() { }
+        protected Client()
+        {
+            NeedsFullUpdate = true;
+            KnownEntities = new SortedList<ushort, NetworkedEntity>();
+        }
 
         private string name;
         public string Name
@@ -25,6 +29,9 @@ namespace FTW.Engine.Server
         }
         internal RakNetGUID UniqueID { get; set; }
         internal uint LastSnapshotFrame { get; set; }
+        private uint NextSnapshotFrame { get; set; }
+        internal bool NeedsFullUpdate { get; set; }
+        private SortedList<ushort, NetworkedEntity> KnownEntities;
 
         public abstract bool IsLocal { get; }
 
@@ -136,13 +143,61 @@ namespace FTW.Engine.Server
 
         internal static void SendSnapshots()
         {
+            Message m;
             foreach (Client c in AllClients.Values)
             {
                 // do we track this using frame numbers, time, or raknet time?
-                //if (c.NextSnapshotFrame > GameServer.Instance.FrameNumber)
-                    //continue;
+                if (c.NextSnapshotFrame > GameServer.Instance.FrameNumber)
+                    continue;
 
-                throw new NotImplementedException();
+                m = new Message((byte)EngineMessage.Snapshot, PacketPriority.HIGH_PRIORITY, PacketReliability.UNRELIABLE);
+                m.Write(GameServer.Instance.FrameNumber); // this isn't any use for clients. sod this.
+
+                // now step through all entities, decide what to send. Will either be:
+                // No change (sends nothing)
+                // New entity / full update of entity (Full)
+                // Partial update of entity (Partial)
+                // Forget about this entity (Delete)
+                // ID reassigned, full update of new entity (Replace)
+                foreach (Entity e in Entity.AllEntities)
+                {
+                    if (!e.IsNetworked)
+                        continue;
+
+                    NetworkedEntity ne = e as NetworkedEntity;
+                    if (!ne.ShouldSendToClient(c))
+                        continue;
+
+                    m.Write(ne.EntityID);
+
+                    if (ne.IsDeleted)
+                    {
+                        m.Write((byte)EntitySnapshotType.Delete);
+                        c.KnownEntities.Remove(ne.EntityID);
+                        continue;
+                    }
+
+                    EntitySnapshotType updateType;
+                    NetworkedEntity known = c.KnownEntities[ne.EntityID];
+                    if (known == null)
+                    {
+                        updateType = EntitySnapshotType.Full;
+                        c.KnownEntities[ne.EntityID] = ne;
+                    }
+                    else if (known != ne)
+                    {
+                        updateType = EntitySnapshotType.Replace;
+                        c.KnownEntities[ne.EntityID] = ne;
+                    }
+                    else
+                        updateType = c.NeedsFullUpdate ? EntitySnapshotType.Full : EntitySnapshotType.Partial;
+                    m.Write((byte)updateType);
+
+                    ne.WriteSnapshot(m, c, updateType == EntitySnapshotType.Partial);
+                }
+
+                c.Send(m);
+                c.NeedsFullUpdate = false;
             }
         }
     }
