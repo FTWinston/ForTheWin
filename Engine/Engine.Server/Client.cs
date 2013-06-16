@@ -145,76 +145,79 @@ namespace FTW.Engine.Server
 
         internal static void SendSnapshots()
         {
-            Message m;
             foreach (Client c in AllClients.Values)
             {
-                // do we track this using frame numbers, time, or raknet time?
                 if (c.NextSnapshotTime > GameServer.Instance.FrameTime)
-                    continue;
+                    return;
 
-                m = new Message((byte)DefaultMessageIDTypes.ID_TIMESTAMP, PacketPriority.HIGH_PRIORITY, PacketReliability.UNRELIABLE);
-                m.Write(GameServer.Instance.FrameTime);
-                m.Write((byte)EngineMessage.Snapshot);
-
-                // now step through all entities, decide what to send. Will either be:
-                // No change (sends nothing)
-                // New entity / full update of entity (Full)
-                // Partial update of entity (Partial)
-                // Forget about this entity (Delete)
-                // ID reassigned, full update of new entity (Replace)
-                foreach (Entity e in Entity.AllEntities)
-                {
-                    if (!e.IsNetworked)
-                        continue;
-
-                    NetworkedEntity ne = e as NetworkedEntity;
-                    if (ne.IsDeleted || !ne.HasChanges(c))
-                        continue;
-
-                    if (!ne.ShouldSendToClient(c))
-                    {
-                        if (c.KnownEntities.Keys.Contains(ne.EntityID))
-                            c.DeletedEntities.Add(ne.EntityID, false); // the client shouldn't see this entity any more, so delete it on their end
-                        continue;
-                    }
-
-                    m.Write(ne.EntityID);
-
-                    EntitySnapshotType updateType;
-                    if (c.KnownEntities.ContainsKey(ne.EntityID))
-                    {
-                        if (c.DeletedEntities.ContainsKey(ne.EntityID))
-                        {
-                            // Reusing an entity ID the client is still using for something else. Ensure it knows the old should be deleted.
-                            // Also, don't include it on the Delete list - the Replace accounts for that.
-                            updateType = EntitySnapshotType.Replace;
-                            c.DeletedEntities.Remove(ne.EntityID);
-                        }
-                        else
-                            updateType = c.NeedsFullUpdate ? EntitySnapshotType.Full : EntitySnapshotType.Partial;
-                    }
-                    else
-                    {
-                        updateType = EntitySnapshotType.Full;
-                        c.KnownEntities[ne.EntityID] = true;
-                    }
-
-                    m.Write((byte)updateType);
-                    ne.WriteSnapshot(m, c, updateType == EntitySnapshotType.Partial);
-                }
-
-                foreach (ushort entityID in c.DeletedEntities.Keys)
-                {
-                    m.Write(entityID);
-                    m.Write((byte)EntitySnapshotType.Delete);
-                }
-                c.DeletedEntities.Clear();
-
-                c.Send(m);
-                c.NeedsFullUpdate = false;
+                c.SendSnapshot();
                 c.LastSnapshotTime = GameServer.Instance.FrameTime;
                 c.NextSnapshotTime += c.SnapshotInterval;
             }
+        }
+
+        private void SendSnapshot()
+        {
+            Message m = new Message((byte)DefaultMessageIDTypes.ID_TIMESTAMP, PacketPriority.HIGH_PRIORITY, PacketReliability.UNRELIABLE);
+            m.Write(GameServer.Instance.FrameTime);
+            m.Write((byte)EngineMessage.Snapshot);
+
+            // now step through all entities, decide what to send. Will either be:
+            // No change (sends nothing)
+            // New entity / full update of entity (Full)
+            // Partial update of entity (Partial)
+            // Forget about this entity (Delete)
+            // ID reassigned, full update of new entity (Replace)
+            foreach (Entity e in Entity.AllEntities)
+            {
+                if (!e.IsNetworked)
+                    continue;
+
+                NetworkedEntity ne = e as NetworkedEntity;
+                if (ne.IsDeleted || !ne.HasChanges(this))
+                    continue;
+
+                if (!ne.ShouldSendToClient(this))
+                {
+                    if (KnownEntities.Keys.Contains(ne.EntityID))
+                        DeletedEntities.Add(ne.EntityID, false); // the client shouldn't see this entity any more, so delete it on their end
+                    continue;
+                }
+
+                m.Write(ne.EntityID);
+
+                EntitySnapshotType updateType;
+                if (KnownEntities.ContainsKey(ne.EntityID))
+                {
+                    if (DeletedEntities.ContainsKey(ne.EntityID))
+                    {
+                        // Reusing an entity ID the client is still using for something else. Ensure it knows the old should be deleted.
+                        // Also, don't include it on the Delete list - the Replace accounts for that.
+                        updateType = EntitySnapshotType.Replace;
+                        DeletedEntities.Remove(ne.EntityID);
+                    }
+                    else
+                        updateType = NeedsFullUpdate ? EntitySnapshotType.Full : EntitySnapshotType.Partial;
+                }
+                else
+                {
+                    updateType = EntitySnapshotType.Full;
+                    KnownEntities[ne.EntityID] = true;
+                }
+
+                m.Write((byte)updateType);
+                ne.WriteSnapshot(m, this, updateType == EntitySnapshotType.Partial);
+            }
+
+            foreach (ushort entityID in DeletedEntities.Keys)
+            {
+                m.Write(entityID);
+                m.Write((byte)EntitySnapshotType.Delete);
+            }
+            DeletedEntities.Clear();
+
+            Send(m);
+            NeedsFullUpdate = false;
         }
     }
 

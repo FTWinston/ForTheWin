@@ -48,9 +48,9 @@ namespace FTW.Engine.Shared
             {
                 val = value;
                 LastChanged = GameServer.Instance.FrameTime;
-                if ( entity.RelatedClient == null )
+                if (entity.RelatedClient == null)
                     entity.LastChanged = LastChanged;
-                else if ( relatedClient )
+                else if (relatedClient)
                     entity.LastChangedRelated = LastChanged;
                 else
                     entity.LastChangedOther = LastChanged;

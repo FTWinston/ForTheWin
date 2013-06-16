@@ -34,15 +34,16 @@ namespace FTW.Engine.Server
 
     public abstract class NetworkedEntity : Entity
     {
-        public NetworkedEntity()
-            : this(null)
+        public NetworkedEntity(string networkedType)
+            : this(networkedType, null)
         {
         }
 
-        public NetworkedEntity(Client relatedClient)
+        public NetworkedEntity(string networkedType, Client relatedClient)
         {
+            NetworkedType = networkedType;
             //EntityID = GetNewEntityID();
-
+            
             Fields = new List<NetworkField>();
             RelatedClient = relatedClient;
 
@@ -62,6 +63,7 @@ namespace FTW.Engine.Server
                     c.DeletedEntities.Add(EntityID, true);
         }
 
+        internal string NetworkedType { get; private set; }
         public ushort EntityID { get; private set; }
         public Client RelatedClient { get; private set; }
         private List<NetworkField> Fields, RelatedClientFields, OtherClientFields;
@@ -114,6 +116,8 @@ namespace FTW.Engine.Server
             }
             else
             {
+                m.Write(NetworkedType);
+
                 for (int i = 0; i < Fields.Count; i++)
                     Fields[i].WriteTo(m);
 
