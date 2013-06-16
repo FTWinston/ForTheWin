@@ -80,8 +80,8 @@ public class RakNet {
     } 
   }
 
-  public static ulong GetTime() {
-    ulong ret = RakNetPINVOKE.GetTime();
+  public static uint GetTime() {
+    uint ret = RakNetPINVOKE.GetTime();
     return ret;
   }
 
@@ -95,12 +95,12 @@ public class RakNet {
     return ret;
   }
 
-  public static bool GreaterThan(ulong a, ulong b) {
+  public static bool GreaterThan(uint a, uint b) {
     bool ret = RakNetPINVOKE.GreaterThan(a, b);
     return ret;
   }
 
-  public static bool LessThan(ulong a, ulong b) {
+  public static bool LessThan(uint a, uint b) {
     bool ret = RakNetPINVOKE.LessThan(a, b);
     return ret;
   }

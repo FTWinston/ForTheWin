@@ -44,22 +44,22 @@ public class PunchthroughConfiguration : IDisposable {
   public PunchthroughConfiguration() : this(RakNetPINVOKE.new_PunchthroughConfiguration(), true) {
   }
 
-  public ulong TIME_BETWEEN_PUNCH_ATTEMPTS_INTERNAL {
+  public uint TIME_BETWEEN_PUNCH_ATTEMPTS_INTERNAL {
     set {
       RakNetPINVOKE.PunchthroughConfiguration_TIME_BETWEEN_PUNCH_ATTEMPTS_INTERNAL_set(swigCPtr, value);
     } 
     get {
-      ulong ret = RakNetPINVOKE.PunchthroughConfiguration_TIME_BETWEEN_PUNCH_ATTEMPTS_INTERNAL_get(swigCPtr);
+      uint ret = RakNetPINVOKE.PunchthroughConfiguration_TIME_BETWEEN_PUNCH_ATTEMPTS_INTERNAL_get(swigCPtr);
       return ret;
     } 
   }
 
-  public ulong TIME_BETWEEN_PUNCH_ATTEMPTS_EXTERNAL {
+  public uint TIME_BETWEEN_PUNCH_ATTEMPTS_EXTERNAL {
     set {
       RakNetPINVOKE.PunchthroughConfiguration_TIME_BETWEEN_PUNCH_ATTEMPTS_EXTERNAL_set(swigCPtr, value);
     } 
     get {
-      ulong ret = RakNetPINVOKE.PunchthroughConfiguration_TIME_BETWEEN_PUNCH_ATTEMPTS_EXTERNAL_get(swigCPtr);
+      uint ret = RakNetPINVOKE.PunchthroughConfiguration_TIME_BETWEEN_PUNCH_ATTEMPTS_EXTERNAL_get(swigCPtr);
       return ret;
     } 
   }

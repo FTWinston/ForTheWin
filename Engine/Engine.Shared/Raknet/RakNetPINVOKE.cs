@@ -3184,16 +3184,16 @@ class RakNetPINVOKE {
   public static extern IntPtr new_PunchthroughConfiguration();
 
   [DllImport("RakNet", EntryPoint="CSharp_PunchthroughConfiguration_TIME_BETWEEN_PUNCH_ATTEMPTS_INTERNAL_set")]
-  public static extern void PunchthroughConfiguration_TIME_BETWEEN_PUNCH_ATTEMPTS_INTERNAL_set(HandleRef jarg1, ulong jarg2);
+  public static extern void PunchthroughConfiguration_TIME_BETWEEN_PUNCH_ATTEMPTS_INTERNAL_set(HandleRef jarg1, uint jarg2);
 
   [DllImport("RakNet", EntryPoint="CSharp_PunchthroughConfiguration_TIME_BETWEEN_PUNCH_ATTEMPTS_INTERNAL_get")]
-  public static extern ulong PunchthroughConfiguration_TIME_BETWEEN_PUNCH_ATTEMPTS_INTERNAL_get(HandleRef jarg1);
+  public static extern uint PunchthroughConfiguration_TIME_BETWEEN_PUNCH_ATTEMPTS_INTERNAL_get(HandleRef jarg1);
 
   [DllImport("RakNet", EntryPoint="CSharp_PunchthroughConfiguration_TIME_BETWEEN_PUNCH_ATTEMPTS_EXTERNAL_set")]
-  public static extern void PunchthroughConfiguration_TIME_BETWEEN_PUNCH_ATTEMPTS_EXTERNAL_set(HandleRef jarg1, ulong jarg2);
+  public static extern void PunchthroughConfiguration_TIME_BETWEEN_PUNCH_ATTEMPTS_EXTERNAL_set(HandleRef jarg1, uint jarg2);
 
   [DllImport("RakNet", EntryPoint="CSharp_PunchthroughConfiguration_TIME_BETWEEN_PUNCH_ATTEMPTS_EXTERNAL_get")]
-  public static extern ulong PunchthroughConfiguration_TIME_BETWEEN_PUNCH_ATTEMPTS_EXTERNAL_get(HandleRef jarg1);
+  public static extern uint PunchthroughConfiguration_TIME_BETWEEN_PUNCH_ATTEMPTS_EXTERNAL_get(HandleRef jarg1);
 
   [DllImport("RakNet", EntryPoint="CSharp_PunchthroughConfiguration_UDP_SENDS_PER_PORT_INTERNAL_set")]
   public static extern void PunchthroughConfiguration_UDP_SENDS_PER_PORT_INTERNAL_set(HandleRef jarg1, int jarg2);
@@ -3913,10 +3913,10 @@ class RakNetPINVOKE {
   public static extern void NatPunchthroughServer_SetDebugInterface(HandleRef jarg1, HandleRef jarg2);
 
   [DllImport("RakNet", EntryPoint="CSharp_NatPunchthroughServer_lastUpdate_set")]
-  public static extern void NatPunchthroughServer_lastUpdate_set(HandleRef jarg1, ulong jarg2);
+  public static extern void NatPunchthroughServer_lastUpdate_set(HandleRef jarg1, uint jarg2);
 
   [DllImport("RakNet", EntryPoint="CSharp_NatPunchthroughServer_lastUpdate_get")]
-  public static extern ulong NatPunchthroughServer_lastUpdate_get(HandleRef jarg1);
+  public static extern uint NatPunchthroughServer_lastUpdate_get(HandleRef jarg1);
 
   [DllImport("RakNet", EntryPoint="CSharp_new_UDPForwarder")]
   public static extern IntPtr new_UDPForwarder();
@@ -4714,7 +4714,7 @@ class RakNetPINVOKE {
   public static extern void ConnectionGraph2_GetParticipantListHelper(HandleRef jarg1, HandleRef jarg2);
 
   [DllImport("RakNet", EntryPoint="CSharp_GetTime")]
-  public static extern ulong GetTime();
+  public static extern uint GetTime();
 
   [DllImport("RakNet", EntryPoint="CSharp_GetTimeMS")]
   public static extern uint GetTimeMS();
@@ -4723,10 +4723,10 @@ class RakNetPINVOKE {
   public static extern ulong GetTimeUS();
 
   [DllImport("RakNet", EntryPoint="CSharp_GreaterThan")]
-  public static extern bool GreaterThan(ulong jarg1, ulong jarg2);
+  public static extern bool GreaterThan(uint jarg1, uint jarg2);
 
   [DllImport("RakNet", EntryPoint="CSharp_LessThan")]
-  public static extern bool LessThan(ulong jarg1, ulong jarg2);
+  public static extern bool LessThan(uint jarg1, uint jarg2);
 
   [DllImport("RakNet", EntryPoint="CSharp_new_RakNetListRakNetGUID__SWIG_0")]
   public static extern IntPtr new_RakNetListRakNetGUID__SWIG_0();

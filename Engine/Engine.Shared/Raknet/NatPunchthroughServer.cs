@@ -57,12 +57,12 @@ public class NatPunchthroughServer : PluginInterface2 {
     RakNetPINVOKE.NatPunchthroughServer_SetDebugInterface(swigCPtr, NatPunchthroughServerDebugInterface.getCPtr(i));
   }
 
-  public ulong lastUpdate {
+  public uint lastUpdate {
     set {
       RakNetPINVOKE.NatPunchthroughServer_lastUpdate_set(swigCPtr, value);
     } 
     get {
-      ulong ret = RakNetPINVOKE.NatPunchthroughServer_lastUpdate_get(swigCPtr);
+      uint ret = RakNetPINVOKE.NatPunchthroughServer_lastUpdate_get(swigCPtr);
       return ret;
     } 
   }
