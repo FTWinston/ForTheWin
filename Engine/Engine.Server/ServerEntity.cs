@@ -21,14 +21,15 @@ namespace FTW.Engine.Server
         public virtual void Delete()
         {
             IsDeleted = true;
+            AllEntities.Remove(this);
         }
-
 
         public virtual void PreThink(double dt) { }
         public virtual void Simulate(double dt) { }
         public virtual void PostThink(double dt) { }
 
         internal static List<Entity> AllEntities = new List<Entity>();
+        internal static SortedList<ushort, NetworkedEntity> NetworkedEntities = new SortedList<ushort, NetworkedEntity>();
         public static ReadOnlyCollection<Entity> GetAll() { return AllEntities.AsReadOnly(); }
     }
 
@@ -40,9 +41,12 @@ namespace FTW.Engine.Server
         }
 
         public NetworkedEntity(string networkedType, Client relatedClient)
+            : base()
         {
             NetworkedType = networkedType;
-            //EntityID = GetNewEntityID();
+            EntityID = GetNewEntityID();
+
+            NetworkedEntities.Add(EntityID, this);
             
             Fields = new List<NetworkField>();
             RelatedClient = relatedClient;
@@ -57,10 +61,25 @@ namespace FTW.Engine.Server
         public override void Delete()
         {
             base.Delete();
+
+            NetworkedEntities.Remove(EntityID);
             
             foreach (Client c in Client.AllClients.Values)
                 if ( ShouldSendToClient(c) )
                     c.DeletedEntities.Add(EntityID, true);
+        }
+
+        ushort nextEntityID = ushort.MinValue;
+        private ushort GetNewEntityID()
+        {
+            while (NetworkedEntities.ContainsKey(nextEntityID))
+            {
+                if (nextEntityID == ushort.MaxValue)
+                    nextEntityID = ushort.MinValue;
+                else
+                    nextEntityID++;
+            }
+            return nextEntityID++;
         }
 
         internal string NetworkedType { get; private set; }

@@ -150,6 +150,11 @@ namespace FTW.Engine.Server
                 Client.LocalClient = null;
 
             Client.AllClients.Clear();
+            Entity.AllEntities.Clear();
+            Entity.NetworkedEntities.Clear();
+
+            Message.ToLocalClient.Clear();
+            Message.ToLocalServer.Clear();
 
             Instance = null;
         }
