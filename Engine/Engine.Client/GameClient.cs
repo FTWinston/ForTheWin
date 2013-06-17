@@ -107,7 +107,7 @@ namespace FTW.Engine.Client
                     }
                 case EngineMessage.PlayerList:
                     {
-                        name = m.ReadString(); // change name rather than Name, to automatically accept the change. Don't re-send this!
+                        name = m.ReadString(); // change name rather than Name, so as to automatically accept the change without re-sending.
                         Console.WriteLine("My name, corrected by server: " + Name);
 
                         byte numOthers = m.ReadByte();
@@ -126,6 +126,15 @@ namespace FTW.Engine.Client
                         }
 
                         GameClient.Instance.FullyConnected = true;
+                        return true;
+                    }
+                case EngineMessage.Snapshot:
+                    {
+                        // add this message to a list sorted by timestamp, assuming it isn't too old
+                        
+                        // As we're only using timestamps, how should we determine (when trying to apply it) if we're MISSING a snapshot, or not?
+                        // Rather than have a frame number in the snapshot, we can compare the time difference to the server frame interval variable.
+                        // That would struggle when the variable changes ... or would it? If the variable change wasn't applied until the relevant snapshot came in, we might get away with it.
                         return true;
                     }
                 default:

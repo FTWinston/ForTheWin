@@ -31,20 +31,13 @@ namespace FTW.Engine.Shared
         {
             Stream = new BitStream(p.data, p.length, false);
 
-            byte b = ReadByte();
-
-            if (b == (byte)DefaultMessageIDTypes.ID_TIMESTAMP)
-            {
-                Timestamp = ReadULong();
-                Type = ReadByte();
-            }
-            else
-                Type = b;
+            Type = ReadByte();
+            CheckTimestamp();
         }
 
         public PacketPriority Priority { get; private set; }
         public PacketReliability Reliability { get; private set; }
-        public ulong? Timestamp { get; private set; }
+        public uint? Timestamp { get; private set; }
 
         public byte Type { get; private set; }
         public BitStream Stream { get; private set; }
@@ -76,7 +69,18 @@ namespace FTW.Engine.Shared
         public static List<Message> ToLocalServer = new List<Message>();
         public void ResetRead()
         {
-            Stream.SetReadOffset(Timestamp.HasValue ? (uint)80 : (uint)8); // if no timestamp, 1 byte. otherwise, 2 bytes + sizeof(ulong), which is 10 bytes total
+            Stream.SetReadOffset(0);
+            Type = ReadByte();
+            CheckTimestamp();
+        }
+
+        private void CheckTimestamp()
+        {
+            if (Type == (byte)DefaultMessageIDTypes.ID_TIMESTAMP)
+            {
+                Timestamp = ReadUInt();
+                Type = ReadByte();
+            }
         }
     }
 }
