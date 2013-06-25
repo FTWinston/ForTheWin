@@ -82,5 +82,10 @@ namespace FTW.Engine.Shared
                 Type = ReadByte();
             }
         }
+
+        public bool HasMoreData()
+        {
+            return Stream.GetNumberOfUnreadBits() > 0;
+        }
     }
 }

@@ -140,6 +140,9 @@ namespace FTW.Engine.Server
                 for (int i = 0; i < Fields.Count; i++)
                     Fields[i].WriteTo(m);
 
+                bool isRelated = RelatedClient == c;
+                m.Write(isRelated);
+
                 if (RelatedClient == null)
                     return;
 
@@ -148,10 +151,10 @@ namespace FTW.Engine.Server
                     list[i].WriteTo(m);
             }
         }
+    }
 
-        public abstract class ServerOnlyEntity : Entity
-        {
-            public sealed override bool IsNetworked { get { return false; } }
-        }
+    public abstract class ServerOnlyEntity : Entity
+    {
+        public sealed override bool IsNetworked { get { return false; } }
     }
 }
