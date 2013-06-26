@@ -28,6 +28,8 @@ namespace FTW.Engine.Shared
         protected NetworkedEntity entity; protected bool relatedClient;
 
         public uint LastChanged { get; protected set; }
+#elif CLIENT
+        public abstract void PerformRead(Message m);
 #endif
     }
 
@@ -77,6 +79,34 @@ namespace FTW.Engine.Shared
                     return Lerp(fromVal, toVal, (GameClient.Instance.FrameTime - fromTime) / (toTime - fromTime));
                 else // no extrapolation, for the moment
                     return toVal;
+            }
+        }
+
+        public override void PerformRead(Message m)
+        {
+            T val = ReadFrom(m);
+
+            uint messageTime = m.Timestamp.Value;
+            if (messageTime < GameClient.Instance.FrameTime)
+            {
+                // can interpolate from this instead of our previous value. Liable to "jump" ... do we want?
+                if (messageTime > fromTime)
+                {
+                    fromVal = val;
+                    fromTime = messageTime;
+                }
+            }
+            else if (messageTime < toTime)
+            {
+                // usurp the current "to" value, and put it back into the queue. Liable to "jump" ... do we want?
+                queuedValues[toTime] = toVal;
+                toVal = val;
+                toTime = messageTime;
+            }
+            else
+            {
+                // put this into the queue, for use later
+                queuedValues[messageTime] = val;
             }
         }
 

@@ -69,6 +69,7 @@
     <Compile Include="GameClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServerConnection.cs" />
+    <Compile Include="Snapshot.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Engine.Shared\Engine.Shared.csproj">

@@ -35,12 +35,13 @@ namespace FTW.Engine.Server
 
     public abstract class NetworkedEntity : Entity
     {
-        public NetworkedEntity(string networkedType)
-            : this(networkedType, null)
-        {
-        }
+        public NetworkedEntity(string networkedType, bool usesRelatedClient)
+            : this(networkedType, usesRelatedClient, null) { }
 
         public NetworkedEntity(string networkedType, Client relatedClient)
+            : this(networkedType, true, relatedClient) { }
+
+        private NetworkedEntity(string networkedType, bool usesRelatedClient, Client relatedClient)
             : base()
         {
             NetworkedType = networkedType;
@@ -49,9 +50,10 @@ namespace FTW.Engine.Server
             NetworkedEntities.Add(EntityID, this);
             
             Fields = new List<NetworkField>();
+            UsesRelatedClient = usesRelatedClient;
             RelatedClient = relatedClient;
 
-            if (RelatedClient != null)
+            if (UsesRelatedClient)
             {
                 RelatedClientFields = new List<NetworkField>();
                 OtherClientFields = new List<NetworkField>();
@@ -84,6 +86,7 @@ namespace FTW.Engine.Server
 
         internal string NetworkedType { get; private set; }
         public ushort EntityID { get; private set; }
+        internal bool UsesRelatedClient { get; private set; }
         public Client RelatedClient { get; private set; }
         private List<NetworkField> Fields, RelatedClientFields, OtherClientFields;
         internal uint LastChanged, LastChangedRelated, LastChangedOther;
@@ -95,7 +98,7 @@ namespace FTW.Engine.Server
             if (LastChanged >= c.LastSnapshotTime)
                 return true;
 
-            if ( RelatedClient != null )
+            if (UsesRelatedClient)
             {
                 uint field = RelatedClient == c ? LastChangedRelated : LastChangedOther;
                 return field >= c.LastSnapshotTime;
@@ -118,20 +121,21 @@ namespace FTW.Engine.Server
                     }
                 }
 
-                if (RelatedClient == null)
-                    return;
-
-                int offset = Fields.Count;
-                var list = RelatedClient == c ? RelatedClientFields : OtherClientFields;
-                for (int i = 0; i < list.Count; i++)
+                if (UsesRelatedClient)
                 {
-                    var f = list[i];
-                    if (f.LastChanged > c.LastSnapshotTime)
+                    int offset = Fields.Count;
+                    var list = RelatedClient == c ? RelatedClientFields : OtherClientFields;
+                    for (int i = 0; i < list.Count; i++)
                     {
-                        m.Write((byte)(i + offset));
-                        f.WriteTo(m);
+                        var f = list[i];
+                        if (f.LastChanged > c.LastSnapshotTime)
+                        {
+                            m.Write((byte)(i + offset));
+                            f.WriteTo(m);
+                        }
                     }
                 }
+                m.Write(byte.MaxValue);
             }
             else
             {
@@ -140,13 +144,12 @@ namespace FTW.Engine.Server
                 for (int i = 0; i < Fields.Count; i++)
                     Fields[i].WriteTo(m);
 
-                bool isRelated = RelatedClient == c;
-                m.Write(isRelated);
-
-                if (RelatedClient == null)
+                if (!UsesRelatedClient)
                     return;
 
+                m.Write(RelatedClient == c);
                 var list = RelatedClient == c ? RelatedClientFields : OtherClientFields;
+
                 for (int i = 0; i < list.Count; i++)
                     list[i].WriteTo(m);
             }

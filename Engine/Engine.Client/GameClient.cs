@@ -139,7 +139,7 @@ namespace FTW.Engine.Client
                     }
                 case EngineMessage.Snapshot:
                     {
-                        ProcessSnapshot(m);
+                        Snapshot.Read(m);
                         return true;
                     }
                 default:
@@ -150,70 +150,6 @@ namespace FTW.Engine.Client
         public void SendMessage(Message m)
         {
             Connection.Send(m);
-        }
-
-        private void ProcessSnapshot(Message m)
-        {
-            // As we're only using timestamps, how should we determine (when trying to apply it) if we're MISSING a snapshot, or not?
-            // Rather than have a frame number in the snapshot, we can compare the time difference to the server frame interval variable.
-            // That would struggle when the variable changes ... or would it? If the variable change wasn't applied until the relevant snapshot came in, we might get away with it.
-
-            while (m.HasMoreData())
-            {
-                ushort entityID = m.ReadUShort();
-                EntitySnapshotType snapshotType = (EntitySnapshotType)m.ReadByte();
-                NetworkedEntity ent;
-                switch (snapshotType)
-                {
-                    case EntitySnapshotType.Full:
-                        string type = m.ReadString();
-                        if ( !NetworkedEntity.NetworkedEntities.TryGetValue(entityID, out ent) )
-                            ScheduleCreation(entityID, type, m);
-                        else if (ent.NetworkedType != type)
-                        {// delete and create new (this was an error, so also log it)
-                            ScheduleDeletion(entityID);
-                            ScheduleCreation(entityID, type, m);
-                            Console.WriteLine(string.Format("Error reading snapshot: entity {0} has the wrong type (got {1}, update has {2})", entityID, ent.NetworkedType, type));
-                        }
-                        else
-                            ScheduleUpdate(ent, false, m);
-                        break;
-                    case EntitySnapshotType.Partial:
-                        if (NetworkedEntity.NetworkedEntities.TryGetValue(entityID, out ent))
-                            ScheduleUpdate(ent, true, m);
-                        else
-                            Console.WriteLine("Error reading snapshot: received an update for unknown entity " + entityID);
-                        break;
-                    case EntitySnapshotType.Delete:
-                        ScheduleDeletion(entityID);
-                        break;
-                    case EntitySnapshotType.Replace:
-                        // delete then treat like a full update
-                        ScheduleDeletion(entityID);
-                        ScheduleCreation(entityID, m.ReadString(), m);
-                        break;
-                    default:
-                        Console.WriteLine("Error reading snapshot: invalid EntitySnapshotType: " + snapshotType);
-                        return;
-                }
-            }
-        }
-
-        private void ScheduleCreation(ushort entityID, string type, Message m)
-        {
-            NetworkedEntity ent = NetworkedEntity.Create(type, entityID);
-            ScheduleUpdate(ent, false, m);
-            throw new NotImplementedException();
-        }
-
-        private void ScheduleUpdate(NetworkedEntity entity, bool incremental, Message m)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void ScheduleDeletion(ushort entityID)
-        {
-            throw new NotImplementedException();
         }
 
         static readonly char[] cmdSplit = { ' ', '	' };

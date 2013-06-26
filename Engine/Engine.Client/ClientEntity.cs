@@ -68,22 +68,23 @@ namespace FTW.Engine.Client
             return ent;
         }
 
-        public NetworkedEntity(ushort entityID, string networkedType, bool isRelatedClient)
+        public NetworkedEntity(ushort entityID, string networkedType, bool usesRelatedClient, bool isRelatedClient)
             : base()
         {
             NetworkedType = networkedType;
             EntityID = entityID;
+            UsesRelatedClient = usesRelatedClient;
             IsRelatedClient = isRelatedClient;
 
             NetworkedEntities.Add(EntityID, this);
 
             Fields = new List<NetworkField>();
 
-            // unless we send a bool to cover whether there IS a related client, we'll always have to create one of these, won't we?
-            if (isRelatedClient)
-                RelatedClientFields = new List<NetworkField>();
-            else
-                OtherClientFields = new List<NetworkField>();
+            if (UsesRelatedClient)
+                if (IsRelatedClient)
+                    RelatedClientFields = new List<NetworkField>();
+                else
+                    OtherClientFields = new List<NetworkField>();
         }
 
         public override void Delete()
@@ -92,8 +93,43 @@ namespace FTW.Engine.Client
             NetworkedEntities.Remove(EntityID);
         }
 
+        internal void ReadSnapshot(Message m, bool incremental)
+        {
+            if (incremental)
+            {
+                var list = UsesRelatedClient ? IsRelatedClient ? RelatedClientFields : OtherClientFields : null;
+                int b = m.ReadByte();
+                int offset = Fields.Count, max = list == null ? offset : list.Count + offset;
+                while (b != byte.MaxValue)
+                {
+                    if (b < offset)
+                        Fields[b].PerformRead(m);
+                    else if (b < max)
+                        list[b-offset].PerformRead(m);
+                    else
+                        Console.Error.WriteLine("Error reading incremental update: invalid field ID specified: " + b);
+
+                    b = m.ReadByte();
+                }
+            }
+            else
+            {
+                for (int i = 0; i < Fields.Count; i++)
+                    Fields[i].PerformRead(m);
+
+                if (!UsesRelatedClient)
+                    return;
+
+                // related client stuff
+                var list = IsRelatedClient ? RelatedClientFields : OtherClientFields;
+                for (int i = 0; i < list.Count; i++)
+                    list[i].PerformRead(m);
+            }
+        }
+
         internal string NetworkedType { get; private set; }
         public ushort EntityID { get; private set; }
+        internal bool UsesRelatedClient { get; private set; }
         public bool IsRelatedClient { get; private set; }
         private List<NetworkField> Fields, RelatedClientFields, OtherClientFields;
     }
