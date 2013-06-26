@@ -17,6 +17,8 @@ namespace FTW.Engine.Shared
         {
         }
 
+        protected internal abstract string Describe();
+
 #if SERVER
         public abstract void WriteTo(Message m);
 
@@ -114,6 +116,12 @@ namespace FTW.Engine.Shared
 
         protected abstract T Lerp(T val1, T val2, float fraction);
 #endif
+
+        protected internal override string Describe()
+        {
+            return typeof(T).Name;
+        } 
+
         public static implicit operator T(NetworkField<T> f) { return f.Value; }
     }
 

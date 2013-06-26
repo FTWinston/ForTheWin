@@ -114,8 +114,17 @@ namespace FTW.Engine.Client
                         Console.WriteLine(clientName + " joined the game");
                         return true;
                     }
-                case EngineMessage.PlayerList:
+                case EngineMessage.ServerInfo:
                     {
+                        byte[] hash = new byte[16];
+                        m.Stream.Read(hash, 128);
+                        if (!NetworkedEntity.CheckNetworkTableHash(hash))
+                        {
+                            Console.Error.WriteLine("Network table doesn't match server's");
+                            Connection.Disconnect();
+                            return true;
+                        }
+
                         name = m.ReadString(); // change name rather than Name, so as to automatically accept the change without re-sending.
                         Console.WriteLine("My name, corrected by server: " + Name);
 

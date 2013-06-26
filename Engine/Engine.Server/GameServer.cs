@@ -103,6 +103,8 @@ namespace FTW.Engine.Server
         {
             Console.WriteLine("Initializing...");
 
+            NetworkedEntity.InitializeTypes();
+
             if (IsMultiplayer)
             {
                 rakNet = RakPeerInterface.GetInstance();
@@ -288,9 +290,10 @@ namespace FTW.Engine.Server
                         if ( !IsDedicated )
                             Console.WriteLine(c.Name + " joined the game");
 
-                        // send a PlayerList to the newly-connected client, telling them how/if we've modified their name
-                        // and the names of everyone else on the server
-                        m = new Message((byte)EngineMessage.PlayerList, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE);
+                        // send ServerInfo to the newly-connected client, which as well as the network table hash,
+                        // tells them how/if we've modified their name and the names of everyone else on the server
+                        m = new Message((byte)EngineMessage.ServerInfo, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE);
+                        m.Stream.Write(NetworkedEntity.NetworkTableHash, (uint)128);
                         m.Write(c.Name);
 
 		                List<Client> otherClients = Client.GetAllExcept(c);

@@ -36,7 +36,7 @@ namespace FTW.Engine.Shared
 
             Type serverType = typeof(ServerBase);
             foreach ( Type t in a.GetTypes() )
-                if (t.IsSubclassOf(serverType) && t.GetConstructor(Type.EmptyTypes) != null)
+                if (t.IsSubclassOf(serverType) && t.GetConstructor(Type.EmptyTypes) != null && !t.IsAbstract)
                     return Activator.CreateInstance(t) as ServerBase;
 
             throw new Exception("Cannot find ServerBase-implementing class in " + assemblyFileName + ". " + Environment.NewLine + "Check it is public, and has a public, parameterless constructor");

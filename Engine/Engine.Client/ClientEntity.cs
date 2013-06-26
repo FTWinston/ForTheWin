@@ -8,39 +8,18 @@ using System.Reflection;
 
 namespace FTW.Engine.Client
 {
-    public abstract class Entity : BaseEntity
+    public abstract partial class Entity
     {
-        protected Entity()
-        {
-            AllEntities.Add(this);
-        }
-
-        /// <summary>
-        /// Schedules this entity for deletion at the end of the current frame.
-        /// Until then, its IsDeleted property will be true.
-        /// </summary>
-        public virtual void Delete()
-        {
-            IsDeleted = true;
-            AllEntities.Remove(this);
-        }
-
-        public virtual void PreThink(double dt) { }
-        public virtual void Simulate(double dt) { }
-        public virtual void PostThink(double dt) { }
-
-        internal static List<Entity> AllEntities = new List<Entity>();
-        internal static SortedList<ushort, NetworkedEntity> NetworkedEntities = new SortedList<ushort, NetworkedEntity>();
-        public static ReadOnlyCollection<Entity> GetAll() { return AllEntities.AsReadOnly(); }
     }
 
-    public abstract class NetworkedEntity : Entity
+    public abstract partial class NetworkedEntity : Entity
     {
-        internal static SortedList<string, ConstructorInfo> Types;
+        internal static SortedList<string, ConstructorInfo> Constructors;
 
         internal static void InitializeTypes()
         {
-            Types = new SortedList<string, ConstructorInfo>();
+            Constructors = new SortedList<string, ConstructorInfo>();
+            var Instances = new SortedList<string, NetworkedEntity>();
 
             foreach (Type t in Assembly.GetEntryAssembly().GetTypes())
                 if (t.IsSubclassOf(typeof(NetworkedEntity)) && !t.IsAbstract)
@@ -49,18 +28,39 @@ namespace FTW.Engine.Client
                     if (c != null)
                     {
                         NetworkedEntity ent = c.Invoke(Type.EmptyTypes) as NetworkedEntity;
-                        if (Types.ContainsKey(ent.NetworkedType))
-                            Console.Error.WriteLine(string.Format("Duplicate network type detected - {1} and {2} both use the same NetworkedType: {0}", ent.NetworkedType, c.DeclaringType, Types[ent.NetworkedType].DeclaringType));
+                        if (Constructors.ContainsKey(ent.NetworkedType))
+                            Console.Error.WriteLine(string.Format("Duplicate network type detected - {1} and {2} both use the same NetworkedType: {0}", ent.NetworkedType, c.DeclaringType.Name, Constructors[ent.NetworkedType].DeclaringType.Name));
                         else
-                            Types.Add(ent.NetworkedType, c);
+                        {
+                            Constructors.Add(ent.NetworkedType, c);
+                            Instances.Add(ent.NetworkedType, ent);
+                        }
                     }
                 }
+
+            NetworkTableHash = GetNetworkTableHash(Instances.Values);
+        }
+
+        private static byte[] NetworkTableHash;
+
+        internal static bool CheckNetworkTableHash(byte[] serverHash)
+        {
+            if (NetworkTableHash.Length != serverHash.Length)
+                return false;
+
+            for (int i = 0; i < serverHash.Length; i++)
+                if (NetworkTableHash[i] != serverHash[i])
+                    return false;
+#if DEBUG
+            Console.WriteLine("Network tables match");
+#endif
+            return true;
         }
 
         internal static NetworkedEntity Create(string type, ushort entityID)
         {
             ConstructorInfo c;
-            if (!Types.TryGetValue(type, out c))
+            if (!Constructors.TryGetValue(type, out c))
                 return null;
 
             NetworkedEntity ent = c.Invoke(Type.EmptyTypes) as NetworkedEntity;
@@ -71,7 +71,7 @@ namespace FTW.Engine.Client
         public NetworkedEntity(ushort entityID, string networkedType, bool usesRelatedClient, bool isRelatedClient)
             : base()
         {
-            NetworkedType = networkedType;
+            NetworkedType = networkedType.Replace('¬', '-');
             EntityID = entityID;
             UsesRelatedClient = usesRelatedClient;
             IsRelatedClient = isRelatedClient;
@@ -127,10 +127,6 @@ namespace FTW.Engine.Client
             }
         }
 
-        internal string NetworkedType { get; private set; }
-        public ushort EntityID { get; private set; }
-        internal bool UsesRelatedClient { get; private set; }
         public bool IsRelatedClient { get; private set; }
-        private List<NetworkField> Fields, RelatedClientFields, OtherClientFields;
     }
 }

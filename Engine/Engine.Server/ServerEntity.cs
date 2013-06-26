@@ -4,36 +4,15 @@ using System.Linq;
 using System.Text;
 using FTW.Engine.Shared;
 using System.Collections.ObjectModel;
+using System.Reflection;
 
 namespace FTW.Engine.Server
 {
-    public abstract class Entity : BaseEntity
+    public abstract partial class Entity
     {
-        protected Entity()
-        {
-            AllEntities.Add(this);
-        }
-
-        /// <summary>
-        /// Schedules this entity for deletion at the end of the current frame.
-        /// Until then, its IsDeleted property will be true.
-        /// </summary>
-        public virtual void Delete()
-        {
-            IsDeleted = true;
-            AllEntities.Remove(this);
-        }
-
-        public virtual void PreThink(double dt) { }
-        public virtual void Simulate(double dt) { }
-        public virtual void PostThink(double dt) { }
-
-        internal static List<Entity> AllEntities = new List<Entity>();
-        internal static SortedList<ushort, NetworkedEntity> NetworkedEntities = new SortedList<ushort, NetworkedEntity>();
-        public static ReadOnlyCollection<Entity> GetAll() { return AllEntities.AsReadOnly(); }
     }
 
-    public abstract class NetworkedEntity : Entity
+    public abstract partial class NetworkedEntity : Entity
     {
         public NetworkedEntity(string networkedType, bool usesRelatedClient)
             : this(networkedType, usesRelatedClient, null) { }
@@ -44,7 +23,7 @@ namespace FTW.Engine.Server
         private NetworkedEntity(string networkedType, bool usesRelatedClient, Client relatedClient)
             : base()
         {
-            NetworkedType = networkedType;
+            NetworkedType = networkedType.Replace('¬', '-');
             EntityID = GetNewEntityID();
 
             NetworkedEntities.Add(EntityID, this);
@@ -59,6 +38,28 @@ namespace FTW.Engine.Server
                 OtherClientFields = new List<NetworkField>();
             }
         }
+
+        internal static void InitializeTypes()
+        {
+            var Instances = new SortedList<string, NetworkedEntity>();
+
+            foreach (Type t in Assembly.GetEntryAssembly().GetTypes())
+                if (t.IsSubclassOf(typeof(NetworkedEntity)) && !t.IsAbstract)
+                {
+                    ConstructorInfo c = t.GetConstructor(Type.EmptyTypes);
+                    if (c != null)
+                    {
+                        NetworkedEntity ent = c.Invoke(Type.EmptyTypes) as NetworkedEntity;
+                        if (Instances.ContainsKey(ent.NetworkedType))
+                            Console.Error.WriteLine(string.Format("Duplicate network type detected - {1} and {2} both use the same NetworkedType: {0}", ent.NetworkedType, c.DeclaringType.Name, Instances[ent.NetworkedType].GetType().Name));
+                        else
+                            Instances.Add(ent.NetworkedType, ent);
+                    }
+                }
+
+            NetworkTableHash = GetNetworkTableHash(Instances.Values);
+        }
+        internal static byte[] NetworkTableHash;
 
         public override void Delete()
         {
@@ -84,11 +85,7 @@ namespace FTW.Engine.Server
             return nextEntityID++;
         }
 
-        internal string NetworkedType { get; private set; }
-        public ushort EntityID { get; private set; }
-        internal bool UsesRelatedClient { get; private set; }
         public Client RelatedClient { get; private set; }
-        private List<NetworkField> Fields, RelatedClientFields, OtherClientFields;
         internal uint LastChanged, LastChangedRelated, LastChangedOther;
 
         protected internal virtual bool ShouldSendToClient(Client c) { return true; }

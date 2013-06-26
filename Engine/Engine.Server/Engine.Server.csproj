@@ -44,6 +44,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Shared Code\EntityShared.cs">
+      <Link>EntityShared.cs</Link>
+    </Compile>
     <Compile Include="..\Shared Code\NetworkField.cs">
       <Link>NetworkField.cs</Link>
     </Compile>
