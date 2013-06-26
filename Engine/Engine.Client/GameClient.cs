@@ -121,7 +121,7 @@ namespace FTW.Engine.Client
                         if (!NetworkedEntity.CheckNetworkTableHash(hash))
                         {
                             Console.Error.WriteLine("Network table doesn't match server's");
-                            Connection.Disconnect();
+                            Disconnect();
                             return true;
                         }
 

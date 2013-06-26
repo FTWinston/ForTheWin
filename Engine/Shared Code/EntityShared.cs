@@ -52,7 +52,32 @@ namespace FTW.Engine.Client
         internal string NetworkedType { get; private set; }
         public ushort EntityID { get; private set; }
         internal bool UsesRelatedClient { get; private set; }
-        private List<NetworkField> Fields, RelatedClientFields, OtherClientFields;
+
+        public sealed override bool IsNetworked { get { return true; } }
+
+        private NetworkField[] Fields, RelatedClientFields, OtherClientFields;
+
+        protected abstract NetworkField[] SetupFields();
+        protected virtual void SetupRelatedClientFields(out NetworkField[] relatedClientFields, out NetworkField[] otherClientFields)
+        {
+            relatedClientFields = null; otherClientFields = null;
+        }
+
+        private void DoFieldSetup()
+        {
+            Fields = SetupFields();
+
+            NetworkField[] related, other;
+            SetupRelatedClientFields(out related, out other);
+            if (related != null)
+            {
+                UsesRelatedClient = true;
+                RelatedClientFields = related;
+                OtherClientFields = other;
+            }
+            else
+                UsesRelatedClient = false;
+        }
 
         private static byte[] GetNetworkTableHash(IList<NetworkedEntity> types)
         {
@@ -114,9 +139,20 @@ namespace FTW.Engine.Client
             }
 
             string fullTable = sb.Length > 0 ? sb.ToString().Substring(3) : string.Empty;
+#if DEBUG
+#if SERVER
+            Console.WriteLine("Server network table:");
+#elif CLIENT
+            Console.WriteLine("Client network table:");
+#endif
+            Console.WriteLine(fullTable.Replace(separator, '\n'));
+#endif
             MD5 md5 = MD5.Create();
             byte[] hash = md5.ComputeHash(Constants.NetworkTableStringEncoding.GetBytes(fullTable));
             md5.Clear();
+
+            AllEntities.Clear();
+            NetworkedEntities.Clear();
             return hash;
         }
     }

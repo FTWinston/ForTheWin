@@ -68,23 +68,12 @@ namespace FTW.Engine.Client
             return ent;
         }
 
-        public NetworkedEntity(ushort entityID, string networkedType, bool usesRelatedClient, bool isRelatedClient)
+        public NetworkedEntity(string networkedType, params NetworkField[] fields)
             : base()
         {
             NetworkedType = networkedType.Replace('¬', '-');
-            EntityID = entityID;
-            UsesRelatedClient = usesRelatedClient;
-            IsRelatedClient = isRelatedClient;
-
             NetworkedEntities.Add(EntityID, this);
-
-            Fields = new List<NetworkField>();
-
-            if (UsesRelatedClient)
-                if (IsRelatedClient)
-                    RelatedClientFields = new List<NetworkField>();
-                else
-                    OtherClientFields = new List<NetworkField>();
+            DoFieldSetup();
         }
 
         public override void Delete()
@@ -99,7 +88,7 @@ namespace FTW.Engine.Client
             {
                 var list = UsesRelatedClient ? IsRelatedClient ? RelatedClientFields : OtherClientFields : null;
                 int b = m.ReadByte();
-                int offset = Fields.Count, max = list == null ? offset : list.Count + offset;
+                int offset = Fields.Length, max = list == null ? offset : list.Length + offset;
                 while (b != byte.MaxValue)
                 {
                     if (b < offset)
@@ -114,15 +103,16 @@ namespace FTW.Engine.Client
             }
             else
             {
-                for (int i = 0; i < Fields.Count; i++)
+                for (int i = 0; i < Fields.Length; i++)
                     Fields[i].PerformRead(m);
 
                 if (!UsesRelatedClient)
                     return;
 
-                // related client stuff
+                IsRelatedClient = m.ReadBool();
+                
                 var list = IsRelatedClient ? RelatedClientFields : OtherClientFields;
-                for (int i = 0; i < list.Count; i++)
+                for (int i = 0; i < list.Length; i++)
                     list[i].PerformRead(m);
             }
         }

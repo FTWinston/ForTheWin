@@ -14,36 +14,26 @@ namespace FTW.Engine.Server
 
     public abstract partial class NetworkedEntity : Entity
     {
-        public NetworkedEntity(string networkedType, bool usesRelatedClient)
-            : this(networkedType, usesRelatedClient, null) { }
+        public NetworkedEntity(string networkedType)
+            : this(networkedType, null) { }
 
         public NetworkedEntity(string networkedType, Client relatedClient)
-            : this(networkedType, true, relatedClient) { }
-
-        private NetworkedEntity(string networkedType, bool usesRelatedClient, Client relatedClient)
             : base()
         {
             NetworkedType = networkedType.Replace('¬', '-');
             EntityID = GetNewEntityID();
 
             NetworkedEntities.Add(EntityID, this);
-            
-            Fields = new List<NetworkField>();
-            UsesRelatedClient = usesRelatedClient;
-            RelatedClient = relatedClient;
 
-            if (UsesRelatedClient)
-            {
-                RelatedClientFields = new List<NetworkField>();
-                OtherClientFields = new List<NetworkField>();
-            }
+            RelatedClient = relatedClient;
+            DoFieldSetup();
         }
 
         internal static void InitializeTypes()
         {
             var Instances = new SortedList<string, NetworkedEntity>();
 
-            foreach (Type t in Assembly.GetEntryAssembly().GetTypes())
+            foreach (Type t in GameServer.Instance.GetType().Assembly.GetTypes())
                 if (t.IsSubclassOf(typeof(NetworkedEntity)) && !t.IsAbstract)
                 {
                     ConstructorInfo c = t.GetConstructor(Type.EmptyTypes);
@@ -108,7 +98,7 @@ namespace FTW.Engine.Server
         {
             if (incremental)
             {
-                for (int i = 0; i < Fields.Count; i++)
+                for (int i = 0; i < Fields.Length; i++)
                 {
                     var f = Fields[i];
                     if (f.LastChanged > c.LastSnapshotTime)
@@ -120,9 +110,9 @@ namespace FTW.Engine.Server
 
                 if (UsesRelatedClient)
                 {
-                    int offset = Fields.Count;
+                    int offset = Fields.Length;
                     var list = RelatedClient == c ? RelatedClientFields : OtherClientFields;
-                    for (int i = 0; i < list.Count; i++)
+                    for (int i = 0; i < list.Length; i++)
                     {
                         var f = list[i];
                         if (f.LastChanged > c.LastSnapshotTime)
@@ -138,7 +128,7 @@ namespace FTW.Engine.Server
             {
                 m.Write(NetworkedType);
 
-                for (int i = 0; i < Fields.Count; i++)
+                for (int i = 0; i < Fields.Length; i++)
                     Fields[i].WriteTo(m);
 
                 if (!UsesRelatedClient)
@@ -147,7 +137,7 @@ namespace FTW.Engine.Server
                 m.Write(RelatedClient == c);
                 var list = RelatedClient == c ? RelatedClientFields : OtherClientFields;
 
-                for (int i = 0; i < list.Count; i++)
+                for (int i = 0; i < list.Length; i++)
                     list[i].WriteTo(m);
             }
         }

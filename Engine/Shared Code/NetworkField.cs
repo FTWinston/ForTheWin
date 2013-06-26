@@ -41,6 +41,7 @@ namespace FTW.Engine.Shared
         public NetworkField(bool interpolate)
             : base()
         {
+            this.interpolate = interpolate;
             val = default(T);
         }
 
@@ -69,7 +70,6 @@ namespace FTW.Engine.Shared
             fromTime = 0; toTime = 1;
         }
 
-        private bool interpolate;
         protected T fromVal, toVal;
         protected uint fromTime, toTime;
         protected SortedList<uint, T> queuedValues = new SortedList<uint, T>();
@@ -117,9 +117,10 @@ namespace FTW.Engine.Shared
         protected abstract T Lerp(T val1, T val2, float fraction);
 #endif
 
+        private bool interpolate;
         protected internal override string Describe()
         {
-            return typeof(T).Name;
+            return string.Format("{0},{1}", typeof(T).Name, interpolate ? "Y" : "N");
         } 
 
         public static implicit operator T(NetworkField<T> f) { return f.Value; }
