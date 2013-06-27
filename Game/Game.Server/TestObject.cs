@@ -12,6 +12,7 @@ namespace Game.Server
         public TestObject()
             : base("moving")
         {
+            positionX.Value = 20; positionY.Value = 0;
         }
 
         protected override NetworkField[] SetupFields()
@@ -19,7 +20,17 @@ namespace Game.Server
             return new NetworkField[] { positionX, positionY };
         }
 
-        NetworkInt positionX = new NetworkInt(false);
-        NetworkInt positionY = new NetworkInt(true);
+        NetworkFloat positionX = new NetworkFloat(false);
+        NetworkFloat positionY = new NetworkFloat(true);
+
+        double speed = 2.0;
+
+        public override void Simulate(double dt)
+        {
+            positionX.Value += (float)(dt * speed);
+            positionY.Value += (float)(dt * speed);
+
+            Console.WriteLine(string.Format("Simulating... now at {0}, {1}", positionX, positionY));
+        }
     }
 }

@@ -28,6 +28,11 @@ namespace Game.Server
             if (base.ConsoleCommand(firstWord, theRest))
                 return true;
 
+            if (firstWord == "test")
+            {
+                new TestObject();
+                return true;
+            }
             // ...
             return false;
         }

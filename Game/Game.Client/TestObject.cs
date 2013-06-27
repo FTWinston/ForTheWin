@@ -19,7 +19,7 @@ namespace Game.Client
             return new NetworkField[] { positionX, positionY };
         }
 
-        NetworkInt positionX = new NetworkInt(false);
-        NetworkInt positionY = new NetworkInt(true);
+        NetworkFloat positionX = new NetworkFloat(false);
+        NetworkFloat positionY = new NetworkFloat(true);
     }
 }

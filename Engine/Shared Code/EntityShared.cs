@@ -66,7 +66,10 @@ namespace FTW.Engine.Client
         private void DoFieldSetup()
         {
             Fields = SetupFields();
-
+#if SERVER
+            foreach (NetworkField field in Fields)
+                field.SetEntity(this, null);
+#endif
             NetworkField[] related, other;
             SetupRelatedClientFields(out related, out other);
             if (related != null)
@@ -74,6 +77,13 @@ namespace FTW.Engine.Client
                 UsesRelatedClient = true;
                 RelatedClientFields = related;
                 OtherClientFields = other;
+#if SERVER
+                foreach (NetworkField field in RelatedClientFields)
+                    field.SetEntity(this, true);
+
+                foreach (NetworkField field in OtherClientFields)
+                    field.SetEntity(this, false);
+#endif
             }
             else
                 UsesRelatedClient = false;

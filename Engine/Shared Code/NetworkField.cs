@@ -22,12 +22,12 @@ namespace FTW.Engine.Shared
 #if SERVER
         public abstract void WriteTo(Message m);
 
-        internal void SetEntity(NetworkedEntity e, bool related)
+        internal void SetEntity(NetworkedEntity e, bool? related)
         {
             entity = e;
             relatedClient = related;
         }
-        protected NetworkedEntity entity; protected bool relatedClient;
+        protected NetworkedEntity entity; protected bool? relatedClient;
 
         public uint LastChanged { get; protected set; }
 #elif CLIENT
@@ -53,12 +53,13 @@ namespace FTW.Engine.Shared
             {
                 val = value;
                 LastChanged = GameServer.Instance.FrameTime;
-                if (entity.RelatedClient == null)
-                    entity.LastChanged = LastChanged;
-                else if (relatedClient)
-                    entity.LastChangedRelated = LastChanged;
+                if (relatedClient.HasValue)
+                    if ( relatedClient.Value )
+                        entity.LastChangedRelated = LastChanged;
+                    else
+                        entity.LastChangedOther = LastChanged;
                 else
-                    entity.LastChangedOther = LastChanged;
+                    entity.LastChanged = LastChanged;
             }
         }
 #elif CLIENT
@@ -124,6 +125,7 @@ namespace FTW.Engine.Shared
         } 
 
         public static implicit operator T(NetworkField<T> f) { return f.Value; }
+        public override string ToString() { return Value.ToString(); }
     }
 
     public class NetworkInt : NetworkField<int>
