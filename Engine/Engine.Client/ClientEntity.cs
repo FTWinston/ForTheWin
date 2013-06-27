@@ -10,6 +10,15 @@ namespace FTW.Engine.Client
 {
     public abstract partial class Entity
     {
+        protected Entity()
+        {
+            IsDeleted = false;
+        }
+
+        protected internal void Initialize()
+        {
+            AllEntities.Add(this);
+        }
     }
 
     public abstract partial class NetworkedEntity : Entity
@@ -72,8 +81,13 @@ namespace FTW.Engine.Client
             : base()
         {
             NetworkedType = networkedType.Replace('¬', '-');
-            NetworkedEntities.Add(EntityID, this);
             DoFieldSetup();
+        }
+
+        protected internal virtual void Initialize()
+        {
+            base.Initialize();
+            NetworkedEntities.Add(EntityID, this);
         }
 
         public override void Delete()
@@ -118,5 +132,15 @@ namespace FTW.Engine.Client
         }
 
         public bool IsRelatedClient { get; private set; }
+    }
+
+    public abstract class ClientOnlyEntity : Entity
+    {
+        protected ClientOnlyEntity()
+        {
+            Initialize();
+        }
+
+        public sealed override bool IsNetworked { get { return false; } }
     }
 }

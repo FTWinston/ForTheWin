@@ -14,12 +14,6 @@ namespace FTW.Engine.Client
 {
     public abstract partial class Entity
     {
-        protected Entity()
-        {
-            IsDeleted = false;
-            AllEntities.Add(this);
-        }
-
         /// <summary>
         /// Indicates that an entity is scheduled for deletion at the end of the current frame.
         /// It should be treated as if it has already been deleted.

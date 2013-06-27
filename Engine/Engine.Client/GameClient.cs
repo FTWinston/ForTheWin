@@ -91,10 +91,11 @@ namespace FTW.Engine.Client
 
         public uint FrameTime { get; private set; }
 
+        // this should really be a GameFrame type of affair, shouldn't it?
         public void Update()
         {
             Connection.RetrieveUpdates();
-
+            Snapshot.CheckQueue();
         }
 
         internal void HandleMessage(Message m)

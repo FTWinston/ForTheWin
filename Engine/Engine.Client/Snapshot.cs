@@ -62,7 +62,7 @@ namespace FTW.Engine.Client
 
         private static void Enqueue(Snapshot s, uint timestamp)
         {
-            if (timestamp <= GameClient.Instance.FrameTime)
+            if (timestamp < GameClient.Instance.FrameTime)
                 ; // well this was too late. I'm sure we'll do SOMETHING with it, however
             else
                 Queue[timestamp] = s;
@@ -70,6 +70,23 @@ namespace FTW.Engine.Client
 
         private static SortedList<uint, Snapshot> Queue = new SortedList<uint, Snapshot>();
 
+        internal static void CheckQueue()
+        {
+            foreach (var kvp in Queue)
+                if (kvp.Key > GameClient.Instance.FrameTime)
+                    break;
+                else
+                {
+                    foreach (var id in kvp.Value.Deletions)
+                    {
+                        NetworkedEntity ent = NetworkedEntity.NetworkedEntities[id];
+                        if (ent != null)
+                            ent.Delete();
+                    }
+                    foreach (var ent in kvp.Value.Creations)
+                        ent.Initialize();
+                }
+        }
 
         private Snapshot()
         {

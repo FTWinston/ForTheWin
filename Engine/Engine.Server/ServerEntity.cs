@@ -10,6 +10,11 @@ namespace FTW.Engine.Server
 {
     public abstract partial class Entity
     {
+        protected Entity()
+        {
+            IsDeleted = false;
+            AllEntities.Add(this);
+        }
     }
 
     public abstract partial class NetworkedEntity : Entity
