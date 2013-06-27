@@ -195,11 +195,11 @@ namespace FTW.Engine.Server
                 else
                 {
                     dt = FrameTime - lastFrameTime;
-                    lastFrameTime = FrameTime - dt;
+                    lastFrameTime = FrameTime;
                 }
 
                 ReceiveMessages();
-                GameFrame(dt);
+                GameFrame(dt/1000.0); // convert milliseconds to seconds
                 
                 int frameTimeRemaining = (int)(FrameTime + TargetFrameInterval) - (int)RakNet.RakNet.GetTime();
                 if (frameTimeRemaining > 0)
