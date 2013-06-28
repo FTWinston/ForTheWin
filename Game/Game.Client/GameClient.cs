@@ -18,6 +18,7 @@ namespace Game.Client
         public GameClient(GameWindow window, Config config)
             : base(config)
         {
+            instance = this;
             this.window = window;
             SetupDisplay();
         }
@@ -36,7 +37,19 @@ namespace Game.Client
             return config;
         }
 
-        Text loading, game;
+        private static GameClient instance;
+        public static void AddDrawable(Drawable d)
+        {
+            instance.gameElements.Add(d);
+        }
+
+        public static void RemoveDrawable(Drawable d)
+        {
+            instance.gameElements.Remove(d);
+        }
+
+        Text loading;
+        List<Drawable> gameElements = new List<Drawable>();
 
         public View MainView { get; set; }
         ConsolePanel console;
@@ -61,9 +74,11 @@ namespace Game.Client
 
             MainView = window.DefaultView;
 
-            game = new Text("This is the game. Blah blah.", font, 48);
-            game.Color = Color.Yellow;
-            game.Position = new Vector2f(window.Size.X / 2 - game.GetLocalBounds().Width / 2, window.Size.Y / 2 - game.GetLocalBounds().Height / 2);
+            Text info = new Text("This is the game. Blah blah.", font, 48);
+            info.Color = Color.Yellow;
+            info.Position = new Vector2f(window.Size.X / 2 - info.GetLocalBounds().Width / 2, window.Size.Y / 2 - info.GetLocalBounds().Height / 2);
+
+            gameElements.Add(info);
 
             console = new ConsolePanel(window, this);
         }
@@ -74,7 +89,8 @@ namespace Game.Client
 
             if (FullyConnected)
             {
-                target.Draw(game);
+                foreach ( Drawable d in gameElements )
+                    target.Draw(d);
 
                 if (ShowConsole)
                     target.Draw(console);

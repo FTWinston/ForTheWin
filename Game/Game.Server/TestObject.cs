@@ -30,7 +30,7 @@ namespace Game.Server
             positionX.Value += (float)(dt * speed);
             positionY.Value += (float)(dt * speed);
 
-            Console.WriteLine(string.Format("Simulating... now at {0}, {1}", positionX, positionY));
+            //Console.WriteLine(string.Format("Simulating... now at {0}, {1}", positionX, positionY));
         }
     }
 }

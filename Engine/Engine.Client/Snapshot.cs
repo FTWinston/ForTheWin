@@ -31,7 +31,7 @@ namespace FTW.Engine.Client
                         {// delete and create new (this was an error, so also log it)
                             s.Deletions.Add(entityID);
                             s.ScheduleCreation(entityID, type, m);
-                            Console.WriteLine(string.Format("Error reading snapshot: entity {0} has the wrong type (got {1}, update has {2})", entityID, ent.NetworkedType, type));
+                            Console.Error.WriteLine(string.Format("Error reading snapshot: entity {0} has the wrong type (got {1}, update has {2})", entityID, ent.NetworkedType, type));
                         }
                         else
                             ent.ReadSnapshot(m, false);
@@ -40,7 +40,7 @@ namespace FTW.Engine.Client
                         if (NetworkedEntity.NetworkedEntities.TryGetValue(entityID, out ent))
                             ent.ReadSnapshot(m, true);
                         else
-                            Console.WriteLine("Error reading snapshot: received an update for unknown entity " + entityID);
+                            Console.Error.WriteLine("Error reading snapshot: received an update for unknown entity " + entityID);
                         break;
                     case EntitySnapshotType.Delete:
                         s.Deletions.Add(entityID);
@@ -51,7 +51,7 @@ namespace FTW.Engine.Client
                         s.ScheduleCreation(entityID, m.ReadString(), m);
                         break;
                     default:
-                        Console.WriteLine("Error reading snapshot: invalid EntitySnapshotType: " + snapshotType);
+                        Console.Error.WriteLine("Error reading snapshot: invalid EntitySnapshotType: " + snapshotType);
                         return;
                 }
             }
@@ -99,6 +99,11 @@ namespace FTW.Engine.Client
         private void ScheduleCreation(ushort entityID, string type, Message m)
         {
             NetworkedEntity ent = NetworkedEntity.Create(type, entityID);
+            if (ent == null)
+            {
+                Console.Error.WriteLine("Snapshot tried to create unrecognised entity type: " + type);
+                return;
+            }
             ent.ReadSnapshot(m, false);
             Creations.Add(ent);
         }

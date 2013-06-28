@@ -78,6 +78,9 @@ namespace FTW.Engine.Client
             if (Disconnected != null)
                 Disconnected(this, EventArgs.Empty);
 
+            Entity.AllEntities.Clear();
+            Entity.NetworkedEntities.Clear();
+
             Connection = null;
             FullyConnected = false;
         }

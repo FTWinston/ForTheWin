@@ -15,7 +15,7 @@ namespace FTW.Engine.Client
             IsDeleted = false;
         }
 
-        protected internal void Initialize()
+        protected internal virtual void Initialize()
         {
             AllEntities.Add(this);
         }
@@ -82,12 +82,12 @@ namespace FTW.Engine.Client
         {
             NetworkedType = networkedType.Replace('¬', '-');
             DoFieldSetup();
+            NetworkedEntities[EntityID] = this;
         }
 
-        protected internal virtual void Initialize()
+        protected internal override void Initialize()
         {
             base.Initialize();
-            NetworkedEntities.Add(EntityID, this);
         }
 
         public override void Delete()
