@@ -46,7 +46,6 @@ namespace Game.Client
 
         public void Draw(RenderTarget target, RenderStates states)
         {
-            Console.WriteLine("Drawing...");
             shape.Position = new Vector2f(positionX, positionY);
             target.Draw(shape, states);
         }

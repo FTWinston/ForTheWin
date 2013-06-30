@@ -78,9 +78,32 @@ namespace FTW.Engine.Shared
         {
             get
             {
-                if (interpolate && toTime < GameClient.Instance.FrameTime)
-                    return Lerp(fromVal, toVal, (GameClient.Instance.FrameTime - fromTime) / (toTime - fromTime));
-                else // no extrapolation, for the moment
+                if (toTime < GameClient.Instance.FrameTime)
+                {
+                    fromVal = toVal;
+                    fromTime = toTime;
+
+                    // is there a queued value to get?
+                    while ( queuedValues.Count > 0 )
+                    {
+                        toTime = queuedValues.Keys[0];
+                        toVal = queuedValues[toTime];
+                        queuedValues.RemoveAt(0);
+
+                        // ok we got this one value, but it's already out-of-date
+                        if (toTime < GameClient.Instance.FrameTime)
+                        {
+                            fromVal = toVal;
+                            fromTime = toTime;
+                        }
+                        else
+                            break;
+                    }
+                }
+
+                if (interpolate && fromTime != toTime)
+                    return Lerp(fromVal, toVal, (float)(GameClient.Instance.FrameTime - fromTime) / (toTime - fromTime));
+                else
                     return toVal;
             }
         }
@@ -143,7 +166,7 @@ namespace FTW.Engine.Shared
 
         protected override int Lerp(int val1, int val2, float fraction)
         {
-            return (int)(val2 * fraction + val1 * (1f - fraction));
+            return (int)(val1 + (val2 - val1) * fraction);
         }
 #elif SERVER
         public override void WriteTo(Message m)
@@ -168,7 +191,7 @@ namespace FTW.Engine.Shared
 
         protected override float Lerp(float val1, float val2, float fraction)
         {
-            return val2 * fraction + val1 * (1f - fraction);
+            return val1 + (val2-val1) * fraction;
         }
 #elif SERVER
         public override void WriteTo(Message m)

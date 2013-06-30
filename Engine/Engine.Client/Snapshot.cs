@@ -73,20 +73,26 @@ namespace FTW.Engine.Client
 
         internal static void CheckQueue()
         {
-            foreach (var kvp in Queue)
-                if (kvp.Key > GameClient.Instance.FrameTime - lerpDelay)
+            for (int i = 0; i < Queue.Count; i++)
+            {
+                uint time = Queue.Keys[i];
+
+                if (time > GameClient.Instance.FrameTime - lerpDelay)
                     break;
                 else
                 {
-                    foreach (var id in kvp.Value.Deletions)
+                    var snapshot = Queue[time];
+                    foreach (var id in snapshot.Deletions)
                     {
                         NetworkedEntity ent = NetworkedEntity.NetworkedEntities[id];
                         if (ent != null)
                             ent.Delete();
                     }
-                    foreach (var ent in kvp.Value.Creations)
+                    foreach (var ent in snapshot.Creations)
                         ent.Initialize();
+                    Queue.RemoveAt(0);
                 }
+            }
         }
 
         private Snapshot()
