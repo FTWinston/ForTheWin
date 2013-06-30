@@ -165,19 +165,19 @@ namespace FTW.Engine.Server
         const int pauseTickMilliseconds = 100;
         
         public uint FrameTime { get; private set; }
-        private uint lastFrameTime, dt;
 
         private void RunMainLoop()
         {
             Console.WriteLine("Server has started");
             isPaused = false;
 
-            dt = 100;
-            lastFrameTime = RakNet.RakNet.GetTime() - dt;
+            uint dt = 100;
+            uint lastFrameTime = FrameTime = RakNet.RakNet.GetTime() - dt;
             DateTime? pauseTime = null;
 
             while (IsRunning)
             {
+                lastFrameTime = FrameTime;
                 FrameTime = RakNet.RakNet.GetTime();
 
                 if (Paused)
@@ -190,13 +190,9 @@ namespace FTW.Engine.Server
                 else if (pauseTime.HasValue)
                 {
                     pauseTime = null;
-                    lastFrameTime = RakNet.RakNet.GetTime() - dt;
                 }
                 else
-                {
                     dt = FrameTime - lastFrameTime;
-                    lastFrameTime = FrameTime;
-                }
 
                 ReceiveMessages();
                 GameFrame(dt/1000.0); // convert milliseconds to seconds

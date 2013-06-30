@@ -60,9 +60,10 @@ namespace FTW.Engine.Client
                 Enqueue(s, m.Timestamp.Value);
         }
 
+        const uint lerpDelay = 200; // what a terrible way to handle this. Seriously. Awful.
         private static void Enqueue(Snapshot s, uint timestamp)
         {
-            if (timestamp < GameClient.Instance.FrameTime)
+            if (timestamp < GameClient.Instance.FrameTime - lerpDelay)
                 ; // well this was too late. I'm sure we'll do SOMETHING with it, however
             else
                 Queue[timestamp] = s;
@@ -73,7 +74,7 @@ namespace FTW.Engine.Client
         internal static void CheckQueue()
         {
             foreach (var kvp in Queue)
-                if (kvp.Key > GameClient.Instance.FrameTime)
+                if (kvp.Key > GameClient.Instance.FrameTime - lerpDelay)
                     break;
                 else
                 {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using FTW.Engine.Shared;
+using System.Threading;
 
 namespace FTW.Engine.Client
 {
@@ -88,17 +89,67 @@ namespace FTW.Engine.Client
         protected virtual void Initialize()
         {
             NetworkedEntity.InitializeTypes();
+
+            dt = 100;
+            FrameTime = lastFrameTime = RakNet.RakNet.GetTime() - dt;
         }
 
         public event EventHandler Disconnected;
 
         public uint FrameTime { get; private set; }
+        private uint lastFrameTime, dt;
 
         // this should really be a GameFrame type of affair, shouldn't it?
         public void Update()
         {
+            lastFrameTime = FrameTime;
+            FrameTime = RakNet.RakNet.GetTime();
+
+            /*if (Paused)
+            {
+                if (!pauseTime.HasValue)
+                    pauseTime = DateTime.Now;
+                Thread.Sleep(pauseTickMilliseconds);
+                return;
+            }
+            else if (pauseTime.HasValue)
+            {
+                pauseTime = null;
+                lastFrameTime = RakNet.RakNet.GetTime() - dt;
+            }
+            else*/
+            {
+                dt = FrameTime - lastFrameTime;
+                lastFrameTime = FrameTime;
+            }
+
             Connection.RetrieveUpdates();
             Snapshot.CheckQueue();
+
+            GameFrame(dt / 1000.0); // convert milliseconds to seconds
+        }
+
+        private void GameFrame(double dt)
+        {
+            int i; Entity e;
+            for (i = 0; i < Entity.AllEntities.Count; i++)
+            {
+                e = Entity.AllEntities[i];
+                if (!e.IsDeleted)
+                    e.PreThink(dt);
+            }
+            for (i = 0; i < Entity.AllEntities.Count; i++)
+            {
+                e = Entity.AllEntities[i];
+                if (!e.IsDeleted)
+                    e.Simulate(dt);
+            }
+            for (i = 0; i < Entity.AllEntities.Count; i++)
+            {
+                e = Entity.AllEntities[i];
+                if (!e.IsDeleted)
+                    e.PostThink(dt);
+            }
         }
 
         internal void HandleMessage(Message m)
