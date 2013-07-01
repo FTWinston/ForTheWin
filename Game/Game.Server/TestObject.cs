@@ -23,12 +23,28 @@ namespace Game.Server
         NetworkFloat positionX = new NetworkFloat(false);
         NetworkFloat positionY = new NetworkFloat(true);
 
-        double speed = 2.0;
-
+        double sx = 60.0, sy = 60.0;
+        
+        const int minX = 50, maxX = 750, minY = 50, maxY = 550;
         public override void Simulate(double dt)
         {
-            positionX.Value += (float)(dt * speed);
-            positionY.Value += (float)(dt * speed);
+            positionX.Value += (float)(dt * sx);
+            if ( sx > 0 )
+            {
+                if ( positionX > maxX )
+                    sx = -sx;
+            }
+            else if ( positionX < minX )
+                sx = -sx;
+
+            positionY.Value += (float)(dt * sy);
+            if (sy > 0)
+            {
+                if (positionY > maxY)
+                    sy = -sy;
+            }
+            else if (positionY < minY)
+                sy = -sy;
 
             //Console.WriteLine(string.Format("Simulating... now at {0}, {1}", positionX, positionY));
         }

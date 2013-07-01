@@ -78,7 +78,7 @@ namespace FTW.Engine.Shared
         {
             get
             {
-                if (toTime < GameClient.Instance.FrameTime)
+                if (toTime < GameClient.Instance.ServerTime)
                 {
                     fromVal = toVal;
                     fromTime = toTime;
@@ -91,7 +91,7 @@ namespace FTW.Engine.Shared
                         queuedValues.RemoveAt(0);
 
                         // ok we got this one value, but it's already out-of-date
-                        if (toTime < GameClient.Instance.FrameTime)
+                        if (toTime < GameClient.Instance.ServerTime)
                         {
                             fromVal = toVal;
                             fromTime = toTime;
@@ -101,8 +101,8 @@ namespace FTW.Engine.Shared
                     }
                 }
 
-                if (interpolate && fromTime != toTime)
-                    return Lerp(fromVal, toVal, (float)(GameClient.Instance.FrameTime - fromTime) / (toTime - fromTime));
+                if (interpolate && fromTime < toTime)
+                    return Lerp(fromVal, toVal, (float)(GameClient.Instance.ServerTime - fromTime) / (toTime - fromTime));
                 else
                     return toVal;
             }
@@ -113,7 +113,7 @@ namespace FTW.Engine.Shared
             T val = ReadFrom(m);
 
             uint messageTime = m.Timestamp.Value;
-            if (messageTime < GameClient.Instance.FrameTime)
+            if (messageTime < GameClient.Instance.ServerTime)
             {
                 // can interpolate from this instead of our previous value. Liable to "jump" ... do we want?
                 if (messageTime > fromTime)
@@ -125,7 +125,8 @@ namespace FTW.Engine.Shared
             else if (messageTime < toTime)
             {
                 // usurp the current "to" value, and put it back into the queue. Liable to "jump" ... do we want?
-                queuedValues[toTime] = toVal;
+                if (toTime > messageTime)
+                    queuedValues[toTime] = toVal;
                 toVal = val;
                 toTime = messageTime;
             }

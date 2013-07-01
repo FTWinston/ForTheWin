@@ -60,7 +60,7 @@ namespace FTW.Engine.Client
                 Enqueue(s, m.Timestamp.Value);
         }
 
-        const uint lerpDelay = 200; // what a terrible way to handle this. Seriously. Awful.
+        public const uint lerpDelay = 200; // what a terrible way to handle this. Seriously. Awful.
         private static void Enqueue(Snapshot s, uint timestamp)
         {
             if (timestamp < GameClient.Instance.FrameTime - lerpDelay)

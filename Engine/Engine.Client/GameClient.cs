@@ -97,6 +97,7 @@ namespace FTW.Engine.Client
         public event EventHandler Disconnected;
 
         public uint FrameTime { get; private set; }
+        public uint ServerTime { get; private set; }
         private uint lastFrameTime, dt;
 
         // this should really be a GameFrame type of affair, shouldn't it?
@@ -104,6 +105,7 @@ namespace FTW.Engine.Client
         {
             lastFrameTime = FrameTime;
             FrameTime = RakNet.RakNet.GetTime();
+            ServerTime = FrameTime - Snapshot.lerpDelay;
 
             /*if (Paused)
             {
@@ -127,6 +129,8 @@ namespace FTW.Engine.Client
             Snapshot.CheckQueue();
 
             GameFrame(dt / 1000.0); // convert milliseconds to seconds
+
+            //Console.WriteLine("Frame duration: {0}ms", RakNet.RakNet.GetTime() - FrameTime);
         }
 
         private void GameFrame(double dt)
