@@ -38,7 +38,7 @@ namespace FTW.Engine.Client
                     {
                         NetworkedEntity ent = c.Invoke(Type.EmptyTypes) as NetworkedEntity;
                         if (Constructors.ContainsKey(ent.NetworkedType))
-                            Console.Error.WriteLine(string.Format("Duplicate network type detected - {1} and {2} both use the same NetworkedType: {0}", ent.NetworkedType, c.DeclaringType.Name, Constructors[ent.NetworkedType].DeclaringType.Name));
+                            Console.Error.WriteLine("Duplicate network type detected - {1} and {2} both use the same NetworkedType: {0}", ent.NetworkedType, c.DeclaringType.Name, Constructors[ent.NetworkedType].DeclaringType.Name);
                         else
                         {
                             Constructors.Add(ent.NetworkedType, c);

@@ -31,7 +31,7 @@ namespace FTW.Engine.Client
                         {// delete and create new (this was an error, so also log it)
                             s.Deletions.Add(entityID);
                             s.ScheduleCreation(entityID, type, m);
-                            Console.Error.WriteLine(string.Format("Error reading snapshot: entity {0} has the wrong type (got {1}, update has {2})", entityID, ent.NetworkedType, type));
+                            Console.Error.WriteLine("Error reading snapshot: entity {0} has the wrong type (got {1}, update has {2})", entityID, ent.NetworkedType, type);
                         }
                         else
                             ent.ReadSnapshot(m, false);

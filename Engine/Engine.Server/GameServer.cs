@@ -239,7 +239,7 @@ namespace FTW.Engine.Server
                                 break;
 #if DEBUG
                             default:
-                                Console.WriteLine(string.Format("Received a {0} packet from {1}, {2} bytes long", (DefaultMessageIDTypes)type, c == null ? "a new client" : c.Name, packet.length));
+                                Console.WriteLine("Received a {0} packet from {1}, {2} bytes long", (DefaultMessageIDTypes)type, c == null ? "a new client" : c.Name, packet.length);
                                 break;
 #endif
                         }

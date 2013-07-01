@@ -46,7 +46,7 @@ namespace Game.Server
             else if (positionY < minY)
                 sy = -sy;
 
-            //Console.WriteLine(string.Format("Simulating... now at {0}, {1}", positionX, positionY));
+            //Console.WriteLine("Simulating... now at {0}, {1}", positionX, positionY);
         }
     }
 }

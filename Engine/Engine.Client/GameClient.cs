@@ -189,12 +189,12 @@ namespace FTW.Engine.Client
 
                         byte numOthers = m.ReadByte();
 
-                        Console.WriteLine(string.Format("There {0} {1} other {2} connected to this server{3}",
+                        Console.WriteLine("There {0} {1} other {2} connected to this server{3}",
                             numOthers == 1 ? "is" : "are",
                             numOthers == 0 ? "no" : numOthers.ToString(),
                             numOthers == 1 ? "client" : "clients",
                             numOthers == 0 ? string.Empty : ":"
-                            ));
+                            );
 
                         for (int i = 0; i < numOthers; i++)
                         {
