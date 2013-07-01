@@ -14,6 +14,11 @@ namespace Game.Server
             ;
         }
 
+        protected override void SetupVariableDefaults()
+        {
+            // ...
+        }
+
         protected override bool MessageReceived(Client c, Message m)
         {
             if (base.MessageReceived(c, m))

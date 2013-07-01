@@ -50,6 +50,9 @@
     <Compile Include="..\Shared Code\NetworkField.cs">
       <Link>NetworkField.cs</Link>
     </Compile>
+    <Compile Include="..\Shared Code\Variable.cs">
+      <Link>Variable.cs</Link>
+    </Compile>
     <Compile Include="Client.cs" />
     <Compile Include="GameServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

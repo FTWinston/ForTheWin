@@ -46,7 +46,12 @@ namespace FTW.Engine.Client
             FullyConnected = false;
 
             Name = settings.FindValueOrDefault("name", defaultClientName);
+
+            SetupVariableDefaults();
+            // read variables from config...
         }
+
+        protected abstract void SetupVariableDefaults();
 
         public void ConnectLocal()
         {

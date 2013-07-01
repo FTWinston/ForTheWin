@@ -31,4 +31,16 @@ namespace FTW.Engine.Shared
         Delete,
         Replace,
     }
+
+    [Flags]
+    public enum VariableFlags : byte
+    {
+        None = 0,
+        Server = 1,     // exists on the server, sent to clients
+        ServerOnly = 2, // exists on the server, not sent to clients
+        Client = 4,     // exist on the client, sent to the server
+        ClientOnly = 8, // exists on the client, not sent to the server
+        DebugOnly = 16, // fixed value, unless in debug mode
+        Cheat = 32,     // fixed value, unless cheats are enabled
+    }
 }

@@ -62,6 +62,8 @@ namespace FTW.Engine.Server
 
             NetworkPort = port;
             MaxClients = maxClients;
+
+            // read variables from config... in fact, the things above could be variables read from config, I guess.
         }
 
         private Thread gameThread;
@@ -79,6 +81,8 @@ namespace FTW.Engine.Server
         public override void Start(bool isDedicated, Config config)
         {
             IsDedicated = isDedicated;
+
+            SetupVariableDefaults();
             ApplyConfig(config);
 
             isRunning = true;
@@ -98,11 +102,12 @@ namespace FTW.Engine.Server
                 isRunning = false;
         }
 
+        protected abstract void SetupVariableDefaults();
+
         internal RakPeerInterface rakNet = null;
         protected virtual bool Initialize()
         {
             Console.WriteLine("Initializing...");
-
             NetworkedEntity.InitializeTypes();
 
             if (IsMultiplayer)

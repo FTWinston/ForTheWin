@@ -37,6 +37,11 @@ namespace Game.Client
             return config;
         }
 
+        protected override void SetupVariableDefaults()
+        {
+            // ...
+        }
+
         private static GameClient instance;
         public static void AddDrawable(Drawable d)
         {
