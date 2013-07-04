@@ -2,6 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+#if SERVER
+using FTW.Engine.Server;
+#elif CLIENT
+using FTW.Engine.Client;
+#endif
 
 namespace FTW.Engine.Shared
 {
@@ -136,7 +141,10 @@ namespace FTW.Engine.Shared
                 return false;
 #endif
             if (!CheatsEnabled && (Flags & VariableFlags.Cheat) == VariableFlags.Cheat)
+            {
+                Console.WriteLine("Cannot modify {0}, when sv_cheats is not 1", Name);
                 return false;
+            }
 
             return true;
         }
@@ -163,17 +171,7 @@ namespace FTW.Engine.Shared
                 if (!CanModify())
                     return;
 
-                string strTmp = value;
-                float? numTmp;
-
-                if (CheckChange(ref strTmp, out numTmp))
-                {
-                    bool isChange = strVal != null && strVal != strTmp;
-                    strVal = strTmp;
-                    numericVal = numTmp;
-                    if (isChange)
-                        VariableChanged();
-                }
+                ChangeValue(value, null, true);
             }
         }
 
@@ -190,42 +188,82 @@ namespace FTW.Engine.Shared
                 if (!CanModify())
                     return;
 
-                float val = value;
-                string newStrVal = val.ToString();
-
-                if ((numericCallback == null || numericCallback(this, val) && (stringCallback == null || stringCallback(this, newStrVal))))
-                {
-                    bool isChange = strVal != null && strVal != newStrVal;
-                    strVal = newStrVal;
-                    numericVal = val;
-                    if (isChange)
-                        VariableChanged();
-                }
+                ChangeValue(value.ToString(), value, true);
             }
         }
 
-        private bool CheckChange(ref string strVal, out float? numValue)
+        private void ChangeValue(string strValue, float? flVal, bool fireChange)
         {
-            numValue = null;
             if (!IsNumeric)
-                return stringCallback == null || stringCallback(this, strVal);
-
-            float numTmp;
-            if (!float.TryParse(strVal, out numTmp))
             {
-                Console.Error.WriteLine("Value specified for {0} is not numeric ({1}), but this is a numeric variable", Name, strVal);
-                return false;
+                if (stringCallback == null || stringCallback(this, strVal))
+                {
+                    bool isChange = Value != strVal;
+                    Value = strVal;
+                    numericVal = null;
+
+                    if (fireChange && isChange)
+                        VariableChanged();
+                }
+                return;
             }
 
-            numValue = numTmp;
+            if (flVal == null)
+            {
+                float numTmp;
+                if (!float.TryParse(strValue, out numTmp))
+                {
+                    Console.Error.WriteLine("Value specified for {0} is not numeric ({1}), but this is a numeric variable", Name, strVal);
+                    return;
+                }
+                flVal = numTmp;
+            }
 
-            // it might still have a string callback, so consider that as well as the numeric one
-            return (numericCallback == null || numericCallback(this, numTmp)) && (stringCallback == null || stringCallback(this, strVal));
+            if (numericCallback == null || numericCallback(this, flVal.Value))
+            {
+                bool isChange = numericVal != flVal.Value;
+                numericVal = flVal.Value;
+                strVal = flVal.Value.ToString();
+
+                if (fireChange && isChange)
+                    VariableChanged();
+            }
+        }
+
+        internal void ForceValue(string value)
+        {
+            ChangeValue(value, null, false);
         }
 
         private void VariableChanged()
         {
-            // ... need to be able to notify others of this
+#if SERVER
+            if ((Flags & VariableFlags.Server) == VariableFlags.Server) // don't send ServerOnly
+#elif CLIENT
+            if ((Flags & VariableFlags.Client) == VariableFlags.Client) // don't send ClientOnly
+#endif
+            {
+                Message m = new Message((byte)EngineMessage.VariableChange, RakNet.PacketPriority.MEDIUM_PRIORITY, RakNet.PacketReliability.RELIABLE_ORDERED);
+                m.Write(Name);
+                m.Write(Value);
+
+#if SERVER
+                Client.SendToAll(m);
+#elif CLIENT
+                GameClient.Instance.SendMessage(m);
+#endif
+            }
+
+#if SERVER
+            if (Client.LocalClient != null)
+                return; // if we have a local client, don't write the change to the console - that will happen client-side
+#endif
+            WriteChange(Name, Value);
+        }
+
+        internal static void WriteChange(string name, string val)
+        {
+            Console.WriteLine("{0} changed to {1}", name, val);
         }
 
 

@@ -215,6 +215,17 @@ namespace FTW.Engine.Client
                         Snapshot.Read(m);
                         return true;
                     }
+                case EngineMessage.VariableChange:
+                    {
+                        string name = m.ReadString();
+                        string val = m.ReadString();
+                        
+                        Variable var = Variable.Get(name);
+                        if (var != null)
+                            var.ForceValue(val);
+                        Variable.WriteChange(name, val);
+                        return true;
+                    }
                 default:
                     return false;
             }
@@ -247,11 +258,48 @@ namespace FTW.Engine.Client
             }
         }
 
+        static readonly char[] space = { ' ' };
         protected virtual bool ConsoleCommand(string firstWord, string theRest)
         {
             switch (firstWord)
             {
+                case "get":
+                    {
+                        string name = theRest.Split(space)[0];
+                        var vari = Variable.Get(name);
+                        if (vari == null)
+                        {
+                            if (FullyConnected && Connection.IsLocal)
+                                return false; // check server-only variables
 
+                            Console.WriteLine("Variable not recognised: {0}", name);
+                        }
+                        else
+                            Console.WriteLine("{0}: {1}", vari.Name, vari.Value);
+                        return true;
+                    }
+                case "set":
+                    {
+                        string[] parts = theRest.Split(space, 2);
+                        var vari = Variable.Get(parts[0]);
+                        if (vari == null)
+                        {
+                            if (FullyConnected && Connection.IsLocal)
+                                return false; // check server-only variables
+
+                            Console.WriteLine("Variable not recognised: {0}", parts[0]);
+                        }
+                        else if ((vari.Flags & (VariableFlags.Client | VariableFlags.ClientOnly)) == VariableFlags.None)
+                        {
+                            if (FullyConnected && Connection.IsLocal)
+                                return false; // its a server variable ... set it on the server
+
+                            Console.WriteLine("Cannot change server variable: {0}", vari.Name);
+                        }
+                        else
+                            vari.Value = parts.Length > 1 ? parts[1] : string.Empty;
+                        return true;
+                    }
                 default:
                     return false;
             }

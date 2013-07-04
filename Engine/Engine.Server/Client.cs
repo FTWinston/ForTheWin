@@ -219,6 +219,11 @@ namespace FTW.Engine.Server
             Send(m);
             NeedsFullUpdate = false;
         }
+
+        internal void SetVariable(string name, string val)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     internal class LocalClient : Client

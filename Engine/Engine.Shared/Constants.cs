@@ -18,6 +18,7 @@ namespace FTW.Engine.Shared
         ServerInfo,
         ClientNameChange,
         Snapshot,
+        VariableChange,
         //ClientCommand,
         //Chat,
 

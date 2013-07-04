@@ -317,6 +317,14 @@ namespace FTW.Engine.Server
                         Console.WriteLine(oldName + " changed name to " + c.Name);*/
                         return true;
                     }
+                case EngineMessage.VariableChange:
+                    {
+                        string name = m.ReadString();
+                        string val = m.ReadString();
+
+                        c.SetVariable(name, val);
+                        return true;
+                    }
                 default:
                     return false;
             }
@@ -333,14 +341,34 @@ namespace FTW.Engine.Server
 
             // for the moment, trying the command on the client before the server (for local listen servers only). May want to swap that.
             if (!ConsoleCommand(words[0], words.Length > 1 ? words[1] : null))
-                Console.Error.WriteLine("Command not recognised: " + words[0]);
+                Console.Error.WriteLine("Command not recognised: {0}", words[0]);
         }
 
+        static readonly char[] space = { ' ' };
         protected virtual bool ConsoleCommand(string firstWord, string theRest)
         {
             switch (firstWord)
             {
-
+                case "get":
+                    {
+                        string name = theRest.Split(space)[0];
+                        var vari = Variable.Get(name);
+                        if (vari == null)
+                            Console.WriteLine("Variable not recognised: {0}", name);
+                        else
+                            Console.WriteLine("{0}: {1}", vari.Name, vari.Value);
+                        return true;
+                    }
+                case "set":
+                    {
+                        string[] parts = theRest.Split(space, 2);
+                        var vari = Variable.Get(parts[0]);
+                        if (vari == null)
+                            Console.WriteLine("Variable not recognised: {0}", parts[0]);
+                        else
+                            vari.Value = parts.Length > 1 ? parts[1] : string.Empty;
+                        return true;
+                    }
                 default:
                     return false;
             }
