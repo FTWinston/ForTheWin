@@ -188,21 +188,21 @@ namespace FTW.Engine.Shared
                 if (!CanModify())
                     return;
 
-                ChangeValue(value.ToString(), value, true);
+                ChangeValue(value.ToString(), value, false);
             }
         }
 
-        private void ChangeValue(string strValue, float? flVal, bool fireChange)
+        private void ChangeValue(string strValue, float? flVal, bool forcedChange)
         {
             if (!IsNumeric)
             {
-                if (stringCallback == null || stringCallback(this, strVal))
+                if (stringCallback == null || stringCallback(this, strVal) || forcedChange)
                 {
                     bool isChange = Value != strVal;
                     Value = strVal;
                     numericVal = null;
 
-                    if (fireChange && isChange)
+                    if (!forcedChange && isChange)
                         VariableChanged();
                 }
                 return;
@@ -219,20 +219,25 @@ namespace FTW.Engine.Shared
                 flVal = numTmp;
             }
 
-            if (numericCallback == null || numericCallback(this, flVal.Value))
+            if (numericCallback == null || numericCallback(this, flVal.Value) || forcedChange)
             {
                 bool isChange = numericVal != flVal.Value;
                 numericVal = flVal.Value;
                 strVal = flVal.Value.ToString();
 
-                if (fireChange && isChange)
+                if (!forcedChange && isChange)
                     VariableChanged();
             }
         }
 
         internal void ForceValue(string value)
         {
-            ChangeValue(value, null, false);
+            ChangeValue(value, null, true);
+        }
+
+        internal void ForceValue(float value)
+        {
+            ChangeValue(value.ToString(), value, true);
         }
 
         private void VariableChanged()
