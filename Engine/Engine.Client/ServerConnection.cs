@@ -39,7 +39,7 @@ namespace FTW.Engine.Client
             server.Start(false, config);
             GameClient.Instance.FullyConnected = true;
 
-            Message m = new Message((byte)EngineMessage.ClientConnecting, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE);
+            Message m = new Message((byte)EngineMessage.ClientConnecting, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, 0);
             m.Write(GameClient.Instance.Name);
             Send(m);
         }
@@ -124,7 +124,7 @@ namespace FTW.Engine.Client
                             Console.WriteLine("Connected to server");
 
                             // server will respond to this with a NewClientInfo message of its own
-                            Message m = new Message((byte)EngineMessage.ClientConnecting, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE);
+                            Message m = new Message((byte)EngineMessage.ClientConnecting, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, 0);
                             m.Write(client.Name);
                             Send(m);
                             break;

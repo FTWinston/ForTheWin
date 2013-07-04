@@ -253,7 +253,7 @@ namespace FTW.Engine.Shared
             if ((Flags & VariableFlags.Client) == VariableFlags.Client) // don't send ClientOnly
 #endif
             {
-                Message m = new Message((byte)EngineMessage.VariableChange, RakNet.PacketPriority.MEDIUM_PRIORITY, RakNet.PacketReliability.RELIABLE_ORDERED);
+                Message m = new Message((byte)EngineMessage.VariableChange, RakNet.PacketPriority.MEDIUM_PRIORITY, RakNet.PacketReliability.RELIABLE_ORDERED, (int)OrderingChannel.Variables);
                 m.Write(Name);
                 m.Write(Value);
 
@@ -280,6 +280,7 @@ namespace FTW.Engine.Shared
 
         
         private static Variable cheats = new Variable("sv_cheats", 0, VariableFlags.Server, cheatsChanged);
+        public static Variable Cheats { get { return cheats; } }
 
         public static bool CheatsEnabled
         {

@@ -44,4 +44,10 @@ namespace FTW.Engine.Shared
         DebugOnly = 16, // fixed value, unless in debug mode
         Cheat = 32,     // fixed value, unless cheats are enabled
     }
+
+    public enum OrderingChannel
+    {
+        Chat = 1,      // ORDERED
+        Variables = 2, // ORDERED
+    }
 }

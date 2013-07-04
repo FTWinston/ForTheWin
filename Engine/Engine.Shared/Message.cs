@@ -14,10 +14,11 @@ namespace FTW.Engine.Shared
         /// <param name="type"></param>
         /// <param name="priority"></param>
         /// <param name="reliability"></param>
-        public Message(byte type, PacketPriority priority, PacketReliability reliability)
+        public Message(byte type, PacketPriority priority, PacketReliability reliability, int orderingChannel)
         {
             Priority = priority;
             Reliability = reliability;
+            OrderingChannel = orderingChannel;
             Stream = new BitStream();
             Type = type;
             Stream.Write(type);
@@ -37,6 +38,7 @@ namespace FTW.Engine.Shared
 
         public PacketPriority Priority { get; private set; }
         public PacketReliability Reliability { get; private set; }
+        public int OrderingChannel { get; private set; }
         public uint? Timestamp { get; private set; }
 
         public byte Type { get; private set; }

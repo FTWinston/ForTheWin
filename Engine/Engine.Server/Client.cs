@@ -131,7 +131,7 @@ namespace FTW.Engine.Server
 
         public static void SendToAll(Message m)
         {
-            GameServer.Instance.rakNet.Send(m.Stream, m.Priority, m.Reliability, (char)0, RakNet.RakNet.UNASSIGNED_RAKNET_GUID, true);
+            GameServer.Instance.rakNet.Send(m.Stream, m.Priority, m.Reliability, (char)m.OrderingChannel, RakNet.RakNet.UNASSIGNED_RAKNET_GUID, true);
             if (LocalClient != null)
                 LocalClient.Send(m);
         }
@@ -158,7 +158,7 @@ namespace FTW.Engine.Server
 
         private void SendSnapshot()
         {
-            Message m = new Message((byte)DefaultMessageIDTypes.ID_TIMESTAMP, PacketPriority.HIGH_PRIORITY, PacketReliability.UNRELIABLE);
+            Message m = new Message((byte)DefaultMessageIDTypes.ID_TIMESTAMP, PacketPriority.HIGH_PRIORITY, PacketReliability.UNRELIABLE, 0);
             m.Write(GameServer.Instance.FrameTime);
             m.Write((byte)EngineMessage.Snapshot);
 

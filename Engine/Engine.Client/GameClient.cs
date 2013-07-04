@@ -25,7 +25,7 @@ namespace FTW.Engine.Client
 
                 if (FullyConnected)
                 {
-                    Message m = new Message((byte)EngineMessage.ClientNameChange, RakNet.PacketPriority.HIGH_PRIORITY, RakNet.PacketReliability.RELIABLE_SEQUENCED);
+                    Message m = new Message((byte)EngineMessage.ClientNameChange, RakNet.PacketPriority.HIGH_PRIORITY, RakNet.PacketReliability.RELIABLE_ORDERED, (int)OrderingChannel.Chat);
                     m.Write(value);
                     SendMessage(m);
                 }

@@ -284,7 +284,7 @@ namespace FTW.Engine.Server
                         c.Name = m.ReadString();
 
                         // tell all other clients about this new client
-                        m = new Message((byte)EngineMessage.ClientConnected, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE);
+                        m = new Message((byte)EngineMessage.ClientConnected, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, 0);
                         m.Write(c.Name);
                         Client.SendToAllExcept(m, c);
 
@@ -293,7 +293,7 @@ namespace FTW.Engine.Server
 
                         // send ServerInfo to the newly-connected client, which as well as the network table hash,
                         // tells them how/if we've modified their name and the names of everyone else on the server
-                        m = new Message((byte)EngineMessage.ServerInfo, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE);
+                        m = new Message((byte)EngineMessage.ServerInfo, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, 0);
                         m.Stream.Write(NetworkedEntity.NetworkTableHash, (uint)128);
                         m.Write(c.Name);
 
