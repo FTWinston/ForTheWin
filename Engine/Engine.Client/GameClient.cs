@@ -14,38 +14,21 @@ namespace FTW.Engine.Client
         public bool Connected { get { return Connection != null; } }
         public bool FullyConnected { get; internal set; }
 
-        private string name;
-        public string Name 
+        public Variable Name = new Variable("name", "unnamed", VariableFlags.Client, (v, val) =>
         {
-            get { return name; }
-            set
+            if (GameClient.Instance.FullyConnected)
             {
-                if (name == value)
-                    return;
-
-                if (FullyConnected)
-                {
-                    Message m = new Message((byte)EngineMessage.ClientNameChange, RakNet.PacketPriority.HIGH_PRIORITY, RakNet.PacketReliability.RELIABLE_ORDERED, (int)OrderingChannel.Chat);
-                    m.Write(value);
-                    SendMessage(m);
-                }
-                else if (Connected)
-                {
-                    Console.Error.WriteLine("Can't change name while connecting to server!");
-                    return;
-                }
-
-                name = value;
+                Message m = new Message((byte)EngineMessage.ClientNameChange, RakNet.PacketPriority.MEDIUM_PRIORITY, RakNet.PacketReliability.RELIABLE_ORDERED, (int)OrderingChannel.Chat);
+                m.Write(val);
+                GameClient.Instance.Connection.Send(m);
+                return false;
             }
-        }
-
-        private const string defaultClientName = "unnamed";
+            return true;
+        });
         protected GameClient(Config settings)
         {
             Instance = this;
             FullyConnected = false;
-
-            Name = settings.FindValueOrDefault("name", defaultClientName);
 
             SetupVariableDefaults();
             // read variables from config...
@@ -171,14 +154,7 @@ namespace FTW.Engine.Client
         {
             switch ((EngineMessage)m.Type)
             {
-                case EngineMessage.ClientConnected:
-                    {
-                        string clientName = m.ReadString();
-
-                        Console.WriteLine(clientName + " joined the game");
-                        return true;
-                    }
-                case EngineMessage.ServerInfo:
+                case EngineMessage.InitialData:
                     {
                         byte[] hash = new byte[16];
                         m.Stream.Read(hash, 128);
@@ -189,8 +165,9 @@ namespace FTW.Engine.Client
                             return true;
                         }
 
-                        name = m.ReadString(); // change name rather than Name, so as to automatically accept the change without re-sending.
-                        Console.WriteLine("My name, corrected by server: " + Name);
+                        string name = m.ReadString();
+                        Name.ForceValue(name);
+                        Console.WriteLine("My name, corrected by server: " + name);
 
                         byte numOthers = m.ReadByte();
 
@@ -207,7 +184,44 @@ namespace FTW.Engine.Client
                             Console.WriteLine(" * " + otherName);
                         }
 
+                        ushort num = m.ReadUShort();
+                        for (int i = 0; i < num; i++)
+                        {
+                            Variable var = Variable.Get(m.ReadString());
+                            string val = m.ReadString();
+                            if ( var != null )
+                            {
+                                var.ForceValue(val);
+                            }
+                        }
+
                         GameClient.Instance.FullyConnected = true;
+                        return true;
+                    }
+                case EngineMessage.ClientConnected:
+                    {
+                        string clientName = m.ReadString();
+
+                        Console.WriteLine(clientName + " joined the game");
+                        return true;
+                    }
+                case EngineMessage.ClientNameChange:
+                    {
+                        string newName = m.ReadString();
+
+                        if ( m.ReadBool() )
+                        {// it's me!
+                            //this is a cheeky hack, to avoid having to add a new variable just to stop the callback sending it's message again
+                            FullyConnected = false;
+                            Name.ForceValue(newName);
+                            FullyConnected = true;
+                            Console.WriteLine("You changed your name to {0}", newName);
+                        }
+                        else
+                        {// someone else
+                            string oldName = m.ReadString();
+                            Console.WriteLine("{0} changed name to {1}", oldName, newName);
+                        }   
                         return true;
                     }
                 case EngineMessage.Snapshot:
@@ -263,6 +277,9 @@ namespace FTW.Engine.Client
         {
             switch (firstWord)
             {
+                case "disconnect":
+                    Disconnect();
+                    return true;
                 case "get":
                     {
                         string name = theRest.Split(space)[0];
@@ -289,7 +306,7 @@ namespace FTW.Engine.Client
 
                             Console.WriteLine("Variable not recognised: {0}", parts[0]);
                         }
-                        else if ((vari.Flags & (VariableFlags.Client | VariableFlags.ClientOnly)) == VariableFlags.None)
+                        else if (!vari.HasAnyFlag(VariableFlags.Client | VariableFlags.ClientOnly))
                         {
                             if (FullyConnected && Connection.IsLocal)
                                 return false; // its a server variable ... set it on the server

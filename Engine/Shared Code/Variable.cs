@@ -61,12 +61,11 @@ namespace FTW.Engine.Shared
             }
 
 #if SERVER
-            if ( (flags & VariableFlags.Client) == VariableFlags.Client )
+            if (HasFlags(VariableFlags.Client))
             {
-                // add this to some client-variable list
                 return;
             }
-            else if ( (flags & VariableFlags.ClientOnly) == VariableFlags.ClientOnly )
+            else if (HasFlags(VariableFlags.ClientOnly))
             {
 #if DEBUG
                 Console.Error.WriteLine("Client-only variable {0} is defined on the server!", Name);
@@ -74,7 +73,7 @@ namespace FTW.Engine.Shared
                 return;
             }
 #elif CLIENT
-            if ((flags & VariableFlags.ServerOnly) == VariableFlags.ServerOnly)
+            if (HasFlags(VariableFlags.ServerOnly))
             {
 #if DEBUG
                 Console.Error.WriteLine("Server-only variable {0} is defined on the client!", Name);
@@ -106,12 +105,20 @@ namespace FTW.Engine.Shared
         }
 
         public Variable(string name, string defaultVal)
-            : this(name, defaultVal, VariableFlags.None, null)
+#if SERVER
+            : this(name, defaultVal, VariableFlags.ServerOnly, null)
+#elif CLIENT
+            : this(name, defaultVal, VariableFlags.ClientOnly, null)
+#endif
         {
         }
 
         public Variable(string name, float defaultVal)
-            : this(name, defaultVal, VariableFlags.None, null)
+#if SERVER
+            : this(name, defaultVal, VariableFlags.ServerOnly, null)
+#elif CLIENT
+            : this(name, defaultVal, VariableFlags.ClientOnly, null)
+#endif
         {
         }
 
@@ -129,18 +136,21 @@ namespace FTW.Engine.Shared
         public VariableFlags Flags { get; private set; }
         public bool IsNumeric { get; private set; }
 
+        public bool HasFlags(VariableFlags flag) { return (Flags & flag) == flag; }
+        public bool HasAnyFlag(VariableFlags flag) { return (Flags & flag) != VariableFlags.None; }
+
         private bool CanModify()
         {
 #if CLIENT
-            if ( (Flags & VariableFlags.Server) == VariableFlags.Server )
+            if (HasFlags(VariableFlags.Server))
                 return false;
 #endif
 
 #if !DEBUG
-            if ( (Flags & VariableFlags.Debug) == VariableFlags.Debug )
+            if (HasFlags(VariableFlags.Debug))
                 return false;
 #endif
-            if (!CheatsEnabled && (Flags & VariableFlags.Cheat) == VariableFlags.Cheat)
+            if (HasFlags(VariableFlags.Cheat) && !CheatsEnabled)
             {
                 Console.WriteLine("Cannot modify {0}, when sv_cheats is not 1", Name);
                 return false;
@@ -162,7 +172,7 @@ namespace FTW.Engine.Shared
         public void SetDefaultValue(string value)
         {
             DefaultValue = value;
-            Value = value;
+            ForceValue(value);
         }
 
         public string Value
@@ -197,14 +207,14 @@ namespace FTW.Engine.Shared
             }
         }
 
-        private void ChangeValue(string strValue, float? flVal, bool forcedChange)
+        private void ChangeValue(string newStrValue, float? flVal, bool forcedChange)
         {
             if (!IsNumeric)
             {
-                if (stringCallback == null || stringCallback(this, strVal) || forcedChange)
+                if (stringCallback == null || stringCallback(this, newStrValue) || forcedChange)
                 {
-                    bool isChange = Value != strVal;
-                    Value = strVal;
+                    bool isChange = strVal != newStrValue;
+                    strVal = newStrValue;
                     numericVal = null;
 
                     if (!forcedChange && isChange)
@@ -216,7 +226,7 @@ namespace FTW.Engine.Shared
             if (flVal == null)
             {
                 float numTmp;
-                if (!float.TryParse(strValue, out numTmp))
+                if (!float.TryParse(newStrValue, out numTmp))
                 {
                     Console.Error.WriteLine("Value specified for {0} is not numeric ({1}), but this is a numeric variable", Name, strVal);
                     return;
@@ -228,7 +238,7 @@ namespace FTW.Engine.Shared
             {
                 bool isChange = numericVal != flVal.Value;
                 numericVal = flVal.Value;
-                strVal = flVal.Value.ToString();
+                strVal = newStrValue;
 
                 if (!forcedChange && isChange)
                     VariableChanged();
@@ -248,9 +258,9 @@ namespace FTW.Engine.Shared
         private void VariableChanged()
         {
 #if SERVER
-            if ((Flags & VariableFlags.Server) == VariableFlags.Server) // don't send ServerOnly
+            if (HasFlags(VariableFlags.Server)) // don't send ServerOnly
 #elif CLIENT
-            if ((Flags & VariableFlags.Client) == VariableFlags.Client) // don't send ClientOnly
+            if (HasFlags(VariableFlags.Client)) // don't send ClientOnly
 #endif
             {
                 Message m = new Message((byte)EngineMessage.VariableChange, RakNet.PacketPriority.MEDIUM_PRIORITY, RakNet.PacketReliability.RELIABLE_ORDERED, (int)OrderingChannel.Variables);
@@ -297,8 +307,8 @@ namespace FTW.Engine.Shared
 
             // if cheats were disabled, set all cheat variables to their default values
             foreach (Variable test in GetEnumerable())
-                if ((test.Flags & VariableFlags.Cheat) == VariableFlags.Cheat && !test.IsDefault)
-                    test.ResetToDefault(); // actually, we should report on this... no?
+                if (test.HasFlags(VariableFlags.Cheat) && !test.IsDefault)
+                    test.ResetToDefault();
 
             return true;
         }

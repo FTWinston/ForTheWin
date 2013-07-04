@@ -16,6 +16,33 @@ namespace FTW.Engine.Client
 
         public abstract void RetrieveUpdates();
         public abstract void Send(Message m);
+
+        protected void SendClientInfo()
+        {
+            Message m = new Message((byte)EngineMessage.InitialData, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, 0);
+            short numVars = 0;
+            var allVars = Variable.GetEnumerable();
+
+            foreach (var v in allVars)
+                if (v.HasFlags(VariableFlags.Client))
+                    numVars++;
+            m.Write(numVars);
+
+            foreach (var v in allVars)
+                if (v.HasFlags(VariableFlags.Client))
+                {
+                    m.Write(v.Name);
+                    m.Write(v.Value);
+                }
+            Send(m);
+        }
+/*
+Client connects, *automatically* sends ID_NEW_INCOMING_CONNECTION
+Server *automatically* responds with ID_CONNECTION_REQUEST_ACCEPTED (or ID_NO_FREE_INCOMING_CONNECTIONS)
+Client sends InitialData listing all variables
+Server responds with InitialData listing all ITS variables
+We are then good to go
+*/
     }
 
     internal class ListenServerConnection : ServerConnection
@@ -37,11 +64,7 @@ namespace FTW.Engine.Client
             }
 
             server.Start(false, config);
-            GameClient.Instance.FullyConnected = true;
-
-            Message m = new Message((byte)EngineMessage.ClientConnecting, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, 0);
-            m.Write(GameClient.Instance.Name);
-            Send(m);
+            SendClientInfo();
         }
 
         public override void Disconnect()
@@ -122,11 +145,7 @@ namespace FTW.Engine.Client
                     {
                         case DefaultMessageIDTypes.ID_CONNECTION_REQUEST_ACCEPTED: // now properly connected. send client info? (e.g. name)
                             Console.WriteLine("Connected to server");
-
-                            // server will respond to this with a NewClientInfo message of its own
-                            Message m = new Message((byte)EngineMessage.ClientConnecting, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, 0);
-                            m.Write(client.Name);
-                            Send(m);
+                            SendClientInfo();
                             break;
                         case DefaultMessageIDTypes.ID_NO_FREE_INCOMING_CONNECTIONS:
                             Console.WriteLine("Unable to connect: the server is full");

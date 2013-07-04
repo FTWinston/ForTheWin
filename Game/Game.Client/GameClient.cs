@@ -39,7 +39,7 @@ namespace Game.Client
 
         protected override void SetupVariableDefaults()
         {
-            // ...
+            Variable.Get("name").SetDefaultValue("Player");
         }
 
         private static GameClient instance;
@@ -159,7 +159,13 @@ namespace Game.Client
             if (base.ConsoleCommand(firstWord, theRest))
                 return true;
 
-            // ...
+            switch (firstWord)
+            {   
+                case "exit":
+                case "quit":
+                    window.CloseGameWindow();
+                    return true;
+            }
             return false;
         }
     }

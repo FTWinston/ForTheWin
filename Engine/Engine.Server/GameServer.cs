@@ -278,43 +278,85 @@ namespace FTW.Engine.Server
         {
             switch ((EngineMessage)m.Type)
             {
-                case EngineMessage.ClientConnecting:
+                case EngineMessage.InitialData:
                     {
-                        // if it's already in use, this name will be corrected automatically
-                        c.Name = m.ReadString();
+                        short num = m.ReadShort();
+                        for (int i = 0; i < num; i++)
+                        {
+                            string var = m.ReadString(), val = m.ReadString();
+                            if (var == "name")
+                                val = c.GetUniqueName(val);
+                            c.SetVariable(var, val);
+                        }
+
+                        string name = c.Name;
 
                         // tell all other clients about this new client
                         m = new Message((byte)EngineMessage.ClientConnected, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, 0);
-                        m.Write(c.Name);
+                        m.Write(name);
                         Client.SendToAllExcept(m, c);
 
-                        if ( !IsDedicated )
-                            Console.WriteLine(c.Name + " joined the game");
+                        if (IsDedicated)
+                            Console.WriteLine(name + " joined the game");
 
                         // send ServerInfo to the newly-connected client, which as well as the network table hash,
-                        // tells them how/if we've modified their name and the names of everyone else on the server
-                        m = new Message((byte)EngineMessage.ServerInfo, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, 0);
+                        // tells them how/if we've modified their name, the names of everyone else on the server, and all the server variables
+
+                        // is it worth having name be a variable here?
+
+                        // how would name change work?
+                        // when you try to change the name, it always fails, but sends a "name change" to the server
+                        // that sends a "name change" to everyone else, and a special one back to you that actaully updates the variable
+                        m = new Message((byte)EngineMessage.InitialData, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, 0);
                         m.Stream.Write(NetworkedEntity.NetworkTableHash, (uint)128);
                         m.Write(c.Name);
 
-		                List<Client> otherClients = Client.GetAllExcept(c);
-		                m.Write((byte)otherClients.Count);
-		                foreach (Client other in otherClients)
+                        List<Client> otherClients = Client.GetAllExcept(c);
+                        m.Write((byte)otherClients.Count);
+                        foreach (Client other in otherClients)
                             m.Write(other.Name);
+
+                        ushort numVars = 0;
+                        var allVars = Variable.GetEnumerable();
+
+                        foreach (var v in allVars)
+                            if (v.HasFlags(VariableFlags.Server))
+                                numVars++;
+                        m.Write(numVars);
+
+                        foreach (var v in allVars)
+                            if (v.HasFlags(VariableFlags.Server))
+                            {
+                                m.Write(v.Name);
+                                m.Write(v.Value);
+                            }
 
                         c.Send(m);
                         return true;
                     }
                 case EngineMessage.ClientNameChange:
                     {
-                        /*BitStream bs = new BitStream(packet.data, packet.length, false);
-                        bs.IgnoreBytes(1);
+                        string oldName = c.Name;
+                        string name = m.ReadString();
+                        c.Name = name;
+                        name = c.Name; // if it wasn't unique, it'll have been changed
 
-                        string newName, oldName = c.Name;
-                        bs.Read(out newName);
-                        c.Name = newName;
+                        // tell everyone else about the change
+                        m = new Message((byte)EngineMessage.ClientNameChange, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE_ORDERED, (int)OrderingChannel.Chat);
+                        m.Write(name);
+                        m.Write(false);
+                        m.Write(oldName);
+                        Client.SendToAllExcept(m, c);
 
-                        Console.WriteLine(oldName + " changed name to " + c.Name);*/
+                        // tell this client their "tidied" name
+                        m = new Message((byte)EngineMessage.ClientNameChange, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE_ORDERED, (int)OrderingChannel.Chat);
+                        m.Write(name);
+                        m.Write(true);
+                        c.Send(m);
+
+                        if (IsDedicated)
+                            Console.WriteLine("{0} changed name to {1}", oldName, name);
+
                         return true;
                     }
                 case EngineMessage.VariableChange:

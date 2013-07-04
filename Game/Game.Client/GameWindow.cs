@@ -139,15 +139,15 @@ namespace Game.Client
         }
 
         private void PlayerNameChanged(string name)
-       {
+        {
             if (name.Trim() == string.Empty)
                 name = GameClient.defaultClientName;
 
             config.Find("name").Value = name;
-            gameClient.Name = name;
+            gameClient.Name.Value = name;
         }
 
-        private void CloseGameWindow()
+        public void CloseGameWindow()
         {
             Close();
             EndGame();

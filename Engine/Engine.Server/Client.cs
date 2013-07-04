@@ -15,17 +15,10 @@ namespace FTW.Engine.Server
             SnapshotInterval = 50; // this should be a Variable
         }
 
-        private string name;
         public string Name
         {
-            get { return name; }
-            set
-            {
-                if (name != null)
-                    name = GetUniqueName(value);
-                else
-                    name = value;
-            }
+            get { return GetVariable("name"); }
+            set { SetVariable("name", GetUniqueName(value)); }
         }
         internal RakNetGUID UniqueID { get; set; }
         internal uint LastSnapshotTime { get; set; }
@@ -109,7 +102,7 @@ namespace FTW.Engine.Server
             return null;
         }
 
-        protected string GetUniqueName(string desiredName)
+        internal string GetUniqueName(string desiredName)
         {
             desiredName = GameServer.Instance.ValidatePlayerName(desiredName);
 

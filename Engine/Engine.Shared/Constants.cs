@@ -13,12 +13,12 @@ namespace FTW.Engine.Shared
 
     public enum EngineMessage : byte
     {
-        ClientConnecting = DefaultMessageIDTypes.ID_USER_PACKET_ENUM,
-        ClientConnected,
-        ServerInfo,
-        ClientNameChange,
-        Snapshot,
+        Snapshot = DefaultMessageIDTypes.ID_USER_PACKET_ENUM,
+        InitialData,
         VariableChange,
+        ClientConnected,
+        ClientNameChange,
+        
         //ClientCommand,
         //Chat,
 
