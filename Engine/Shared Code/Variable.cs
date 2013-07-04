@@ -157,8 +157,13 @@ namespace FTW.Engine.Shared
         private StringCallback stringCallback;
         private NumericCallback numericCallback;
 
-        public string DefaultValue { get; internal set; }
-        internal void SetDefault() { Value = DefaultValue; }
+        public string DefaultValue { get; private set; }
+        internal void ResetToDefault() { Value = DefaultValue; }
+        public void SetDefaultValue(string value)
+        {
+            DefaultValue = value;
+            Value = value;
+        }
 
         public string Value
         {
@@ -292,7 +297,7 @@ namespace FTW.Engine.Shared
             // if cheats were disabled, set all cheat variables to their default values
             foreach (Variable test in GetEnumerable())
                 if ((test.Flags & VariableFlags.Cheat) == VariableFlags.Cheat && !test.IsDefault)
-                    test.SetDefault(); // actually, we should report on this... no?
+                    test.ResetToDefault(); // actually, we should report on this... no?
 
             return true;
         }

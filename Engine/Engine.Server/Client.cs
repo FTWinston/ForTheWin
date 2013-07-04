@@ -220,9 +220,38 @@ namespace FTW.Engine.Server
             NeedsFullUpdate = false;
         }
 
+        private SortedList<string, string> variables = new SortedList<string, string>();
+        private SortedList<string, float> numericVariables = new SortedList<string, float>();
         internal void SetVariable(string name, string val)
         {
-            throw new NotImplementedException();
+            variables[name] = val;
+            float num;
+            if (float.TryParse(val, out num))
+                numericVariables[name] = num;
+            else
+                numericVariables.Remove(name);
+        }
+
+        internal void SetVariable(string name, float val)
+        {
+            variables[name] = val.ToString();
+            numericVariables[name] = val;
+        }
+
+        public string GetVariable(string name)
+        {
+            string val;
+            if (variables.TryGetValue(name, out val))
+                return val;
+            return null;
+        }
+
+        public float? GetNumericVariable(string name)
+        {
+            float val;
+            if (numericVariables.TryGetValue(name, out val))
+                return val;
+            return null;
         }
     }
 
