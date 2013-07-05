@@ -186,7 +186,7 @@ namespace FTW.Engine.Shared
                 if (!CanModify())
                     return;
 
-                ChangeValue(value, null, true);
+                ChangeValue(value, null, false);
             }
         }
 
