@@ -60,11 +60,10 @@ namespace FTW.Engine.Client
                 Enqueue(s, m.Timestamp.Value);
         }
 
-        public const uint lerpDelay = 200; // what a terrible way to handle this. Seriously. Awful.
         private static void Enqueue(Snapshot s, uint timestamp)
         {
-            if (timestamp < GameClient.Instance.FrameTime - lerpDelay)
-                ; // well this was too late. I'm sure we'll do SOMETHING with it, however
+            if (timestamp < GameClient.Instance.FrameTime - GameClient.Instance.LerpDelay)
+                ;//s.Apply(); // well this was too late. I'm sure we'll do SOMETHING with it, however
             else
                 Queue[timestamp] = s;
         }
@@ -77,22 +76,26 @@ namespace FTW.Engine.Client
             {
                 uint time = Queue.Keys[i];
 
-                if (time > GameClient.Instance.FrameTime - lerpDelay)
+                if (time > GameClient.Instance.FrameTime - GameClient.Instance.LerpDelay)
                     break;
                 else
                 {
-                    var snapshot = Queue[time];
-                    foreach (var id in snapshot.Deletions)
-                    {
-                        NetworkedEntity ent = NetworkedEntity.NetworkedEntities[id];
-                        if (ent != null)
-                            ent.Delete();
-                    }
-                    foreach (var ent in snapshot.Creations)
-                        ent.Initialize();
+                    Queue[time].Apply();
                     Queue.RemoveAt(0);
                 }
             }
+        }
+
+        private void Apply()
+        {
+            foreach (var id in Deletions)
+            {
+                NetworkedEntity ent = NetworkedEntity.NetworkedEntities[id];
+                if (ent != null)
+                    ent.Delete();
+            }
+            foreach (var ent in Creations)
+                ent.Initialize();
         }
 
         private Snapshot()

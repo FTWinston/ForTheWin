@@ -25,13 +25,28 @@ namespace FTW.Engine.Client
             }
             return true;
         });
+
         protected GameClient(Config settings)
         {
             Instance = this;
             FullyConnected = false;
 
+
+            Variable var = new Variable("cl_interp", 200, VariableFlags.ClientOnly, (v, val) =>
+            {
+                if (val > 0 && val < 1000)
+                {
+                    GameClient.Instance.LerpDelay = (uint)val;
+                    return true;
+                }
+                return false;
+            });
+
             SetupVariableDefaults();
             // read variables from config...
+
+
+            LerpDelay = (uint)var.NumericValue;
         }
 
         protected abstract void SetupVariableDefaults();
@@ -86,6 +101,7 @@ namespace FTW.Engine.Client
 
         public uint FrameTime { get; private set; }
         public uint ServerTime { get; private set; }
+        internal uint LerpDelay { get; private set; }
         private uint lastFrameTime, dt;
 
         // this should really be a GameFrame type of affair, shouldn't it?
@@ -93,7 +109,7 @@ namespace FTW.Engine.Client
         {
             lastFrameTime = FrameTime;
             FrameTime = RakNet.RakNet.GetTime();
-            ServerTime = FrameTime - Snapshot.lerpDelay;
+            ServerTime = FrameTime - LerpDelay;
 
             /*if (Paused)
             {
