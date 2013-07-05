@@ -312,5 +312,111 @@ namespace FTW.Engine.Shared
 
             return true;
         }
+/*
+        // the rate at which the server (and client) simulate steps of the world
+        private static Variable tickrate = new Variable("tickrate", 33, VariableFlags.Server, (v, val) =>
+        {
+            if (val >= 1 && val < 100)
+            {
+#if SERVER
+                GameServer.Instance.TickInterval = (uint)(1f/val);
+#elif CLIENT
+                GameClient.Instance.TickInterval = (uint)(1f/val);
+#endif
+                return true;
+            }
+            return false;
+        });
+
+#if CLIENT
+        // the number of snapshots per second that a client desires from the server
+        private static Variable cl_updaterate = new Variable("cl_updaterate", 20, VariableFlags.Client, (v, val) =>
+        {
+            if (val >= 1 && val < 100)
+            {
+                GameClient.Instance.SnapshotInterval = (uint)(1f/val);
+                return true;
+            }
+            return false;
+        });
+
+        // the number of user commands per second that a client sends to the server
+        private static Variable cl_cmdrate = new Variable("cl_cmdrate", 20, VariableFlags.Client, (v, val) =>
+        {
+            if (val >= sv_minupdaterate.NumericValue && val < sv_maxupdaterate.NumericValue)
+            {
+                GameClient.Instance.CommandInterval = (uint)(1f / val);
+                return true;
+            }
+            return false;
+        });
+
+        // the maximum amount of data that can be sent to this client, in kb/sec
+        // hold off on sending snapshots if doing so would exceed this rate, over the last second
+        private static Variable cl_datarate = new Variable("cl_datarate", 20, VariableFlags.Client, (v, val) =>
+        {
+            if (val >= sv_mindatarate.NumericValue && val < sv_maxdatarate.NumericValue)
+            {
+                // don't know how to use this, yet
+                return true;
+            }
+            return false;
+        });
+#endif
+        // snapshots/sec
+        private static Variable sv_maxupdaterate = new Variable("sv_maxupdaterate", 100, VariableFlags.Server, (v, val) =>
+        {
+            if (val >= 1 && val < 100)
+            {
+                // any client with a cl_updaterate higher should have it reduced
+                return true;
+            }
+            return false;
+        });
+
+        // snapshots/sec
+        private static Variable sv_minupdaterate = new Variable("sv_minupdaterate", 1, VariableFlags.Server, (v, val) =>
+        {
+            if (val >= 1 && val < 100)
+            {
+                // any client with a cl_updaterate lower should have it reduced
+                return true;
+            }
+            return false;
+        });
+
+        // kb/sec
+        private static Variable sv_maxdatarate = new Variable("sv_maxdatarate", 100, VariableFlags.Server, (v, val) =>
+        {
+            if (val >= 1 && val < 100)
+            {
+                // any client with a cl_datarate higher should have it reduced
+                return true;
+            }
+            return false;
+        });
+
+        // kb/sec
+        private static Variable sv_mindatarate = new Variable("sv_mindatarate", 1, VariableFlags.Server, (v, val) =>
+        {
+            if (val >= 1 && val < 100)
+            {
+                // any client with a cl_datarate lower should have it reduced
+                return true;
+            }
+            return false;
+        });
+*/
+/*
+ * Game data is compressed using delta compression to reduce network load. That means the server doesn't send a full
+ * world snapshot each time, but rather only changes (a delta snapshot) that happened since THE LAST ACKNOWLEDGED UPDATE.
+ * With each packet sent between the client and server, acknowledge numbers are attached to keep track of their data flow.
+ * Usually full (non-delta) snapshots are only sent when a game starts or a client suffers from heavy packet loss for a
+ * couple of seconds. Clients can request a full snapshot manually with the cl_fullupdate command.
+
+Should we do this? This would perhaps increase what we need to send, but might make "detecting loss" easier... ?
+
+How would we decide that packet loss was so bad as to need a full update, though?
+*/
     }
 }
