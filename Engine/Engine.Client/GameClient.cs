@@ -34,7 +34,7 @@ namespace FTW.Engine.Client
 
             Variable var = new Variable("cl_interp", 200, VariableFlags.ClientOnly, (v, val) =>
             {
-                if (val > 0 && val < 1000)
+                if (val > 0 && val <= 1000)
                 {
                     GameClient.Instance.LerpDelay = (uint)val;
                     return true;
@@ -130,8 +130,11 @@ namespace FTW.Engine.Client
             }
 
             Connection.RetrieveUpdates();
-            Snapshot.CheckQueue();
 
+            // actually everything in GameFrame seems to me like it should only run on a "tick" rather than just when rendering
+
+
+            Snapshot.CheckQueue();
             GameFrame(dt / 1000.0); // convert milliseconds to seconds
 
             //Console.WriteLine("Frame duration: {0}ms", RakNet.RakNet.GetTime() - FrameTime);

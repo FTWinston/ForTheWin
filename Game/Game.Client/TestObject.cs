@@ -41,7 +41,7 @@ namespace Game.Client
             return new NetworkField[] { positionX, positionY };
         }
 
-        NetworkFloat positionX = new NetworkFloat(false);
+        NetworkFloat positionX = new NetworkFloat(true);
         NetworkFloat positionY = new NetworkFloat(true);
 
         public void Draw(RenderTarget target, RenderStates states)

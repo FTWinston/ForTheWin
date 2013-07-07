@@ -20,7 +20,7 @@ namespace Game.Server
             return new NetworkField[] { positionX, positionY };
         }
 
-        NetworkFloat positionX = new NetworkFloat(false);
+        NetworkFloat positionX = new NetworkFloat(true);
         NetworkFloat positionY = new NetworkFloat(true);
 
         double sx = 60.0, sy = 60.0;

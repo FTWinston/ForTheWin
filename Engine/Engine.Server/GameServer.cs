@@ -166,7 +166,7 @@ namespace FTW.Engine.Server
             Instance = null;
         }
 
-        protected uint TargetFrameInterval = 33;
+        protected internal uint TickInterval = 33;
         const int pauseTickMilliseconds = 100;
         
         public uint FrameTime { get; private set; }
@@ -202,7 +202,7 @@ namespace FTW.Engine.Server
                 ReceiveMessages();
                 GameFrame(dt/1000.0); // convert milliseconds to seconds
                 
-                int frameTimeRemaining = (int)(FrameTime + TargetFrameInterval) - (int)RakNet.RakNet.GetTime();
+                int frameTimeRemaining = (int)(FrameTime + TickInterval) - (int)RakNet.RakNet.GetTime();
                 if (frameTimeRemaining > 0)
                     Thread.Sleep(frameTimeRemaining);
             }
@@ -282,12 +282,7 @@ namespace FTW.Engine.Server
                     {
                         short num = m.ReadShort();
                         for (int i = 0; i < num; i++)
-                        {
-                            string var = m.ReadString(), val = m.ReadString();
-                            if (var == "name")
-                                val = c.GetUniqueName(val);
-                            c.SetVariable(var, val);
-                        }
+                            c.SetVariable(m.ReadString(), m.ReadString());
 
                         string name = c.Name;
 
@@ -332,6 +327,7 @@ namespace FTW.Engine.Server
                             }
 
                         c.Send(m);
+                        c.NextSnapshotTime = FrameTime + c.SnapshotInterval;
                         return true;
                     }
                 case EngineMessage.ClientNameChange:

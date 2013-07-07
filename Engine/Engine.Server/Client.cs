@@ -22,8 +22,8 @@ namespace FTW.Engine.Server
         }
         internal RakNetGUID UniqueID { get; set; }
         internal uint LastSnapshotTime { get; set; }
-        private uint NextSnapshotTime { get; set; }
-        private uint SnapshotInterval { get; set; }
+        internal uint NextSnapshotTime { get; set; }
+        internal uint SnapshotInterval { get; set; }
         internal bool NeedsFullUpdate { get; set; }
         private SortedList<ushort, bool> KnownEntities = new SortedList<ushort, bool>();
         internal SortedList<ushort, bool> DeletedEntities = new SortedList<ushort, bool>();
@@ -141,7 +141,7 @@ namespace FTW.Engine.Server
             foreach (Client c in AllClients.Values)
             {
                 if (c.NextSnapshotTime > GameServer.Instance.FrameTime)
-                    return;
+                    continue;
 
                 c.SendSnapshot();
                 c.LastSnapshotTime = GameServer.Instance.FrameTime;
@@ -165,7 +165,7 @@ namespace FTW.Engine.Server
             {
                 if (!e.IsNetworked)
                     continue;
-
+                
                 NetworkedEntity ne = e as NetworkedEntity;
                 if (ne.IsDeleted || !ne.HasChanges(this))
                     continue;
@@ -217,6 +217,15 @@ namespace FTW.Engine.Server
         private SortedList<string, float> numericVariables = new SortedList<string, float>();
         internal void SetVariable(string name, string val)
         {
+            if (name == "name")
+                val = GetUniqueName(val);
+            else if (name == "cl_updaterate")
+            {
+                float f;
+                if (float.TryParse(val, out f) && f != 0f)
+                    SnapshotInterval = (uint)(1000f / f);
+            }
+
             variables[name] = val;
             float num;
             if (float.TryParse(val, out num))

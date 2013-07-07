@@ -312,16 +312,16 @@ namespace FTW.Engine.Shared
 
             return true;
         }
-/*
+
         // the rate at which the server (and client) simulate steps of the world
         private static Variable tickrate = new Variable("tickrate", 33, VariableFlags.Server, (v, val) =>
         {
             if (val >= 1 && val < 100)
             {
 #if SERVER
-                GameServer.Instance.TickInterval = (uint)(1f/val);
+                GameServer.Instance.TickInterval = (uint)(1000f/val);
 #elif CLIENT
-                GameClient.Instance.TickInterval = (uint)(1f/val);
+                //GameClient.Instance.TickInterval = (uint)(1000f/val);
 #endif
                 return true;
             }
@@ -332,20 +332,21 @@ namespace FTW.Engine.Shared
         // the number of snapshots per second that a client desires from the server
         private static Variable cl_updaterate = new Variable("cl_updaterate", 20, VariableFlags.Client, (v, val) =>
         {
-            if (val >= 1 && val < 100)
+            if (val >= sv_minupdaterate.NumericValue && val < sv_maxupdaterate.NumericValue)
             {
-                GameClient.Instance.SnapshotInterval = (uint)(1f/val);
+                //we don't need to use this on the client, do we?
+                //GameClient.Instance.SnapshotInterval = (uint)(1000f/val);
                 return true;
             }
             return false;
         });
-
+/*
         // the number of user commands per second that a client sends to the server
         private static Variable cl_cmdrate = new Variable("cl_cmdrate", 20, VariableFlags.Client, (v, val) =>
         {
             if (val >= sv_minupdaterate.NumericValue && val < sv_maxupdaterate.NumericValue)
             {
-                GameClient.Instance.CommandInterval = (uint)(1f / val);
+                GameClient.Instance.CommandInterval = (uint)(1000f / val);
                 return true;
             }
             return false;
@@ -361,8 +362,9 @@ namespace FTW.Engine.Shared
                 return true;
             }
             return false;
-        });
+        });*/
 #endif
+
         // snapshots/sec
         private static Variable sv_maxupdaterate = new Variable("sv_maxupdaterate", 100, VariableFlags.Server, (v, val) =>
         {
@@ -384,7 +386,7 @@ namespace FTW.Engine.Shared
             }
             return false;
         });
-
+/*
         // kb/sec
         private static Variable sv_maxdatarate = new Variable("sv_maxdatarate", 100, VariableFlags.Server, (v, val) =>
         {
