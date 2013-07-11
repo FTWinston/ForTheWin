@@ -94,22 +94,30 @@ namespace FTW.Engine.Client
             NetworkedEntity.InitializeTypes();
 
             dt = 100;
+            nextFrameTime = RakNet.RakNet.GetTime();
             FrameTime = lastFrameTime = RakNet.RakNet.GetTime() - dt;
         }
 
         public event EventHandler Disconnected;
 
+        protected internal uint TickInterval = 30;
+
         public uint FrameTime { get; private set; }
         public uint ServerTime { get; private set; }
         internal uint LerpDelay { get; private set; }
-        private uint lastFrameTime, dt;
+        private uint lastFrameTime, nextFrameTime, dt;
 
         // this should really be a GameFrame type of affair, shouldn't it?
         public void Update()
         {
-            lastFrameTime = FrameTime;
             FrameTime = RakNet.RakNet.GetTime();
             ServerTime = FrameTime - LerpDelay;
+
+            Connection.RetrieveUpdates();
+            Snapshot.CheckQueue();
+
+            if ( nextFrameTime > FrameTime )
+                return;
 
             /*if (Paused)
             {
@@ -129,15 +137,10 @@ namespace FTW.Engine.Client
                 lastFrameTime = FrameTime;
             }
 
-            Connection.RetrieveUpdates();
-
-            // actually everything in GameFrame seems to me like it should only run on a "tick" rather than just when rendering
-
-
-            Snapshot.CheckQueue();
             GameFrame(dt / 1000.0); // convert milliseconds to seconds
 
-            //Console.WriteLine("Frame duration: {0}ms", RakNet.RakNet.GetTime() - FrameTime);
+            nextFrameTime += TickInterval;
+            lastFrameTime = FrameTime;
         }
 
         private void GameFrame(double dt)

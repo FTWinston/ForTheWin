@@ -321,7 +321,7 @@ namespace FTW.Engine.Shared
 #if SERVER
                 GameServer.Instance.TickInterval = (uint)(1000f/val);
 #elif CLIENT
-                //GameClient.Instance.TickInterval = (uint)(1000f/val);
+                GameClient.Instance.TickInterval = (uint)(1000f/val);
 #endif
                 return true;
             }
@@ -330,12 +330,12 @@ namespace FTW.Engine.Shared
 
 #if CLIENT
         // the number of snapshots per second that a client desires from the server
-        private static Variable cl_updaterate = new Variable("cl_updaterate", 20, VariableFlags.Client, (v, val) =>
+        private static Variable cl_snapshotrate = new Variable("cl_snapshotrate", 20, VariableFlags.Client, (v, val) =>
         {
-            if (val >= sv_minupdaterate.NumericValue && val < sv_maxupdaterate.NumericValue)
+            if (val >= sv_minsnapshotrate.NumericValue && val < sv_maxsnapshotrate.NumericValue)
             {
                 //we don't need to use this on the client, do we?
-                //GameClient.Instance.SnapshotInterval = (uint)(1000f/val);
+                //GameClient.Instance.UpdateInterval = (uint)(1000f/val);
                 return true;
             }
             return false;
@@ -344,7 +344,7 @@ namespace FTW.Engine.Shared
         // the number of user commands per second that a client sends to the server
         private static Variable cl_cmdrate = new Variable("cl_cmdrate", 20, VariableFlags.Client, (v, val) =>
         {
-            if (val >= sv_minupdaterate.NumericValue && val < sv_maxupdaterate.NumericValue)
+            if (val >= sv_minsnapshotrate.NumericValue && val < sv_maxsnapshotrate.NumericValue)
             {
                 GameClient.Instance.CommandInterval = (uint)(1000f / val);
                 return true;
@@ -366,22 +366,22 @@ namespace FTW.Engine.Shared
 #endif
 
         // snapshots/sec
-        private static Variable sv_maxupdaterate = new Variable("sv_maxupdaterate", 100, VariableFlags.Server, (v, val) =>
+        private static Variable sv_maxsnapshotrate = new Variable("sv_maxsnapshotrate", 100, VariableFlags.Server, (v, val) =>
         {
             if (val >= 1 && val < 100)
             {
-                // any client with a cl_updaterate higher should have it reduced
+                // any client with a cl_snapshotrate higher should have it reduced
                 return true;
             }
             return false;
         });
 
         // snapshots/sec
-        private static Variable sv_minupdaterate = new Variable("sv_minupdaterate", 1, VariableFlags.Server, (v, val) =>
+        private static Variable sv_minsnapshotrate = new Variable("sv_minsnapshotrate", 1, VariableFlags.Server, (v, val) =>
         {
             if (val >= 1 && val < 100)
             {
-                // any client with a cl_updaterate lower should have it reduced
+                // any client with a cl_snapshotrate lower should have it reduced
                 return true;
             }
             return false;

@@ -166,7 +166,7 @@ namespace FTW.Engine.Server
             Instance = null;
         }
 
-        protected internal uint TickInterval = 33;
+        protected internal uint TickInterval = 30;
         const int pauseTickMilliseconds = 100;
         
         public uint FrameTime { get; private set; }

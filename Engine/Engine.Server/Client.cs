@@ -219,7 +219,7 @@ namespace FTW.Engine.Server
         {
             if (name == "name")
                 val = GetUniqueName(val);
-            else if (name == "cl_updaterate")
+            else if (name == "cl_snapshotrate")
             {
                 float f;
                 if (float.TryParse(val, out f) && f != 0f)
