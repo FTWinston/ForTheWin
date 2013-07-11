@@ -48,7 +48,7 @@ namespace FTW.Engine.Shared
         public void Write(bool val) { Stream.Write(val); }
         public void Write(byte val) { Stream.Write(val); }
         public void Write(short val) { Stream.Write(val); }
-        public void Write(ushort val) { Stream.Write(val); }
+        public void Write(ushort val) { /*Stream.Write(val);*/ Stream.Write(BitConverter.GetBytes(val), sizeof(ushort)); } // the existing write method put bytes the wrong way around, compared to how we have to read them.
         public void Write(int val) { Stream.Write(val); }
         public void Write(uint val) { Stream.Write(BitConverter.GetBytes(val), sizeof(uint)); }
         public void Write(long val) { Stream.Write(val); }

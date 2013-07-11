@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using FTW.Engine.Shared;
+using RakNet;
 
 namespace UnitTests
 {
@@ -15,6 +16,12 @@ namespace UnitTests
                 () => config.Find("ship-to").Find("state").Value == "KS",
                 () => config.Find("items").Children[1].Find("quantity").Value == "1",
                 () => config.FindValueOrDefault("notPresent", "default") == "default"
+                );
+
+            TestResult("Message read/write",
+                () => ReadWriteUShort(),
+                () => ReadWriteUInt(),
+                () => ReadWriteULong()
                 );
 
             Console.WriteLine("Press any key to continue...");
@@ -57,6 +64,45 @@ namespace UnitTests
                 Console.Error.WriteLine(" tests");
             }
             Console.WriteLine();
+        }
+
+        private static bool ReadWriteUShort()
+        {
+            ushort val1 = 27;
+
+            Message m = new Message(0, RakNet.PacketPriority.MEDIUM_PRIORITY, RakNet.PacketReliability.RELIABLE, 0);
+            m.Write(val1);
+
+            m.ResetRead();
+            ushort val2 = m.ReadUShort();
+
+            return val2 == val1;
+        }
+
+        private static bool ReadWriteUInt()
+        {
+            uint val1 = 27;
+
+            Message m = new Message(0, RakNet.PacketPriority.MEDIUM_PRIORITY, RakNet.PacketReliability.RELIABLE, 0);
+            m.Write(val1);
+
+            m.ResetRead();
+            uint val2 = m.ReadUInt();
+
+            return val2 == val1;
+        }
+
+        private static bool ReadWriteULong()
+        {
+            ulong val1 = 27;
+
+            Message m = new Message(0, RakNet.PacketPriority.MEDIUM_PRIORITY, RakNet.PacketReliability.RELIABLE, 0);
+            m.Write(val1);
+
+            m.ResetRead();
+            ulong val2 = m.ReadULong();
+
+            return val2 == val1;
         }
     }
 }
