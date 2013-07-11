@@ -74,6 +74,7 @@ namespace FTW.Engine.Client
 
             NetworkedEntity ent = c.Invoke(Type.EmptyTypes) as NetworkedEntity;
             ent.EntityID = entityID;
+            NetworkedEntities[entityID] = ent;
             return ent;
         }
 
@@ -82,7 +83,6 @@ namespace FTW.Engine.Client
         {
             NetworkedType = networkedType.Replace('¬', '-');
             DoFieldSetup();
-            NetworkedEntities[EntityID] = this;
         }
 
         protected internal override void Initialize()
