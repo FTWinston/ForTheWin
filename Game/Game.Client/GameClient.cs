@@ -21,6 +21,7 @@ namespace Game.Client
             instance = this;
             this.window = window;
             SetupDisplay();
+            Disconnected += (e, o) => gameElements.Clear();
         }
 
         public const string defaultClientName = "Some Client";
