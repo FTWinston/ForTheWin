@@ -118,6 +118,7 @@ namespace FTW.Engine.Server
                 rakNet.Startup(numRemoteClients, new SocketDescriptor(NetworkPort, null), 1);
                 rakNet.SetMaximumIncomingConnections(numRemoteClients);
                 rakNet.SetOccasionalPing(true);
+                Console.WriteLine("Network server started at time {0}", RakNet.RakNet.GetTime());
             }
 
             return true;
@@ -201,7 +202,7 @@ namespace FTW.Engine.Server
 
                 ReceiveMessages();
                 GameFrame(dt/1000.0); // convert milliseconds to seconds
-                
+
                 int frameTimeRemaining = (int)(FrameTime + TickInterval) - (int)RakNet.RakNet.GetTime();
                 if (frameTimeRemaining > 0)
                     Thread.Sleep(frameTimeRemaining);

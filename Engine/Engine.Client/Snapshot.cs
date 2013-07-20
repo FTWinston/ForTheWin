@@ -72,9 +72,9 @@ namespace FTW.Engine.Client
 
         internal static void CheckQueue()
         {
-            for (int i = 0; i < Queue.Count; i++)
+            while ( Queue.Count > 0 )
             {
-                uint time = Queue.Keys[i];
+                uint time = Queue.Keys[0];
 
                 if (time > GameClient.Instance.FrameTime - GameClient.Instance.LerpDelay)
                     break;

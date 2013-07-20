@@ -31,9 +31,7 @@ namespace FTW.Engine.Shared
         public Message(Packet p)
         {
             Stream = new BitStream(p.data, p.length, false);
-
-            Type = ReadByte();
-            CheckTimestamp();
+            GetTypeAndTimestamp();
         }
 
         public PacketPriority Priority { get; private set; }
@@ -72,12 +70,12 @@ namespace FTW.Engine.Shared
         public void ResetRead()
         {
             Stream.SetReadOffset(0);
-            Type = ReadByte();
-            CheckTimestamp();
+            GetTypeAndTimestamp();
         }
 
-        private void CheckTimestamp()
+        private void GetTypeAndTimestamp()
         {
+            Type = ReadByte();
             if (Type == (byte)DefaultMessageIDTypes.ID_TIMESTAMP)
             {
                 Timestamp = ReadUInt();
