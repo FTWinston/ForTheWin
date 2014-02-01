@@ -147,7 +147,7 @@ namespace FTW.Engine.Shared
 #endif
 
 #if !DEBUG
-            if (HasFlags(VariableFlags.Debug))
+            if (HasFlags(VariableFlags.DebugOnly))
                 return false;
 #endif
             if (HasFlags(VariableFlags.Cheat) && !CheatsEnabled)

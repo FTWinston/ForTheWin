@@ -177,6 +177,31 @@ namespace FTW.Engine.Shared
 #endif
     }
 
+    public class NetworkLong : NetworkField<long>
+    {
+        public NetworkLong(bool interpolate)
+            : base(interpolate)
+        {
+        }
+
+#if CLIENT
+        public override long ReadFrom(Message m)
+        {
+            return m.ReadLong();
+        }
+
+        protected override long Lerp(long val1, long val2, float fraction)
+        {
+            return (long)(val1 + (val2 - val1) * fraction);
+        }
+#elif SERVER
+        public override void WriteTo(Message m)
+        {
+            m.Write(val);
+        }
+#endif
+    }
+
     public class NetworkFloat : NetworkField<float>
     {
         public NetworkFloat(bool interpolate)
