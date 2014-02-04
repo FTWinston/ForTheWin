@@ -14,6 +14,20 @@ namespace Game.Server
             ;
         }
 
+        protected override bool Initialize()
+        {
+            bool retVal = base.Initialize();
+            
+            var test = new Obstacle();
+            test.positionX.Value = 50;
+            test.positionY.Value = 50;
+
+            test = new Obstacle();
+            test.positionX.Value = 300;
+            test.positionY.Value = 300;
+            
+            return retVal;
+        }
         protected override void SetupVariableDefaults()
         {
             // ...
@@ -35,11 +49,30 @@ namespace Game.Server
 
             if (firstWord == "test")
             {
-                new TestObject();
+                new Obstacle();
                 return true;
             }
             // ...
             return false;
+        }
+
+        List<Player> playerObjects = new List<Player>();
+
+        protected override void ClientConnected(Client c)
+        {
+            base.ClientConnected(c);
+            playerObjects.Add(new Player() { Client = c });
+        }
+
+        protected override void ClientDisconnected(Client c, bool manualDisconnect)
+        {
+            base.ClientDisconnected(c, manualDisconnect);
+            for ( int i=0; i<playerObjects.Count; i++ )
+                if (playerObjects[i].Client == c)
+                {
+                    playerObjects.RemoveAt(i);
+                    i--;
+                }
         }
     }
 }

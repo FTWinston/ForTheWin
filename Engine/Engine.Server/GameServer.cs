@@ -235,12 +235,12 @@ namespace FTW.Engine.Server
                                 // the only response the client needs here is the automatic ID_CONNECTION_REQUEST_ACCEPTED packet
                                 break;
                             case DefaultMessageIDTypes.ID_DISCONNECTION_NOTIFICATION:
-                                Console.WriteLine(c.Name + " disconnected");
+                                ClientDisconnected(c, true);
                                 Client.AllClients.Remove(packet.guid.g);
 
                                 break;
                             case DefaultMessageIDTypes.ID_CONNECTION_LOST:
-                                Console.WriteLine(c.Name + "timed out");
+                                ClientDisconnected(c, false);
                                 Client.AllClients.Remove(packet.guid.g);
                                 break;
 #if DEBUG
@@ -269,6 +269,17 @@ namespace FTW.Engine.Server
             }
         }
 
+        protected virtual void ClientConnected(Client c)
+        {
+            if (IsDedicated)
+                Console.WriteLine(c.Name + " joined the game");
+        }
+
+        protected virtual void ClientDisconnected(Client c, bool manualDisconnect)
+        {
+            Console.WriteLine(c.Name + (manualDisconnect ? " disconnected" : " timed out"));
+        }
+
         private void HandleMessage(Client c, Message m)
         {
             if (!MessageReceived(c, m))
@@ -291,9 +302,8 @@ namespace FTW.Engine.Server
                         m = new Message((byte)EngineMessage.ClientConnected, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, 0);
                         m.Write(name);
                         Client.SendToAllExcept(m, c);
-
-                        if (IsDedicated)
-                            Console.WriteLine(name + " joined the game");
+                        
+                        ClientConnected(c);
 
                         // send ServerInfo to the newly-connected client, which as well as the network table hash,
                         // tells them how/if we've modified their name, the names of everyone else on the server, and all the server variables
