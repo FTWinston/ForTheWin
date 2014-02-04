@@ -137,10 +137,22 @@ namespace FTW.Engine.Client
                 lastFrameTime = FrameTime;
             }
 
+            PreUpdate();
             GameFrame(dt / 1000.0); // convert milliseconds to seconds
+            PostUpdate();
 
             nextFrameTime += TickInterval;
             lastFrameTime = FrameTime;
+        }
+
+        protected virtual void PreUpdate()
+        {
+
+        }
+
+        protected virtual void PostUpdate()
+        {
+
         }
 
         private void GameFrame(double dt)

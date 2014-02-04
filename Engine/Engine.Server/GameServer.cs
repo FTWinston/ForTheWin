@@ -201,7 +201,10 @@ namespace FTW.Engine.Server
                     dt = FrameTime - lastFrameTime;
 
                 ReceiveMessages();
+
+                PreUpdate();
                 GameFrame(dt/1000.0); // convert milliseconds to seconds
+                PostUpdate();
 
                 int frameTimeRemaining = (int)(FrameTime + TickInterval) - (int)RakNet.RakNet.GetTime();
                 if (frameTimeRemaining > 0)
@@ -209,6 +212,16 @@ namespace FTW.Engine.Server
             }
 
             ShutDown();
+        }
+
+        protected virtual void PreUpdate()
+        {
+
+        }
+
+        protected virtual void PostUpdate()
+        {
+
         }
 
         private void ReceiveMessages()

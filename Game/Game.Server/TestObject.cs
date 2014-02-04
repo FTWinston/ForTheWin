@@ -20,6 +20,13 @@ namespace Game.Server
             return new NetworkField[] { positionX, positionY };
         }
 
+        public override void Simulate(double dt)
+        {
+            positionX.Value += (float)(dt * sx);
+            positionY.Value += (float)(dt * sy);
+        }
+
+        public double sx = 60.0, sy = 60.0;
         public NetworkFloat positionX = new NetworkFloat(true);
         public NetworkFloat positionY = new NetworkFloat(true);
     }
@@ -29,15 +36,15 @@ namespace Game.Server
         public Obstacle()
             : base("obstacle")
         {
-
+            sx = 60; sy = 60;
         }
 
-        double sx = 60.0, sy = 60.0;
 
         const int minX = 50, maxX = 750, minY = 50, maxY = 550;
         public override void Simulate(double dt)
         {
-            positionX.Value += (float)(dt * sx);
+            base.Simulate(dt);
+
             if (sx > 0)
             {
                 if (positionX > maxX)
@@ -46,7 +53,6 @@ namespace Game.Server
             else if (positionX < minX)
                 sx = -sx;
 
-            positionY.Value += (float)(dt * sy);
             if (sy > 0)
             {
                 if (positionY > maxY)
@@ -54,8 +60,6 @@ namespace Game.Server
             }
             else if (positionY < minY)
                 sy = -sy;
-
-            //Console.WriteLine("Simulating... now at {0}, {1}", positionX, positionY);
         }
     }
 
@@ -69,5 +73,7 @@ namespace Game.Server
         }
 
         public Client Client { get; set; }
+
+        public static double speed = 140;
     }
 }

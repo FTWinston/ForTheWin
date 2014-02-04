@@ -7,6 +7,7 @@ using SFML.Graphics;
 using SFML.Window;
 using System.IO;
 using System.Runtime.InteropServices;
+using Game.Shared;
 
 namespace Game.Client
 {
@@ -105,6 +106,8 @@ namespace Game.Client
                 target.Draw(loading);
         }
 
+        Keys movement = Keys.None;
+
         public void KeyPressed(KeyEventArgs e)
         {
             if (e.Code == Keyboard.Key.Escape)
@@ -113,12 +116,35 @@ namespace Game.Client
                 return;
             }
 
-            // ...
+            if (e.Code == Keyboard.Key.Up)
+                movement |= Keys.Up;
+            else if (e.Code == Keyboard.Key.Down)
+                movement |= Keys.Down;
+            if (e.Code == Keyboard.Key.Left)
+                movement |= Keys.Left;
+            else if (e.Code == Keyboard.Key.Right)
+                movement |= Keys.Right;
         }
 
         public void KeyReleased(KeyEventArgs e)
         {
-            
+            if (e.Code == Keyboard.Key.Up)
+                movement &= ~Keys.Up;
+            else if (e.Code == Keyboard.Key.Down)
+                movement &= ~Keys.Down;
+            if (e.Code == Keyboard.Key.Left)
+                movement &= ~Keys.Left;
+            else if (e.Code == Keyboard.Key.Right)
+                movement &= ~Keys.Right;
+        }
+
+        protected override void PreUpdate()
+        {
+            base.PreUpdate();
+
+            Message m = new Message((byte)GameMessage.Movement, RakNet.PacketPriority.HIGH_PRIORITY, RakNet.PacketReliability.UNRELIABLE_SEQUENCED, 0);
+            m.Write((byte)movement);
+            SendMessage(m);
         }
 
         public void TextEntered(TextEventArgs e)
