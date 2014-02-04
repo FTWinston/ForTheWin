@@ -78,6 +78,7 @@
   -->
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\Tools\DedicatedCLI\$(OutDir)" /Y</PostBuildEvent>
-    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\Tools\DedicatedGUI\$(OutDir)" /Y</PostBuildEvent>
+    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\Tools\DedicatedGUI\$(OutDir)" /Y
+xcopy "$(TargetPath)" "$(ProjectDir)..\..\Tools\DedicatedCLI\$(OutDir)" /Y</PostBuildEvent>
   </PropertyGroup>
 </Project>
