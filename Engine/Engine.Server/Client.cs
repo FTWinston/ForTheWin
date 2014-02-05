@@ -174,7 +174,7 @@ namespace FTW.Engine.Server
 
                 if (!ne.ShouldSendToClient(this))
                 {
-                    if (KnownEntities.Keys.Contains(ne.EntityID))
+                    if (KnownEntities.ContainsKey(ne.EntityID))
                         DeletedEntities.Add(ne.EntityID, false); // the client shouldn't see this entity any more, so delete it on their end
                     continue;
                 }
@@ -208,6 +208,7 @@ namespace FTW.Engine.Server
             {
                 m.Write(entityID);
                 m.Write((byte)EntitySnapshotType.Delete);
+                KnownEntities.Remove(entityID);
             }
             DeletedEntities.Clear();
 
