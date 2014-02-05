@@ -100,7 +100,7 @@ namespace FTW.Engine.Client
         {
             if (incremental)
             {
-                var list = UsesRelatedClient ? IsRelatedClient ? RelatedClientFields : OtherClientFields : null;
+                var list = UsesRelatedClient ? (IsRelatedClient ? RelatedClientFields : OtherClientFields) : null;
                 int b = m.ReadByte();
                 int offset = Fields.Length, max = list == null ? offset : list.Length + offset;
                 while (b != byte.MaxValue)

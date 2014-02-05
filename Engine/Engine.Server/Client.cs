@@ -20,7 +20,9 @@ namespace FTW.Engine.Server
             get { return GetVariable("name"); }
             set { SetVariable("name", GetUniqueName(value)); }
         }
-        internal RakNetGUID UniqueID { get; set; }
+        private RakNetGUID guid;
+        internal RakNetGUID UniqueID { get { return guid; } set { guid = value; ID = guid.systemIndex; } }
+        public ushort ID { get; private set; }
         internal uint LastSnapshotTime { get; set; }
         internal uint NextSnapshotTime { get; set; }
         internal uint SnapshotInterval { get; set; }

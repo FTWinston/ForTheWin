@@ -41,7 +41,9 @@ namespace Game.Server
 
             if (m.Type == (byte)GameMessage.Movement)
             {
-                Player player = playerObjects[c.Name];
+                Player player;
+                if (!playerObjects.TryGetValue(c.ID, out player))
+                    return true; // this might come through before the InitialData message
 
                 Keys pressed = (Keys)m.ReadByte();
 
@@ -80,18 +82,20 @@ namespace Game.Server
         }
 
         // sorting by name is dangerous. Can't we get a unique ID?
-        SortedList<string, Player> playerObjects = new SortedList<string, Player>();
+        SortedList<ushort, Player> playerObjects = new SortedList<ushort, Player>();
 
         protected override void ClientConnected(Client c)
         {
             base.ClientConnected(c);
-            playerObjects.Add(c.Name, new Player() { Client = c });
+            playerObjects.Add(c.ID, new Player() { Client = c });
         }
 
         protected override void ClientDisconnected(Client c, bool manualDisconnect)
         {
             base.ClientDisconnected(c, manualDisconnect);
-            playerObjects.Remove(c.Name);
+            var player = playerObjects[c.ID];
+            playerObjects.Remove(c.ID);
+            player.Delete();
         }
     }
 }
