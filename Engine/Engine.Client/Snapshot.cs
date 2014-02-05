@@ -32,6 +32,7 @@ namespace FTW.Engine.Client
                             s.Deletions.Add(entityID);
                             s.ScheduleCreation(entityID, type, m);
                             Console.Error.WriteLine("Error reading snapshot: entity {0} has the wrong type (got {1}, update has {2})", entityID, ent.NetworkedType, type);
+                            return;
                         }
                         else
                             ent.ReadSnapshot(m, false);
@@ -40,7 +41,10 @@ namespace FTW.Engine.Client
                         if (NetworkedEntity.NetworkedEntities.TryGetValue(entityID, out ent))
                             ent.ReadSnapshot(m, true);
                         else
+                        {
                             Console.Error.WriteLine("Error reading snapshot: received an update for unknown entity " + entityID);
+                            return;
+                        }
                         break;
                     case EntitySnapshotType.Delete:
                         s.Deletions.Add(entityID);
