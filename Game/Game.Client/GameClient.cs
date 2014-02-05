@@ -142,6 +142,9 @@ namespace Game.Client
         {
             base.PreUpdate();
 
+            if (!FullyConnected)
+                return;
+
             Message m = new Message((byte)GameMessage.Movement, RakNet.PacketPriority.HIGH_PRIORITY, RakNet.PacketReliability.UNRELIABLE_SEQUENCED, 0);
             m.Write((byte)movement);
             SendMessage(m);
