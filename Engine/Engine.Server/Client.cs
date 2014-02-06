@@ -27,6 +27,7 @@ namespace FTW.Engine.Server
         internal uint NextSnapshotTime { get; set; }
         internal uint SnapshotInterval { get; set; }
         internal bool NeedsFullUpdate { get; set; }
+        internal bool FullyConnected { get; set; }
         private SortedList<ushort, bool> KnownEntities = new SortedList<ushort, bool>();
         internal SortedList<ushort, bool> DeletedEntities = new SortedList<ushort, bool>();
 

@@ -138,16 +138,9 @@ namespace Game.Client
                 movement &= ~Keys.Right;
         }
 
-        protected override void PreUpdate()
+        protected override void WriteUpdate(Message m)
         {
-            base.PreUpdate();
-
-            if (!FullyConnected)
-                return;
-
-            Message m = new Message((byte)GameMessage.Movement, RakNet.PacketPriority.HIGH_PRIORITY, RakNet.PacketReliability.UNRELIABLE_SEQUENCED, 0);
             m.Write((byte)movement);
-            SendMessage(m);
         }
 
         public void TextEntered(TextEventArgs e)

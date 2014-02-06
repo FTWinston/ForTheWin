@@ -352,6 +352,7 @@ namespace FTW.Engine.Server
 
                         c.Send(m);
                         c.NextSnapshotTime = FrameTime + c.SnapshotInterval;
+                        c.FullyConnected = true;
                         return true;
                     }
                 case EngineMessage.ClientNameChange:
@@ -387,10 +388,22 @@ namespace FTW.Engine.Server
                         c.SetVariable(name, val);
                         return true;
                     }
+                case EngineMessage.ClientUpdate:
+                    {
+                        if (!c.FullyConnected)
+                            return true; // this might come through before the InitialData message
+
+                        // read the "latest snapshot" info from the message
+
+                        UpdateReceived(c, m);
+                        return true;
+                    }
                 default:
                     return false;
             }
         }
+
+        protected abstract void UpdateReceived(Client c, Message m);
 
         static readonly char[] cmdSplit = { ' ', '	' };
         public override void HandleCommand(string cmd)

@@ -8,7 +8,7 @@ namespace Game.Shared
 {
     public enum GameMessage : byte
     {
-        Movement = EngineMessage.FirstGameMessageID
+        //Dunno = EngineMessage.FirstGameMessageID
     }
 
     [Flags]

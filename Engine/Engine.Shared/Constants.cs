@@ -14,6 +14,7 @@ namespace FTW.Engine.Shared
     public enum EngineMessage : byte
     {
         Snapshot = DefaultMessageIDTypes.ID_USER_PACKET_ENUM,
+        ClientUpdate,
         InitialData,
         VariableChange,
         ClientConnected,

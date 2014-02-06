@@ -138,12 +138,29 @@ namespace FTW.Engine.Client
             }
 
             PreUpdate();
+            SendUpdate();
             GameFrame(dt / 1000.0); // convert milliseconds to seconds
             PostUpdate();
 
             nextFrameTime += TickInterval;
             lastFrameTime = FrameTime;
         }
+
+        private void SendUpdate()
+        {
+            if (!FullyConnected)
+                return;
+
+            // don't actaully want this going out every frame. Should collect input and send at slightly more spread-out intervals.
+            Message m = new Message((byte)EngineMessage.ClientUpdate, RakNet.PacketPriority.HIGH_PRIORITY, RakNet.PacketReliability.UNRELIABLE_SEQUENCED, 0);
+            
+            // write the "latest snapshot" info to the message
+
+            WriteUpdate(m);
+            SendMessage(m);
+        }
+
+        protected abstract void WriteUpdate(Message m);
 
         protected virtual void PreUpdate()
         {

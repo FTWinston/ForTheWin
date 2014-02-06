@@ -29,9 +29,33 @@ namespace Game.Server
             
             return retVal;
         }
+
         protected override void SetupVariableDefaults()
         {
             // ...
+        }
+
+        protected override void UpdateReceived(Client c, Message m)
+        {
+            Player player;
+            if (!playerObjects.TryGetValue(c.ID, out player))
+                return;
+
+            Keys pressed = (Keys)m.ReadByte();
+
+            if ((pressed & Keys.Up) == Keys.Up)
+                player.sy = -Player.speed;
+            else if ((pressed & Keys.Down) == Keys.Down)
+                player.sy = Player.speed;
+            else
+                player.sy = 0;
+
+            if ((pressed & Keys.Left) == Keys.Left)
+                player.sx = -Player.speed;
+            else if ((pressed & Keys.Right) == Keys.Right)
+                player.sx = Player.speed;
+            else
+                player.sx = 0;
         }
 
         protected override bool MessageReceived(Client c, Message m)
@@ -39,30 +63,7 @@ namespace Game.Server
             if (base.MessageReceived(c, m))
                 return true;
 
-            if (m.Type == (byte)GameMessage.Movement)
-            {
-                Player player;
-                if (!playerObjects.TryGetValue(c.ID, out player))
-                    return true; // this might come through before the InitialData message
-
-                Keys pressed = (Keys)m.ReadByte();
-
-                if ((pressed & Keys.Up) == Keys.Up)
-                    player.sy = -Player.speed;
-                else if ((pressed & Keys.Down) == Keys.Down)
-                    player.sy = Player.speed;
-                else
-                    player.sy = 0;
-
-                if ((pressed & Keys.Left) == Keys.Left)
-                    player.sx = -Player.speed;
-                else if ((pressed & Keys.Right) == Keys.Right)
-                    player.sx = Player.speed;
-                else
-                    player.sx = 0;
-
-                return true;
-            }
+            // ...
 
             return false;
         }
@@ -81,7 +82,6 @@ namespace Game.Server
             return false;
         }
 
-        // sorting by name is dangerous. Can't we get a unique ID?
         SortedList<ushort, Player> playerObjects = new SortedList<ushort, Player>();
 
         protected override void ClientConnected(Client c)
