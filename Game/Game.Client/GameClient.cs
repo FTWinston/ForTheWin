@@ -8,6 +8,7 @@ using SFML.Window;
 using System.IO;
 using System.Runtime.InteropServices;
 using Game.Shared;
+using FTW.Engine.Client;
 
 namespace Game.Client
 {
@@ -81,13 +82,44 @@ namespace Game.Client
 
             MainView = window.DefaultView;
 
-            Text info = new Text("This is the game. Blah blah.", font, 48);
-            info.Color = Color.Yellow;
-            info.Position = new Vector2f(window.Size.X / 2 - info.GetLocalBounds().Width / 2, window.Size.Y / 2 - info.GetLocalBounds().Height / 2);
+            txtInfo = new Text("Net Info", font, 16);
+            txtInfo.Color = Color.Yellow;
+            txtInfo.Position = new Vector2f(window.Size.X * 0.02f, window.Size.Y * 0.02f);
 
-            gameElements.Add(info);
+            gameElements.Add(txtInfo);
 
             console = new ConsolePanel(window, this);
+        }
+
+        Text txtInfo;
+        private void WriteNetGraph()
+        {
+            if (!NetInfo.Enabled)
+            {
+                txtInfo.DisplayedString = string.Empty;
+                return;
+            }
+
+            uint numIn = 0, numOut = 0;
+            float sizeIn = 0, sizeOut = 0;
+            foreach (var item in NetInfo.Data)
+                if ( item.Outgoing )
+                {
+                    numOut++;
+                    sizeOut += item.Size;
+                }
+                else
+                {
+                    numIn++;
+                    sizeIn += item.Size;
+                }
+
+            txtInfo.DisplayedString = string.Format("In: {0}, {1} kb/sec\nOut: {2}, {3} kb/sec", numIn, sizeIn / NetInfo.DataDuration, numOut, sizeOut / NetInfo.DataDuration);
+        }
+
+        protected override void PreUpdate()
+        {
+            WriteNetGraph();
         }
 
         public void Draw(RenderTarget target, RenderStates states)
@@ -187,6 +219,9 @@ namespace Game.Client
                 case "exit":
                 case "quit":
                     window.CloseGameWindow();
+                    return true;
+                case "net":
+                    NetInfo.Enabled = !NetInfo.Enabled;
                     return true;
             }
             return false;

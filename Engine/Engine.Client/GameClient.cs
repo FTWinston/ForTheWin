@@ -93,6 +93,10 @@ namespace FTW.Engine.Client
         {
             NetworkedEntity.InitializeTypes();
 
+#if NET_INFO
+            NetInfo = new NetworkInfo();
+#endif
+
             dt = 100;
             nextFrameTime = RakNet.RakNet.GetTime();
             FrameTime = lastFrameTime = RakNet.RakNet.GetTime() - dt;
@@ -106,6 +110,10 @@ namespace FTW.Engine.Client
         public uint ServerTime { get; private set; }
         internal uint LerpDelay { get; private set; }
         private uint lastFrameTime, nextFrameTime, dt;
+
+#if NET_INFO
+        public NetworkInfo NetInfo { get; private set; }
+#endif
 
         // this should really be a GameFrame type of affair, shouldn't it?
         public void Update()
@@ -137,6 +145,10 @@ namespace FTW.Engine.Client
                 lastFrameTime = FrameTime;
             }
 
+#if NET_INFO
+            if ( NetInfo.Enabled )
+                NetInfo.Prune();
+#endif
             PreUpdate();
             SendUpdate();
             GameFrame(dt / 1000.0); // convert milliseconds to seconds
@@ -197,6 +209,10 @@ namespace FTW.Engine.Client
 
         internal void HandleMessage(Message m)
         {
+#if NET_INFO
+            if (NetInfo.Enabled)
+                NetInfo.Add(m, false); // this ignores raknet-interal packets
+#endif
             if (!MessageReceived(m))
                 Console.Error.WriteLine("Received an unrecognised message of Type " + m.Type);
         }
@@ -298,6 +314,10 @@ namespace FTW.Engine.Client
 
         public void SendMessage(Message m)
         {
+#if NET_INFO
+            if (NetInfo.Enabled)
+                NetInfo.Add(m, true); // this ignores raknet-interal packets
+#endif
             Connection.Send(m);
         }
 
