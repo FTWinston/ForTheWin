@@ -242,7 +242,7 @@ namespace FTW.Engine.Server
                         {
                             case DefaultMessageIDTypes.ID_NEW_INCOMING_CONNECTION:
                                 if (c == null)
-                                    c = RemoteClient.Create(packet.guid);
+                                    c = RemoteClient.Create(packet.guid, packet.systemAddress);
 
                                 Console.WriteLine("Incoming connection from {0}...", packet.systemAddress.ToString());
                                 // the only response the client needs here is the automatic ID_CONNECTION_REQUEST_ACCEPTED packet

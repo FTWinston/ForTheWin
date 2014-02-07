@@ -295,11 +295,14 @@ namespace FTW.Engine.Server
     {
         private RemoteClient(RakNetGUID id) { UniqueID = id; }
         public override bool IsLocal { get { return false; } }
+        private SystemAddress address;
 
-        public static Client Create(RakNetGUID uniqueID)
+
+        public static Client Create(RakNetGUID uniqueID, SystemAddress address)
         {
             RemoteClient c = new RemoteClient(uniqueID);
             c.Name = "unknown";
+            c.address = address;
 
             AllClients.Add(uniqueID.g, c);
             return c;
@@ -307,7 +310,7 @@ namespace FTW.Engine.Server
 
         public override void Send(Message m)
         {
-            GameServer.Instance.rakNet.Send(m.Stream, m.Priority, m.Reliability, (char)0, UniqueID, false);
+            GameServer.Instance.rakNet.Send(m.Stream, m.Priority, m.Reliability, (char)0, address, false);
         }
     }
 }
