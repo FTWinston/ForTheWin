@@ -93,7 +93,17 @@ namespace Game.Client
             MainMenu.EscapePressed = () => { CloseGameWindow(); };
 
             MainMenu.AddItem(new Menu.LinkItem("Host game", () => { gameClient.ConnectLocal(); CurrentMenu = null; }));
-            MainMenu.AddItem(new Menu.LinkItem("Join game", () => { gameClient.ConnectRemote("127.0.0.1", 24680); CurrentMenu = null; }));
+            MainMenu.AddItem(new Menu.LinkItem("Join game", () =>
+            {
+                string ip = config.FindValueOrDefault(GameClient.config_ServerIP, GameClient.defaultServerIP);
+
+                Config port = config.Find(GameClient.config_ServerPort);
+                ushort iPort;
+                if (port == null || !ushort.TryParse(port.Value, out iPort))
+                    iPort = GameClient.defaultServerPort;
+
+                gameClient.ConnectRemote(ip, iPort); CurrentMenu = null;
+            }));
             MainMenu.AddItem(new Menu.LinkItem("Options", () => CurrentMenu = OptionsMenu));
             MainMenu.AddItem(new Menu.LinkItem("Quit", () => { CloseGameWindow(); }));
 
@@ -111,7 +121,7 @@ namespace Game.Client
             OptionsMenu.CopyStyling(MainMenu);
 
             OptionsMenu.AddItem(new Menu.ListItem("Choice:", new string[] { "Option 1", "Option 2", "Option 3" }, (string value) => Console.WriteLine(value + " selected")));
-            OptionsMenu.AddItem(new Menu.TextEntryItem("Name:", config.FindValueOrDefault("name", GameClient.defaultClientName), 12, PlayerNameChanged));
+            OptionsMenu.AddItem(new Menu.TextEntryItem("Name:", config.FindValueOrDefault(GameClient.config_ClientName, GameClient.defaultClientName), 12, PlayerNameChanged));
             OptionsMenu.AddItem(new Menu.LinkItem("Back", () => { config.SaveToFile(GameClient.settingsFilename); CurrentMenu = MainMenu; }));
 
             OptionsMenu.EscapePressed = () => { CurrentMenu = MainMenu; };
@@ -130,12 +140,11 @@ namespace Game.Client
             config = Config.ReadFile(GameClient.settingsFilename) ?? GameClient.CreateDefaultConfig();
 
             // validate the player name, set to default if needed.
-            Config name = config.Find("name");
-            string strName = name == null ? string.Empty : name.Value;
-            if (strName.Trim() == string.Empty)
+            Config value = config.Find(GameClient.config_ClientName);
+            string strName = value == null ? string.Empty : value.Value.Trim();
+            if (strName == string.Empty)
                 strName = GameClient.defaultClientName;
-
-            name.Value = strName;
+            value.Value = strName;
         }
 
         private void PlayerNameChanged(string name)

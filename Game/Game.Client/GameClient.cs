@@ -27,13 +27,26 @@ namespace Game.Client
         }
 
         public const string defaultClientName = "Some Client";
+        public const string defaultServerIP = "127.0.0.1";
+        public const int defaultServerPort = 24680;
+
+        public const string config_ClientName = "name", config_ServerIP = "server_ip", config_ServerPort = "server_port";
+
         public static Config CreateDefaultConfig()
         {
             Config config = new Config(null);
             config.Children = new List<Config>();
 
-            Config value = new Config("name");
+            Config value = new Config(config_ClientName);
             value.Value = defaultClientName;
+            config.Children.Add(value);
+
+            value = new Config(config_ServerIP);
+            value.Value = defaultServerIP;
+            config.Children.Add(value);
+
+            value = new Config(config_ServerPort);
+            value.Value = defaultServerPort.ToString();
             config.Children.Add(value);
 
             config.SaveToFile(settingsFilename);
