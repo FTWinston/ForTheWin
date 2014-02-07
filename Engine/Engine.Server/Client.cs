@@ -9,8 +9,12 @@ namespace FTW.Engine.Server
 {
     public abstract class Client
     {
+        private static byte nextIndex = 0;
+        internal byte Index;
+
         protected Client()
         {
+            Index = nextIndex++;
             NeedsFullUpdate = true;
             SnapshotInterval = 50; // this should be a Variable
         }
@@ -157,6 +161,8 @@ namespace FTW.Engine.Server
             Message m = new Message((byte)DefaultMessageIDTypes.ID_TIMESTAMP, PacketPriority.HIGH_PRIORITY, PacketReliability.UNRELIABLE, 0);
             m.Write(GameServer.Instance.FrameTime);
             m.Write((byte)EngineMessage.Snapshot);
+
+            m.Write(Index);
 
             // now step through all entities, decide what to send. Will either be:
             // No change (sends nothing)

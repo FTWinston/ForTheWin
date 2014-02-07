@@ -8,6 +8,8 @@ namespace FTW.Engine.Client
 {
     class Snapshot
     {
+        static byte lastClientIndex = 255;
+        static ulong lastId = 0;
         public static void Read(Message m)
         {
             // As we're only using timestamps, how should we determine (when trying to apply it) if we're MISSING a snapshot, or not?
@@ -15,6 +17,14 @@ namespace FTW.Engine.Client
             // That would struggle when the variable changes ... or would it? If the variable change wasn't applied until the relevant snapshot came in, we might get away with it.
 
             Snapshot s = new Snapshot();
+
+            byte clientIndex = m.ReadByte();
+            if (clientIndex != lastClientIndex)
+            {
+                if (lastClientIndex != 255)
+                    Console.WriteLine("Snapshot has incorrect client index: get {0}, expected {1}", clientIndex, lastClientIndex);
+                lastClientIndex = clientIndex;
+            }
 
             while (m.HasMoreData())
             {
