@@ -1,0 +1,3 @@
+[submodule "Libraries/lidgren"]
+	path = Libraries/lidgren
+	url = git@github.com:FTWinston/lidgren.git
