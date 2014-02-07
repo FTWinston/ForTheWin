@@ -353,6 +353,8 @@ namespace FTW.Engine.Client
                     return true;
                 case "get":
                     {
+                        if (theRest == null)
+                            return true;
                         string name = theRest.Split(space)[0];
                         var vari = Variable.Get(name);
                         if (vari == null)
@@ -368,6 +370,8 @@ namespace FTW.Engine.Client
                     }
                 case "set":
                     {
+                        if (theRest == null)
+                            return true;
                         string[] parts = theRest.Split(space, 2);
                         var vari = Variable.Get(parts[0]);
                         if (vari == null)

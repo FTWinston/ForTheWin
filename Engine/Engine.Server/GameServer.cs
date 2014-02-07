@@ -244,7 +244,7 @@ namespace FTW.Engine.Server
                                 if (c == null)
                                     c = RemoteClient.Create(packet.guid);
 
-                                Console.WriteLine("Incoming connection...");
+                                Console.WriteLine("Incoming connection from {0}...", packet.systemAddress.ToString());
                                 // the only response the client needs here is the automatic ID_CONNECTION_REQUEST_ACCEPTED packet
                                 break;
                             case DefaultMessageIDTypes.ID_DISCONNECTION_NOTIFICATION:
@@ -426,6 +426,8 @@ namespace FTW.Engine.Server
             {
                 case "get":
                     {
+                        if (theRest == null)
+                            return true;
                         string name = theRest.Split(space)[0];
                         var vari = Variable.Get(name);
                         if (vari == null)
@@ -436,6 +438,8 @@ namespace FTW.Engine.Server
                     }
                 case "set":
                     {
+                        if (theRest == null)
+                            return true;
                         string[] parts = theRest.Split(space, 2);
                         var vari = Variable.Get(parts[0]);
                         if (vari == null)
