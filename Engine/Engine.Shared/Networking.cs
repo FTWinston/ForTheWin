@@ -6,10 +6,10 @@ using Lidgren.Network;
 
 namespace FTW.Engine.Shared
 {
-    public abstract class NetworkManager
+    public abstract class Networking
     {
-        public static NetworkManager Instance { get; private set; }
-        protected NetworkManager() { Instance = this; }
+        public static Networking Instance { get; private set; }
+        protected Networking() { Instance = this; }
 
         protected abstract NetPeer lidgren { get; }
 
@@ -22,6 +22,8 @@ namespace FTW.Engine.Shared
         {
             return lidgren.CreateMessage();
         }
+
+        internal virtual ServerNetworking.Connection GetConnection(NetConnection con) { return null; }
 
         public event EventHandler<StatusEventArgs> Connected, Disconnected;
 
@@ -49,11 +51,11 @@ namespace FTW.Engine.Shared
                         {
                             case NetConnectionStatus.Connected:
                                 if (Connected != null)
-                                    Connected(this, new StatusEventArgs { Connection = msg.SenderConnection });
+                                    Connected(this, new StatusEventArgs { Connection = new ServerNetworking.Connection(msg.SenderConnection) });
                                 break;
                             case NetConnectionStatus.Disconnected:
                                 if (Disconnected != null)
-                                    Disconnected(this, new StatusEventArgs { Connection = msg.SenderConnection });
+                                    Disconnected(this, new StatusEventArgs { Connection = GetConnection(msg.SenderConnection) });
                                 break;
                         }
                         break;
@@ -73,16 +75,16 @@ namespace FTW.Engine.Shared
 
         public class StatusEventArgs : EventArgs
         {
-            public NetConnection Connection { get; internal set; }
+            public ServerNetworking.Connection Connection { get; internal set; }
         }
     }
 
-    public class NetworkServer : NetworkManager
+    public class ServerNetworking : Networking
     {
         NetServer server;
-        protected override NetPeer lidgren { get { return server; }}
+        protected override NetPeer lidgren { get { return server; } }
 
-        public NetworkServer(int port, int maxClients)
+        public ServerNetworking(int port, int maxClients)
         {
             var config = new NetPeerConfiguration("ftw");
             config.Port = port;
@@ -90,16 +92,23 @@ namespace FTW.Engine.Shared
 
             server = new NetServer(config);
             server.Start();
+
+            Disconnected += ClientDisconnected;
         }
 
-        public void Send(OutboundMessage message, NetConnection recipient)
+        private void ClientDisconnected(object sender, StatusEventArgs e)
         {
-            server.SendMessage(message.Msg, recipient, DeliveryMethod(message));
+            Connections.Remove(e.Connection.UniqueID);
         }
 
-        public void SendToAllExcept(OutboundMessage message, NetConnection exclude)
+        public void Send(OutboundMessage message, Connection recipient)
         {
-            var recipients = server.Connections.Where(con => con != exclude).ToList();
+            server.SendMessage(message.Msg, recipient.Remote, DeliveryMethod(message));
+        }
+
+        public void SendToAllExcept(OutboundMessage message, Connection exclude)
+        {
+            var recipients = server.Connections.Where(con => con != exclude.Remote).ToList();
             server.SendMessage(message.Msg, recipients, DeliveryMethod(message), 0);
         }
 
@@ -107,14 +116,31 @@ namespace FTW.Engine.Shared
         {
             server.SendToAll(message.Msg, DeliveryMethod(message));
         }
+
+        SortedList<long, Connection> Connections = new SortedList<long, Connection>();
+
+        internal override Connection GetConnection(NetConnection con)
+        {
+            Connection c;
+            Connections.TryGetValue(con.RemoteUniqueIdentifier, out c);
+            return c;
+        }
+
+        public class Connection
+        {
+            internal Connection(NetConnection remote) { Remote = remote; }
+            internal NetConnection Remote { get; set; }
+            public long UniqueID { get { return Remote.RemoteUniqueIdentifier; } }
+            public string RemoteHailMessage { get { return Remote.RemoteHailMessage.ReadString(); } }
+        }
     }
 
-    public class NetworkClient : NetworkManager
+    public class ClientNetworking : Networking
     {
         NetClient client;
         protected override NetPeer lidgren { get { return client; } }
 
-        public NetworkClient(string hostname, int hostPort)
+        public ClientNetworking(string hostname, int hostPort)
         {
             var config = new NetPeerConfiguration("ftw");
             //config.Port = NetworkPort;

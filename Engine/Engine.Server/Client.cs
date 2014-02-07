@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using FTW.Engine.Shared;
-using Lidgren.Network;
 
 namespace FTW.Engine.Server
 {
@@ -133,7 +132,7 @@ namespace FTW.Engine.Server
 
         public static void SendToAllExcept(OutboundMessage m, Client c)
         {
-            NetConnection exclude = c.IsLocal ? null : (c as RemoteClient).Connection;
+            ServerNetworking.Connection exclude = c.IsLocal ? null : (c as RemoteClient).Connection;
             GameServer.Instance.Networking.SendToAllExcept(m, exclude);
 
             if (c != LocalClient && LocalClient != null)
@@ -286,11 +285,11 @@ namespace FTW.Engine.Server
     {
         private RemoteClient(long id) : base(id) { }
         public override bool IsLocal { get { return false; } }
-        internal NetConnection Connection { get; private set; }
+        internal ServerNetworking.Connection Connection { get; private set; }
 
-        public static Client Create(NetConnection connection)
+        public static Client Create(ServerNetworking.Connection connection)
         {
-            RemoteClient c = new RemoteClient(connection.RemoteUniqueIdentifier);
+            RemoteClient c = new RemoteClient(connection.UniqueID);
             c.Connection = connection;
             c.Name = "unknown";
 

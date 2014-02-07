@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using FTW.Engine.Shared;
-using Lidgren.Network;
 
 namespace FTW.Engine.Server
 {
@@ -104,7 +103,7 @@ namespace FTW.Engine.Server
 
         protected abstract void SetupVariableDefaults();
 
-        internal NetworkServer Networking { get; private set; }
+        internal ServerNetworking Networking { get; private set; }
         protected virtual bool Initialize()
         {
             Console.WriteLine("Initializing...");
@@ -112,16 +111,16 @@ namespace FTW.Engine.Server
 
             if (IsMultiplayer)
             {
-                Networking = new NetworkServer(NetworkPort, IsDedicated ? MaxClients : (MaxClients - 1));
+                Networking = new ServerNetworking(NetworkPort, IsDedicated ? MaxClients : (MaxClients - 1));
                 Networking.Connected += (o, e) =>
                 {
                     RemoteClient.Create(e.Connection);
-                    Console.WriteLine("Remote hail: " + e.Connection.RemoteHailMessage.ReadString());
+                    Console.WriteLine("Remote hail: " + e.Connection.RemoteHailMessage);
                 };
 
                 Networking.Disconnected += (o, e) =>
                 {
-                    long id = e.Connection.RemoteUniqueIdentifier;
+                    long id = e.Connection.UniqueID;
                     bool deliberate = true; // true means disconnected, false means timed out
                     ClientDisconnected(Client.GetByID(id), deliberate);
                     Client.AllClients.Remove(id);
@@ -238,7 +237,7 @@ namespace FTW.Engine.Server
             {
                 foreach (var msg in Networking.RetrieveMessages())
                 {
-                    Client c = Client.GetByID(msg.Connection.RemoteUniqueIdentifier);
+                    Client c = Client.GetByID(msg.Connection.UniqueID);
                     HandleMessage(c, msg);
                 }
             }

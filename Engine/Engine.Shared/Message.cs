@@ -26,7 +26,7 @@ namespace FTW.Engine.Shared
         internal InboundMessage(NetIncomingMessage m)
         {
             Msg = m;
-            Connection = m.SenderConnection;
+            Connection = Networking.Instance.GetConnection(m.SenderConnection);
             //GetTypeAndTimestamp();
         }
 
@@ -42,7 +42,7 @@ namespace FTW.Engine.Shared
         public SequenceChannel? SequenceChannel { get { return null; } }//Msg.SequenceChannel; } }
         public uint? Timestamp { get; private set; }
 
-        public NetConnection Connection { get; private set; }
+        public ServerNetworking.Connection Connection { get; private set; }
 
         public override int SizeInBits { get { return Msg.LengthBits; } }
 
@@ -92,7 +92,7 @@ namespace FTW.Engine.Shared
         /// <param name="reliability"></param>
         private OutboundMessage(byte type, MessageReliabililty reliability, SequenceChannel? sequenceChannel = null)
         {
-            Msg = NetworkManager.Instance.CreateOutgoing();
+            Msg = Networking.Instance.CreateOutgoing();
             Reliability = reliability;
             SequenceChannel = sequenceChannel;
 

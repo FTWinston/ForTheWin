@@ -106,13 +106,13 @@ We are then good to go
 
         private string hostname;
         private ushort hostPort;
-        NetworkClient Networking;
+        ClientNetworking Networking;
 
         public override bool IsLocal { get { return false; } }
 
         public override void Connect()
         {
-            Networking = new NetworkClient(hostname, hostPort);
+            Networking = new ClientNetworking(hostname, hostPort);
             Networking.Connected += (o, e) => SendClientInfo();
             Networking.Disconnected += (o, e) =>
             {
