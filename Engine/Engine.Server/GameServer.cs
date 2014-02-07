@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using FTW.Engine.Shared;
-using RakNet;
+using Lidgren.Network;
 
 namespace FTW.Engine.Server
 {
@@ -104,7 +104,7 @@ namespace FTW.Engine.Server
 
         protected abstract void SetupVariableDefaults();
 
-        internal RakPeerInterface rakNet = null;
+        internal NetworkServer Networking { get; private set; }
         protected virtual bool Initialize()
         {
             Console.WriteLine("Initializing...");
@@ -112,13 +112,22 @@ namespace FTW.Engine.Server
 
             if (IsMultiplayer)
             {
-                rakNet = RakPeerInterface.GetInstance();
-                ushort numRemoteClients = IsDedicated ? MaxClients : (ushort)(MaxClients - 1);
+                Networking = new NetworkServer(NetworkPort, IsDedicated ? MaxClients : (MaxClients - 1));
+                Networking.Connected += (o, e) =>
+                {
+                    RemoteClient.Create(e.Connection);
+                    Console.WriteLine("Remote hail: " + e.Connection.RemoteHailMessage.ReadString());
+                };
 
-                rakNet.Startup(numRemoteClients, new SocketDescriptor(NetworkPort, null), 1);
-                rakNet.SetMaximumIncomingConnections(numRemoteClients);
-                rakNet.SetOccasionalPing(true);
-                Console.WriteLine("Network server started at time {0}", RakNet.RakNet.GetTime());
+                Networking.Disconnected += (o, e) =>
+                {
+                    long id = e.Connection.RemoteUniqueIdentifier;
+                    bool deliberate = true; // true means disconnected, false means timed out
+                    ClientDisconnected(Client.GetByID(id), deliberate);
+                    Client.AllClients.Remove(id);
+                };
+
+                //Console.WriteLine("Network server started at time {0}", RakNet.RakNet.GetTime());
             }
 
             return true;
@@ -147,11 +156,10 @@ namespace FTW.Engine.Server
         {
             Console.WriteLine("Server is shutting down");
 
-            if (rakNet != null)
+            if (Networking != null)
             {
-                rakNet.Shutdown(300);
-                RakPeerInterface.DestroyInstance(rakNet);
-                rakNet = null;
+                Networking.Disconnect("Server is shutting down");
+                Networking = null;
             }
 
             if (Client.LocalClient != null)
@@ -161,8 +169,8 @@ namespace FTW.Engine.Server
             Entity.AllEntities.Clear();
             Entity.NetworkedEntities.Clear();
 
-            Message.ToLocalClient.Clear();
-            Message.ToLocalServer.Clear();
+            InboundMessage.ToLocalClient.Clear();
+            InboundMessage.ToLocalServer.Clear();
 
             Instance = null;
         }
@@ -226,59 +234,26 @@ namespace FTW.Engine.Server
 
         private void ReceiveMessages()
         {
-            if (rakNet != null)
+            if (Networking != null)
             {
-                Packet packet;
-                for (packet = rakNet.Receive(); packet != null; rakNet.DeallocatePacket(packet), packet = rakNet.Receive())
+                foreach (var msg in Networking.RetrieveMessages())
                 {
-                    Client c = Client.GetByUniqueID(packet.guid);
-                    byte type = packet.data[0];
-                    if (type == (byte)DefaultMessageIDTypes.ID_TIMESTAMP)
-                        type = packet.data[5]; // skip the timestamp to get to the REAL "type"
-
-                    if (type < (byte)DefaultMessageIDTypes.ID_USER_PACKET_ENUM)
-                    {
-                        switch ((DefaultMessageIDTypes)type)
-                        {
-                            case DefaultMessageIDTypes.ID_NEW_INCOMING_CONNECTION:
-                                if (c == null)
-                                    c = RemoteClient.Create(packet.guid);
-
-                                Console.WriteLine("Incoming connection from {0}...", packet.systemAddress.ToString());
-                                // the only response the client needs here is the automatic ID_CONNECTION_REQUEST_ACCEPTED packet
-                                break;
-                            case DefaultMessageIDTypes.ID_DISCONNECTION_NOTIFICATION:
-                                ClientDisconnected(c, true);
-                                Client.AllClients.Remove(packet.guid.g);
-
-                                break;
-                            case DefaultMessageIDTypes.ID_CONNECTION_LOST:
-                                ClientDisconnected(c, false);
-                                Client.AllClients.Remove(packet.guid.g);
-                                break;
-#if DEBUG
-                            default:
-                                Console.WriteLine("Received a {0} packet from {1}, {2} bytes long", (DefaultMessageIDTypes)type, c == null ? "a new client" : c.Name, packet.length);
-                                break;
-#endif
-                        }
-                    }
-                    else
-                        HandleMessage(c, new Message(packet));
+                    Client c = Client.GetByID(msg.Connection.RemoteUniqueIdentifier);
+                    HandleMessage(c, msg);
                 }
             }
 
             if (Client.LocalClient != null)
             {
-                Message[] messages;
-                lock (Message.ToLocalServer)
+                OutboundMessage[] messages;
+                lock (InboundMessage.ToLocalServer)
                 {
                     messages = Message.ToLocalServer.ToArray();
-                    Message.ToLocalServer.Clear();
+                    InboundMessage.ToLocalServer.Clear();
                 }
 
-                foreach (Message m in messages)
-                    HandleMessage(Client.LocalClient, m);
+                foreach (OutboundMessage m in messages)
+                    HandleMessage(Client.LocalClient, new InboundMessage(m));
             }
         }
 
@@ -293,14 +268,15 @@ namespace FTW.Engine.Server
             Console.WriteLine(c.Name + (manualDisconnect ? " disconnected" : " timed out"));
         }
 
-        private void HandleMessage(Client c, Message m)
+        private void HandleMessage(Client c, InboundMessage m)
         {
             if (!MessageReceived(c, m))
                 Console.Error.WriteLine("Received an unrecognised message from " + c.Name + " of Type " + m.Type);
         }
 
-        protected virtual bool MessageReceived(Client c, Message m)
+        protected virtual bool MessageReceived(Client c, InboundMessage m)
         {
+            OutboundMessage o;
             switch ((EngineMessage)m.Type)
             {
                 case EngineMessage.InitialData:
@@ -312,9 +288,9 @@ namespace FTW.Engine.Server
                         string name = c.Name;
 
                         // tell all other clients about this new client
-                        m = new Message((byte)EngineMessage.ClientConnected, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, 0);
-                        m.Write(name);
-                        Client.SendToAllExcept(m, c);
+                        o = OutboundMessage.CreateReliable((byte)EngineMessage.ClientConnected, false, SequenceChannel.System);
+                        o.Write(name);
+                        Client.SendToAllExcept(o, c);
                         
                         ClientConnected(c);
 
@@ -326,14 +302,14 @@ namespace FTW.Engine.Server
                         // how would name change work?
                         // when you try to change the name, it always fails, but sends a "name change" to the server
                         // that sends a "name change" to everyone else, and a special one back to you that actaully updates the variable
-                        m = new Message((byte)EngineMessage.InitialData, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, 0);
-                        m.Stream.Write(NetworkedEntity.NetworkTableHash, (uint)128);
-                        m.Write(c.Name);
+                        o = OutboundMessage.CreateReliable((byte)EngineMessage.InitialData, false, SequenceChannel.System);
+                        o.Write(NetworkedEntity.NetworkTableHash);
+                        o.Write(c.Name);
 
                         List<Client> otherClients = Client.GetAllExcept(c);
-                        m.Write((byte)otherClients.Count);
+                        o.Write((byte)otherClients.Count);
                         foreach (Client other in otherClients)
-                            m.Write(other.Name);
+                            o.Write(other.Name);
 
                         ushort numVars = 0;
                         var allVars = Variable.GetEnumerable();
@@ -341,16 +317,16 @@ namespace FTW.Engine.Server
                         foreach (var v in allVars)
                             if (v.HasFlags(VariableFlags.Server))
                                 numVars++;
-                        m.Write(numVars);
+                        o.Write(numVars);
 
                         foreach (var v in allVars)
                             if (v.HasFlags(VariableFlags.Server))
                             {
-                                m.Write(v.Name);
-                                m.Write(v.Value);
+                                o.Write(v.Name);
+                                o.Write(v.Value);
                             }
 
-                        c.Send(m);
+                        c.Send(o);
                         c.NextSnapshotTime = FrameTime + c.SnapshotInterval;
                         c.FullyConnected = true;
                         return true;
@@ -363,17 +339,17 @@ namespace FTW.Engine.Server
                         name = c.Name; // if it wasn't unique, it'll have been changed
 
                         // tell everyone else about the change
-                        m = new Message((byte)EngineMessage.ClientNameChange, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE_ORDERED, (int)OrderingChannel.Chat);
-                        m.Write(name);
-                        m.Write(false);
-                        m.Write(oldName);
-                        Client.SendToAllExcept(m, c);
+                        o = OutboundMessage.CreateReliable((byte)EngineMessage.ClientNameChange, false, SequenceChannel.Chat);
+                        o.Write(name);
+                        o.Write(false);
+                        o.Write(oldName);
+                        Client.SendToAllExcept(o, c);
 
                         // tell this client their "tidied" name
-                        m = new Message((byte)EngineMessage.ClientNameChange, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE_ORDERED, (int)OrderingChannel.Chat);
-                        m.Write(name);
-                        m.Write(true);
-                        c.Send(m);
+                        o = OutboundMessage.CreateReliable((byte)EngineMessage.ClientNameChange, false, SequenceChannel.Chat);
+                        o.Write(name);
+                        o.Write(true);
+                        c.Send(o);
 
                         if (IsDedicated)
                             Console.WriteLine("{0} changed name to {1}", oldName, name);
@@ -403,7 +379,7 @@ namespace FTW.Engine.Server
             }
         }
 
-        protected abstract void UpdateReceived(Client c, Message m);
+        protected abstract void UpdateReceived(Client c, InboundMessage m);
 
         static readonly char[] cmdSplit = { ' ', '	' };
         public override void HandleCommand(string cmd)

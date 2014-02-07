@@ -8,7 +8,7 @@ namespace FTW.Engine.Client
 {
     class Snapshot
     {
-        public static void Read(Message m)
+        public static void Read(InboundMessage m)
         {
             // As we're only using timestamps, how should we determine (when trying to apply it) if we're MISSING a snapshot, or not?
             // Rather than have a frame number in the snapshot, we can compare the time difference to the server frame interval variable.
@@ -67,7 +67,7 @@ namespace FTW.Engine.Client
         private static void Enqueue(Snapshot s, uint timestamp)
         {
             if (timestamp < GameClient.Instance.FrameTime - GameClient.Instance.LerpDelay)
-                ;//s.Apply(); // well this was too late. I'm sure we'll do SOMETHING with it, however
+                Console.WriteLine("skipping snapshot that is {0} ms too late", GameClient.Instance.FrameTime - GameClient.Instance.LerpDelay - timestamp);//s.Apply(); // well this was too late. I'm sure we'll do SOMETHING with it, however
             else
                 Queue[timestamp] = s;
         }
@@ -110,7 +110,7 @@ namespace FTW.Engine.Client
         private List<NetworkedEntity> Creations = new List<NetworkedEntity>();
         private List<ushort> Deletions = new List<ushort>();
 
-        private void ScheduleCreation(ushort entityID, string type, Message m)
+        private void ScheduleCreation(ushort entityID, string type, InboundMessage m)
         {
             NetworkedEntity ent = NetworkedEntity.Create(type, entityID);
             if (ent == null)

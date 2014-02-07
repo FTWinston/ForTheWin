@@ -11,9 +11,20 @@ namespace FTW.Engine.Client
     public class NetworkInfo
     {
         public bool Enabled = false;
-        public void Add(Message m, bool outgoing)
+
+        public void Add(InboundMessage m)
         {
-            var packet = new NetworkInfo.PacketInfo() { Outgoing = outgoing, Type = m.Type, ActualTimestamp = GameClient.Instance.FrameTime, MessageTimestamp = m.Timestamp, Size = m.Stream.GetNumberOfBitsUsed() };
+            Add(m, false);
+        }
+
+        public void Add(OutboundMessage m)
+        {
+            Add(m, true);
+        }
+
+        private void Add(Message m, bool outgoing)
+        {
+            var packet = new NetworkInfo.PacketInfo() { Outgoing = outgoing, Type = m.Type, ActualTimestamp = GameClient.Instance.FrameTime, MessageTimestamp = m.Timestamp, Size = m.SizeInBits };
             int pos = data.BinarySearch(packet);
             data.Insert(pos < 0 ? ~pos : pos, packet);
         }
@@ -39,7 +50,7 @@ namespace FTW.Engine.Client
         {
             public uint? MessageTimestamp;
             public uint ActualTimestamp;
-            public uint Size; // in BITS
+            public int Size; // in BITS
             public byte Type;
             public bool Outgoing;
 

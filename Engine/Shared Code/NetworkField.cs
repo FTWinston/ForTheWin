@@ -20,7 +20,7 @@ namespace FTW.Engine.Shared
         protected internal abstract string Describe();
 
 #if SERVER
-        public abstract void WriteTo(Message m);
+        public abstract void WriteTo(OutboundMessage m);
 
         internal void SetEntity(NetworkedEntity e, bool? related)
         {
@@ -31,7 +31,7 @@ namespace FTW.Engine.Shared
 
         public uint LastChanged { get; protected set; }
 #elif CLIENT
-        public abstract void PerformRead(Message m);
+        public abstract void PerformRead(InboundMessage m);
 #endif
     }
 
@@ -108,7 +108,7 @@ namespace FTW.Engine.Shared
             }
         }
 
-        public override void PerformRead(Message m)
+        public override void PerformRead(InboundMessage m)
         {
             T val = ReadFrom(m);
 
@@ -137,7 +137,7 @@ namespace FTW.Engine.Shared
             }
         }
 
-        public abstract T ReadFrom(Message m);
+        public abstract T ReadFrom(InboundMessage m);
 
         protected abstract T Lerp(T val1, T val2, float fraction);
 #endif
@@ -160,7 +160,7 @@ namespace FTW.Engine.Shared
         }
 
 #if CLIENT
-        public override int ReadFrom(Message m)
+        public override int ReadFrom(InboundMessage m)
         {
             return m.ReadInt();
         }
@@ -170,7 +170,7 @@ namespace FTW.Engine.Shared
             return (int)(val1 + (val2 - val1) * fraction);
         }
 #elif SERVER
-        public override void WriteTo(Message m)
+        public override void WriteTo(OutboundMessage m)
         {
             m.Write(val);
         }
@@ -185,7 +185,7 @@ namespace FTW.Engine.Shared
         }
 
 #if CLIENT
-        public override long ReadFrom(Message m)
+        public override long ReadFrom(InboundMessage m)
         {
             return m.ReadLong();
         }
@@ -195,7 +195,7 @@ namespace FTW.Engine.Shared
             return (long)(val1 + (val2 - val1) * fraction);
         }
 #elif SERVER
-        public override void WriteTo(Message m)
+        public override void WriteTo(OutboundMessage m)
         {
             m.Write(val);
         }
@@ -210,7 +210,7 @@ namespace FTW.Engine.Shared
         }
 
 #if CLIENT
-        public override float ReadFrom(Message m)
+        public override float ReadFrom(InboundMessage m)
         {
             return m.ReadFloat();
         }
@@ -220,7 +220,7 @@ namespace FTW.Engine.Shared
             return val1 + (val2-val1) * fraction;
         }
 #elif SERVER
-        public override void WriteTo(Message m)
+        public override void WriteTo(OutboundMessage m)
         {
             m.Write(val);
         }
@@ -235,14 +235,14 @@ namespace FTW.Engine.Shared
         }
 
 #if CLIENT
-        public override string ReadFrom(Message m)
+        public override string ReadFrom(InboundMessage m)
         {
             return m.ReadString();
         }
 
         protected override string Lerp(string val1, string val2, float fraction) { return val1; } // don't interpolate strings
 #elif SERVER
-        public override void WriteTo(Message m)
+        public override void WriteTo(OutboundMessage m)
         {
             m.Write(val);
         }

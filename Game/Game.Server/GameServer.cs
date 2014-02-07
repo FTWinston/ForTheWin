@@ -35,7 +35,7 @@ namespace Game.Server
             // ...
         }
 
-        protected override void UpdateReceived(Client c, Message m)
+        protected override void UpdateReceived(Client c, InboundMessage m)
         {
             Player player;
             if (!playerObjects.TryGetValue(c.ID, out player))
@@ -58,7 +58,7 @@ namespace Game.Server
                 player.sx = 0;
         }
 
-        protected override bool MessageReceived(Client c, Message m)
+        protected override bool MessageReceived(Client c, InboundMessage m)
         {
             if (base.MessageReceived(c, m))
                 return true;
@@ -82,7 +82,7 @@ namespace Game.Server
             return false;
         }
 
-        SortedList<ushort, Player> playerObjects = new SortedList<ushort, Player>();
+        SortedList<long, Player> playerObjects = new SortedList<long, Player>();
 
         protected override void ClientConnected(Client c)
         {

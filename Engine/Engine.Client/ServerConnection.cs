@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using FTW.Engine.Shared;
-using RakNet;
 
 namespace FTW.Engine.Client
 {
@@ -15,11 +14,11 @@ namespace FTW.Engine.Client
         public abstract void Disconnect();
 
         public abstract void RetrieveUpdates();
-        public abstract void Send(Message m);
+        public abstract void Send(OutboundMessage m);
 
         protected void SendClientInfo()
         {
-            Message m = new Message((byte)EngineMessage.InitialData, PacketPriority.HIGH_PRIORITY, PacketReliability.RELIABLE, 0);
+            var m = OutboundMessage.CreateReliable((byte)EngineMessage.InitialData, false, SequenceChannel.System);
             short numVars = 0;
             var allVars = Variable.GetEnumerable();
 
@@ -74,21 +73,19 @@ We are then good to go
 
         public override void RetrieveUpdates()
         {
-            Message[] messages;
+            OutboundMessage[] messages;
             lock (Message.ToLocalClient)
             {
                 messages = Message.ToLocalClient.ToArray();
                 Message.ToLocalClient.Clear();
             }
 
-            foreach (Message m in messages)
-                GameClient.Instance.HandleMessage(m);
+            foreach (OutboundMessage m in messages)
+                GameClient.Instance.HandleMessage(new InboundMessage(m));
         }
 
-        public override void Send(Message m)
+        public override void Send(OutboundMessage m)
         {
-            m.ResetRead();
-
             lock (Message.ToLocalServer)
                 Message.ToLocalServer.Add(m);
         }
@@ -109,70 +106,39 @@ We are then good to go
 
         private string hostname;
         private ushort hostPort;
-        RakPeerInterface rakNet;
+        NetworkClient Networking;
 
         public override bool IsLocal { get { return false; } }
 
         public override void Connect()
         {
-            rakNet = RakPeerInterface.GetInstance();
-            rakNet.Startup(1, new SocketDescriptor(), 1);
-            rakNet.Connect(hostname, hostPort, string.Empty, 0);
+            Networking = new NetworkClient(hostname, hostPort);
+            Networking.Connected += (o, e) => SendClientInfo();
+            Networking.Disconnected += (o, e) =>
+            {
+                Console.WriteLine("Lost connection to the server for some reason. Full? Kicked? Timed out?");
+                GameClient.Instance.Disconnect();
+            };
         }
 
         public override void Disconnect()
         {
-            rakNet.Shutdown(300);
-            RakPeerInterface.DestroyInstance(rakNet);
-            rakNet = null;
+            Networking.Disconnect("Disconnected by user");
+            Networking = null;
         }
 
         public override void RetrieveUpdates()
         {
-            if (rakNet == null)
+            if (Networking == null)
                 return;
 
-            GameClient client = GameClient.Instance;
-            Packet packet;
-            for (packet = rakNet.Receive(); packet != null; rakNet.DeallocatePacket(packet), packet = rakNet.Receive())
-            {
-                byte type = packet.data[0];
-                if (type == (byte)DefaultMessageIDTypes.ID_TIMESTAMP)
-                    type = packet.data[5]; // skip the timestamp to get to the REAL "type"
-
-                if (type < (byte)DefaultMessageIDTypes.ID_USER_PACKET_ENUM)
-                    switch ((DefaultMessageIDTypes)type)
-                    {
-                        case DefaultMessageIDTypes.ID_CONNECTION_REQUEST_ACCEPTED: // now properly connected. send client info? (e.g. name)
-                            Console.WriteLine("Connected to server");
-                            SendClientInfo();
-                            break;
-                        case DefaultMessageIDTypes.ID_NO_FREE_INCOMING_CONNECTIONS:
-                            Console.WriteLine("Unable to connect: the server is full");
-                            client.Disconnect();
-                            return;
-                        case DefaultMessageIDTypes.ID_DISCONNECTION_NOTIFICATION: // server disconnected me. kicked, shutdown, or what?
-                            Console.WriteLine("You have been kicked from the server");
-                            client.Disconnect();
-                            return;
-                        case DefaultMessageIDTypes.ID_CONNECTION_LOST:
-                            Console.WriteLine("Lost connection to the server");
-                            client.Disconnect();
-                            return;
-#if DEBUG
-                        default:
-                            Console.WriteLine("Received a " + (DefaultMessageIDTypes)type + " packet, " + packet.length + " bytes long");
-                            break;
-#endif
-                    }
-                else
-                    client.HandleMessage(new Message(packet));
-            }
+            foreach (var msg in Networking.RetrieveMessages())
+                GameClient.Instance.HandleMessage(msg);
         }
 
-        public override void Send(Message m)
+        public override void Send(OutboundMessage m)
         {
-            rakNet.Send(m.Stream, m.Priority, m.Reliability, (char)0, RakNet.RakNet.UNASSIGNED_RAKNET_GUID, true);
+            Networking.Send(m);
         }
     }
 }

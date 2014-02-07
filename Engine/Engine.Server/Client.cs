@@ -2,17 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using RakNet;
 using FTW.Engine.Shared;
+using Lidgren.Network;
 
 namespace FTW.Engine.Server
 {
     public abstract class Client
     {
-        protected Client()
+        protected Client(long id)
         {
             NeedsFullUpdate = true;
             SnapshotInterval = 50; // this should be a Variable
+            AllClients.Add(id, this);
         }
 
         public string Name
@@ -20,9 +21,7 @@ namespace FTW.Engine.Server
             get { return GetVariable("name"); }
             set { SetVariable("name", GetUniqueName(value)); }
         }
-        private RakNetGUID guid;
-        internal RakNetGUID UniqueID { get { return guid; } set { guid = value; ID = guid.systemIndex; } }
-        public ushort ID { get; private set; }
+        public long ID { get; private set; }
         internal uint LastSnapshotTime { get; set; }
         internal uint NextSnapshotTime { get; set; }
         internal uint SnapshotInterval { get; set; }
@@ -33,7 +32,7 @@ namespace FTW.Engine.Server
 
         public abstract bool IsLocal { get; }
 
-        internal static SortedList<ulong, Client> AllClients = new SortedList<ulong, Client>();
+        internal static SortedList<long, Client> AllClients = new SortedList<long, Client>();
         public IList<Client> GetAll() { return AllClients.Values; }
 
         public static List<Client> GetAllExcept(params Client[] exclude)
@@ -98,11 +97,11 @@ namespace FTW.Engine.Server
             return null;
         }
 
-        internal static Client GetByUniqueID(RakNetGUID uniqueID)
+        internal static Client GetByID(long id)
         {
-            if (AllClients.ContainsKey(uniqueID.g))
-                return AllClients[uniqueID.g];
-            return null;
+            Client c;
+            AllClients.TryGetValue(id, out c);
+            return c;
         }
 
         internal string GetUniqueName(string desiredName)
@@ -123,18 +122,20 @@ namespace FTW.Engine.Server
             return newName;
         }
 
-        public abstract void Send(Message m);
+        public abstract void Send(OutboundMessage m);
 
-        public static void SendToAll(Message m)
+        public static void SendToAll(OutboundMessage m)
         {
-            GameServer.Instance.rakNet.Send(m.Stream, m.Priority, m.Reliability, (char)m.OrderingChannel, RakNet.RakNet.UNASSIGNED_RAKNET_GUID, true);
+            GameServer.Instance.Networking.SendToAll(m);
             if (LocalClient != null)
                 LocalClient.Send(m);
         }
 
-        public static void SendToAllExcept(Message m, Client c)
+        public static void SendToAllExcept(OutboundMessage m, Client c)
         {
-            GameServer.Instance.rakNet.Send(m.Stream, m.Priority, m.Reliability, (char)0, c.UniqueID, true);
+            NetConnection exclude = c.IsLocal ? null : (c as RemoteClient).Connection;
+            GameServer.Instance.Networking.SendToAllExcept(m, exclude);
+
             if (c != LocalClient && LocalClient != null)
                 LocalClient.Send(m);
         }
@@ -154,9 +155,8 @@ namespace FTW.Engine.Server
 
         private void SendSnapshot()
         {
-            Message m = new Message((byte)DefaultMessageIDTypes.ID_TIMESTAMP, PacketPriority.HIGH_PRIORITY, PacketReliability.UNRELIABLE, 0);
+            OutboundMessage m = OutboundMessage.CreateUnreliable((byte)EngineMessage.Snapshot);
             m.Write(GameServer.Instance.FrameTime);
-            m.Write((byte)EngineMessage.Snapshot);
 
             // now step through all entities, decide what to send. Will either be:
             // No change (sends nothing)
@@ -263,7 +263,7 @@ namespace FTW.Engine.Server
 
     internal class LocalClient : Client
     {
-        private LocalClient() { UniqueID = RakNet.RakNet.UNASSIGNED_RAKNET_GUID; }
+        private LocalClient() : base(long.MaxValue) { }
         public override bool IsLocal { get { return true; } }
 
         public static Client Create(string desiredName)
@@ -271,15 +271,12 @@ namespace FTW.Engine.Server
             LocalClient c = new LocalClient();
             c.Name = desiredName;
 
-            AllClients.Add(RakNet.RakNet.UNASSIGNED_RAKNET_GUID.g, c);
             LocalClient = c;
             return c;
         }
 
-        public override void Send(Message m)
+        public override void Send(OutboundMessage m)
         {
-            m.ResetRead();
-
             lock (Message.ToLocalClient)
                 Message.ToLocalClient.Add(m);
         }
@@ -287,21 +284,22 @@ namespace FTW.Engine.Server
 
     internal class RemoteClient : Client
     {
-        private RemoteClient(RakNetGUID id) { UniqueID = id; }
+        private RemoteClient(long id) : base(id) { }
         public override bool IsLocal { get { return false; } }
+        internal NetConnection Connection { get; private set; }
 
-        public static Client Create(RakNetGUID uniqueID)
+        public static Client Create(NetConnection connection)
         {
-            RemoteClient c = new RemoteClient(uniqueID);
+            RemoteClient c = new RemoteClient(connection.RemoteUniqueIdentifier);
+            c.Connection = connection;
             c.Name = "unknown";
 
-            AllClients.Add(uniqueID.g, c);
             return c;
         }
 
-        public override void Send(Message m)
+        public override void Send(OutboundMessage m)
         {
-            GameServer.Instance.rakNet.Send(m.Stream, m.Priority, m.Reliability, (char)0, UniqueID, false);
+            GameServer.Instance.Networking.Send(m, Connection);
         }
     }
 }

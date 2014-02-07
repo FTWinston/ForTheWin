@@ -263,7 +263,7 @@ namespace FTW.Engine.Shared
             if (HasFlags(VariableFlags.Client)) // don't send ClientOnly
 #endif
             {
-                Message m = new Message((byte)EngineMessage.VariableChange, RakNet.PacketPriority.MEDIUM_PRIORITY, RakNet.PacketReliability.RELIABLE_ORDERED, (int)OrderingChannel.Variables);
+                var m = OutboundMessage.CreateReliable((byte)EngineMessage.VariableChange, true, SequenceChannel.Variables);
                 m.Write(Name);
                 m.Write(Value);
 

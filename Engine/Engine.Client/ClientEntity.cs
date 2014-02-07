@@ -96,7 +96,7 @@ namespace FTW.Engine.Client
             NetworkedEntities.Remove(EntityID);
         }
 
-        internal void ReadSnapshot(Message m, bool incremental)
+        internal void ReadSnapshot(InboundMessage m, bool incremental)
         {
             if (incremental)
             {

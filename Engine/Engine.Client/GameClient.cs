@@ -18,7 +18,7 @@ namespace FTW.Engine.Client
         {
             if (GameClient.Instance.FullyConnected)
             {
-                Message m = new Message((byte)EngineMessage.ClientNameChange, RakNet.PacketPriority.MEDIUM_PRIORITY, RakNet.PacketReliability.RELIABLE_ORDERED, (int)OrderingChannel.Chat);
+                OutboundMessage m = OutboundMessage.CreateReliable((byte)EngineMessage.ClientNameChange, false, SequenceChannel.Chat);
                 m.Write(val);
                 GameClient.Instance.Connection.Send(m);
                 return false;
@@ -164,7 +164,7 @@ namespace FTW.Engine.Client
                 return;
 
             // don't actaully want this going out every frame. Should collect input and send at slightly more spread-out intervals.
-            Message m = new Message((byte)EngineMessage.ClientUpdate, RakNet.PacketPriority.HIGH_PRIORITY, RakNet.PacketReliability.UNRELIABLE_SEQUENCED, 0);
+            OutboundMessage m = OutboundMessage.CreateUnreliable((byte)EngineMessage.ClientUpdate);
             
             // write the "latest snapshot" info to the message
 
@@ -172,7 +172,7 @@ namespace FTW.Engine.Client
             SendMessage(m);
         }
 
-        protected abstract void WriteUpdate(Message m);
+        protected abstract void WriteUpdate(OutboundMessage m);
 
         protected virtual void PreUpdate()
         {
@@ -207,24 +207,23 @@ namespace FTW.Engine.Client
             }
         }
 
-        internal void HandleMessage(Message m)
+        internal void HandleMessage(InboundMessage m)
         {
 #if NET_INFO
             if (NetInfo.Enabled)
-                NetInfo.Add(m, false); // this ignores raknet-interal packets
+                NetInfo.Add(m); // this ignores raknet-interal packets
 #endif
             if (!MessageReceived(m))
                 Console.Error.WriteLine("Received an unrecognised message of Type " + m.Type);
         }
 
-        protected internal virtual bool MessageReceived(Message m)
+        protected internal virtual bool MessageReceived(InboundMessage m)
         {
             switch ((EngineMessage)m.Type)
             {
                 case EngineMessage.InitialData:
                     {
-                        byte[] hash = new byte[16];
-                        m.Stream.Read(hash, 128);
+                        byte[] hash = m.ReadBytes(16);
                         if (!NetworkedEntity.CheckNetworkTableHash(hash))
                         {
                             Console.Error.WriteLine("Network table doesn't match server's");
@@ -312,11 +311,11 @@ namespace FTW.Engine.Client
             }
         }
 
-        public void SendMessage(Message m)
+        public void SendMessage(OutboundMessage m)
         {
 #if NET_INFO
             if (NetInfo.Enabled)
-                NetInfo.Add(m, true); // this ignores raknet-interal packets
+                NetInfo.Add(m); // this ignores raknet-interal packets
 #endif
             Connection.Send(m);
         }

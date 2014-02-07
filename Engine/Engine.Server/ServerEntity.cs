@@ -99,7 +99,7 @@ namespace FTW.Engine.Server
             return false;
         }
 
-        internal void WriteSnapshot(Message m, Client c, bool incremental)
+        internal void WriteSnapshot(OutboundMessage m, Client c, bool incremental)
         {
             if (incremental)
             {

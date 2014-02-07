@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using RakNet;
+using Lidgren.Network;
 
 namespace FTW.Engine.Shared
 {
@@ -13,7 +13,7 @@ namespace FTW.Engine.Shared
 
     public enum EngineMessage : byte
     {
-        Snapshot = DefaultMessageIDTypes.ID_USER_PACKET_ENUM,
+        Snapshot = 0,
         ClientUpdate,
         InitialData,
         VariableChange,
@@ -46,9 +46,17 @@ namespace FTW.Engine.Shared
         Cheat = 32,     // fixed value, unless cheats are enabled
     }
 
-    public enum OrderingChannel
+    public enum MessageReliabililty
     {
-        Chat = 1,      // ORDERED
-        Variables = 2, // ORDERED
+        Unreliable = NetDeliveryMethod.Unreliable,
+        ReliableSkipOld = NetDeliveryMethod.ReliableSequenced,
+        Reliable = NetDeliveryMethod.ReliableOrdered,
+    }
+
+    public enum SequenceChannel
+    {
+        System = 0,
+        Chat = 1,
+        Variables = 2,
     }
 }

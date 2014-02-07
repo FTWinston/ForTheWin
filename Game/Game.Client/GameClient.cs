@@ -183,7 +183,7 @@ namespace Game.Client
                 movement &= ~Keys.Right;
         }
 
-        protected override void WriteUpdate(Message m)
+        protected override void WriteUpdate(OutboundMessage m)
         {
             m.Write((byte)movement);
         }
@@ -213,7 +213,7 @@ namespace Game.Client
 
         }
 
-        protected override bool MessageReceived(Message m)
+        protected override bool MessageReceived(InboundMessage m)
         {
             if (base.MessageReceived(m))
                 return true;
