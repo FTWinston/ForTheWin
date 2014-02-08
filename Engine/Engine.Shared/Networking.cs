@@ -140,6 +140,12 @@ namespace FTW.Engine.Shared
         NetClient client;
         protected override NetPeer lidgren { get { return client; } }
 
+        public ClientNetworking()
+        {
+            var config = new NetPeerConfiguration("ftw");
+            client = new NetClient(config);
+        }
+
         public ClientNetworking(string hostname, int hostPort)
         {
             var config = new NetPeerConfiguration("ftw");

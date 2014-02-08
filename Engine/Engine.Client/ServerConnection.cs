@@ -8,6 +8,7 @@ namespace FTW.Engine.Client
 {
     internal abstract class ServerConnection
     {
+        protected ClientNetworking Networking;
         public abstract bool IsLocal { get; }
 
         public abstract void Connect();
@@ -53,6 +54,7 @@ We are then good to go
 
         public override void Connect()
         {
+            Networking = new ClientNetworking(); // we need this so as to create Outgoing messages :\
             server = ServerBase.CreateReflection();
 
             Config config = Config.ReadFile(settingsFilename);
@@ -106,7 +108,6 @@ We are then good to go
 
         private string hostname;
         private ushort hostPort;
-        ClientNetworking Networking;
 
         public override bool IsLocal { get { return false; } }
 
