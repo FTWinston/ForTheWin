@@ -179,19 +179,25 @@ namespace FTW.Engine.Server
         
         public uint FrameTime { get; private set; }
 
+        private uint GetTime()
+        {
+            throw new NotImplementedException();
+            // RakNet.RakNet.GetTime()
+        }
+
         private void RunMainLoop()
         {
             Console.WriteLine("Server has started");
             isPaused = false;
 
             uint dt = 100;
-            uint lastFrameTime = FrameTime = RakNet.RakNet.GetTime() - dt;
+            uint lastFrameTime = FrameTime = GetTime() - dt;
             DateTime? pauseTime = null;
 
             while (IsRunning)
             {
                 lastFrameTime = FrameTime;
-                FrameTime = RakNet.RakNet.GetTime();
+                FrameTime = GetTime();
 
                 if (Paused)
                 {
@@ -213,7 +219,7 @@ namespace FTW.Engine.Server
                 GameFrame(dt/1000.0); // convert milliseconds to seconds
                 PostUpdate();
 
-                int frameTimeRemaining = (int)(FrameTime + TickInterval) - (int)RakNet.RakNet.GetTime();
+                int frameTimeRemaining = (int)(FrameTime + TickInterval) - (int)GetTime();
                 if (frameTimeRemaining > 0)
                     Thread.Sleep(frameTimeRemaining);
             }

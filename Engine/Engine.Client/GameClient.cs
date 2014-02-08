@@ -98,8 +98,8 @@ namespace FTW.Engine.Client
 #endif
 
             dt = 100;
-            nextFrameTime = RakNet.RakNet.GetTime();
-            FrameTime = lastFrameTime = RakNet.RakNet.GetTime() - dt;
+            nextFrameTime = GetTime();
+            FrameTime = lastFrameTime = GetTime() - dt;
         }
 
         public event EventHandler Disconnected;
@@ -111,6 +111,12 @@ namespace FTW.Engine.Client
         internal uint LerpDelay { get; private set; }
         private uint lastFrameTime, nextFrameTime, dt;
 
+        private uint GetTime()
+        {
+            throw new NotImplementedException();
+            // RakNet.RakNet.GetTime()
+        }
+
 #if NET_INFO
         public NetworkInfo NetInfo { get; private set; }
 #endif
@@ -118,7 +124,7 @@ namespace FTW.Engine.Client
         // this should really be a GameFrame type of affair, shouldn't it?
         public void Update()
         {
-            FrameTime = RakNet.RakNet.GetTime();
+            FrameTime = GetTime();
             ServerTime = FrameTime - LerpDelay;
 
             Connection.RetrieveUpdates();

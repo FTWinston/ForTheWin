@@ -24,7 +24,7 @@ namespace FTW.Engine.Client
 
         private void Add(Message m, bool outgoing)
         {
-            var packet = new NetworkInfo.PacketInfo() { Outgoing = outgoing, Type = m.Type, ActualTimestamp = GameClient.Instance.FrameTime, MessageTimestamp = m.Timestamp, Size = m.SizeInBits };
+            var packet = new NetworkInfo.PacketInfo() { Outgoing = outgoing, Type = m.Type, ActualTimestamp = GameClient.Instance.FrameTime, Size = m.SizeInBits };
             int pos = data.BinarySearch(packet);
             data.Insert(pos < 0 ? ~pos : pos, packet);
         }
@@ -48,7 +48,6 @@ namespace FTW.Engine.Client
 
         public struct PacketInfo : IComparable<PacketInfo>
         {
-            public uint? MessageTimestamp;
             public uint ActualTimestamp;
             public int Size; // in BITS
             public byte Type;
