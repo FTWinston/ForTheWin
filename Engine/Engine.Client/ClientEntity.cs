@@ -96,7 +96,7 @@ namespace FTW.Engine.Client
             NetworkedEntities.Remove(EntityID);
         }
 
-        internal void ReadSnapshot(InboundMessage m, bool incremental)
+        internal void ReadSnapshot(InboundMessage m, uint tick, bool incremental)
         {
             if (incremental)
             {
@@ -106,9 +106,9 @@ namespace FTW.Engine.Client
                 while (b != byte.MaxValue)
                 {
                     if (b < offset)
-                        Fields[b].PerformRead(m);
+                        Fields[b].PerformRead(m, tick);
                     else if (b < max)
-                        list[b-offset].PerformRead(m);
+                        list[b - offset].PerformRead(m, tick);
                     else
                         Console.Error.WriteLine("Error reading incremental update: invalid field ID specified: " + b);
 
@@ -118,7 +118,7 @@ namespace FTW.Engine.Client
             else
             {
                 for (int i = 0; i < Fields.Length; i++)
-                    Fields[i].PerformRead(m);
+                    Fields[i].PerformRead(m, tick);
 
                 if (!UsesRelatedClient)
                     return;
@@ -127,7 +127,7 @@ namespace FTW.Engine.Client
                 
                 var list = IsRelatedClient ? RelatedClientFields : OtherClientFields;
                 for (int i = 0; i < list.Length; i++)
-                    list[i].PerformRead(m);
+                    list[i].PerformRead(m, tick);
             }
         }
 

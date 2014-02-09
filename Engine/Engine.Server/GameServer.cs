@@ -125,8 +125,6 @@ namespace FTW.Engine.Server
                     ClientDisconnected(Client.GetByID(id), deliberate);
                     Client.AllClients.Remove(id);
                 };
-
-                //Console.WriteLine("Network server started at time {0}", RakNet.RakNet.GetTime());
             }
 
             return true;
@@ -174,30 +172,24 @@ namespace FTW.Engine.Server
             Instance = null;
         }
 
-        protected internal uint TickInterval = 30;
         const int pauseTickMilliseconds = 100;
-        
-        public uint FrameTime { get; private set; }
-
-        private uint GetTime()
-        {
-            throw new NotImplementedException();
-            // RakNet.RakNet.GetTime()
-        }
+        protected internal TimeSpan TickInterval { get; internal set; }
+        internal uint CurrentTick { get; private set; }
+        public DateTime FrameTime { get; private set; }
 
         private void RunMainLoop()
         {
             Console.WriteLine("Server has started");
             isPaused = false;
 
-            uint dt = 100;
-            uint lastFrameTime = FrameTime = GetTime() - dt;
+            TimeSpan dt = TickInterval;
+            FrameTime = DateTime.Now;
+            DateTime lastFrameTime = FrameTime.Subtract(dt);
             DateTime? pauseTime = null;
 
             while (IsRunning)
             {
-                lastFrameTime = FrameTime;
-                FrameTime = GetTime();
+                CurrentTick++;
 
                 if (Paused)
                 {
@@ -216,12 +208,20 @@ namespace FTW.Engine.Server
                 ReceiveMessages();
 
                 PreUpdate();
-                GameFrame(dt/1000.0); // convert milliseconds to seconds
+                GameFrame(dt.TotalSeconds); // convert milliseconds to seconds
                 PostUpdate();
 
-                int frameTimeRemaining = (int)(FrameTime + TickInterval) - (int)GetTime();
-                if (frameTimeRemaining > 0)
-                    Thread.Sleep(frameTimeRemaining);
+                TimeSpan frameTimeRemaining = TickInterval - (DateTime.Now - FrameTime);
+                if (frameTimeRemaining.Ticks > 0)
+                {
+                    dt = TickInterval;
+                    Thread.Sleep(frameTimeRemaining.Milliseconds);
+                }
+                else
+                    dt = FrameTime - lastFrameTime;
+
+                lastFrameTime = FrameTime;
+                FrameTime = DateTime.Now;
             }
 
             ShutDown();
@@ -373,9 +373,8 @@ namespace FTW.Engine.Server
                     {
                         if (!c.FullyConnected)
                             return true; // this might come through before the InitialData message
-
-                        // read the "latest snapshot" info from the message
-
+                        
+                        c.LastAcknowledgedTick = m.ReadUInt();
                         UpdateReceived(c, m);
                         return true;
                     }

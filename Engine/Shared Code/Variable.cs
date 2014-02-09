@@ -319,9 +319,9 @@ namespace FTW.Engine.Shared
             if (val >= 1 && val < 100)
             {
 #if SERVER
-                GameServer.Instance.TickInterval = (uint)(1000f/val);
+                GameServer.Instance.TickInterval = TimeSpan.FromSeconds(1.0/val);
 #elif CLIENT
-                GameClient.Instance.TickInterval = (uint)(1000f/val);
+                GameClient.Instance.TickInterval = TimeSpan.FromSeconds(1.0/val);
 #endif
                 return true;
             }

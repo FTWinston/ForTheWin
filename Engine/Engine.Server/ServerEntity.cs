@@ -81,7 +81,7 @@ namespace FTW.Engine.Server
         }
 
         public Client RelatedClient { get; private set; }
-        internal uint LastChanged, LastChangedRelated, LastChangedOther;
+        internal DateTime LastChanged, LastChangedRelated, LastChangedOther;
 
         protected internal virtual bool ShouldSendToClient(Client c) { return true; }
         
@@ -92,7 +92,7 @@ namespace FTW.Engine.Server
 
             if (UsesRelatedClient)
             {
-                uint field = RelatedClient == c ? LastChangedRelated : LastChangedOther;
+                DateTime field = RelatedClient == c ? LastChangedRelated : LastChangedOther;
                 return field >= c.LastSnapshotTime;
             }
 

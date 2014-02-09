@@ -27,7 +27,6 @@ namespace FTW.Engine.Shared
         {
             Msg = m;
             Connection = Networking.Instance.GetConnection(m.SenderConnection);
-            //GetTypeAndTimestamp();
         }
 
         public InboundMessage(OutboundMessage m)
@@ -35,12 +34,10 @@ namespace FTW.Engine.Shared
             Msg = m.Msg;
             Msg.Position = 0;
             Connection = null;
-            //GetTypeAndTimestamp();
         }
 
         protected internal NetBuffer Msg { get; protected set; }
         public SequenceChannel? SequenceChannel { get { return null; } }//Msg.SequenceChannel; } }
-        public uint? Timestamp { get; private set; }
 
         public ServerNetworking.Connection Connection { get; private set; }
 
@@ -62,19 +59,9 @@ namespace FTW.Engine.Shared
         public void ResetRead()
         {
             Msg.Position = 0;
-            //GetTypeAndTimestamp();
-        }
-        /*
-        private void GetTypeAndTimestamp()
-        {
             Type = ReadByte();
-            if (Type == (byte)DefaultMessageIDTypes.ID_TIMESTAMP)
-            {
-                Timestamp = ReadUInt();
-                Type = ReadByte();
-            }
         }
-        */
+        
         public bool HasMoreData()
         {
             return Msg.Position < Msg.LengthBits;
@@ -116,8 +103,6 @@ namespace FTW.Engine.Shared
         public uint? Timestamp { get; private set; }
 
         public override int SizeInBits { get { return (int)Msg.Position; } }
-
-        //public byte Type { get; private set; }
 
         public void Write(string val) { Msg.Write(val); }
         public void Write(bool val) { Msg.Write(val); }

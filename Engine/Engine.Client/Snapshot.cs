@@ -14,7 +14,7 @@ namespace FTW.Engine.Client
             // Rather than have a frame number in the snapshot, we can compare the time difference to the server frame interval variable.
             // That would struggle when the variable changes ... or would it? If the variable change wasn't applied until the relevant snapshot came in, we might get away with it.
 
-            Snapshot s = new Snapshot();
+            Snapshot s = new Snapshot(m.ReadUInt());
 
             while (m.HasMoreData())
             {
@@ -26,20 +26,20 @@ namespace FTW.Engine.Client
                     case EntitySnapshotType.Full:
                         string type = m.ReadString();
                         if ( !NetworkedEntity.NetworkedEntities.TryGetValue(entityID, out ent) )
-                            s.ScheduleCreation(entityID, type, m);
+                            s.ScheduleCreation(entityID, type, m, s.Tick);
                         else if (ent.NetworkedType != type)
                         {// delete and create new (this was an error, so also log it)
                             s.Deletions.Add(entityID);
-                            s.ScheduleCreation(entityID, type, m);
+                            s.ScheduleCreation(entityID, type, m, s.Tick);
                             Console.Error.WriteLine("Error reading snapshot: entity {0} has the wrong type (got {1}, update has {2})", entityID, ent.NetworkedType, type);
                             return;
                         }
                         else
-                            ent.ReadSnapshot(m, false);
+                            ent.ReadSnapshot(m, s.Tick, false);
                         break;
                     case EntitySnapshotType.Partial:
                         if (NetworkedEntity.NetworkedEntities.TryGetValue(entityID, out ent))
-                            ent.ReadSnapshot(m, true);
+                            ent.ReadSnapshot(m, s.Tick, true);
                         else
                         {
                             Console.Error.WriteLine("Error reading snapshot: received an update for unknown entity " + entityID);
@@ -52,7 +52,7 @@ namespace FTW.Engine.Client
                     case EntitySnapshotType.Replace:
                         // delete then treat like a full update
                         s.Deletions.Add(entityID);
-                        s.ScheduleCreation(entityID, m.ReadString(), m);
+                        s.ScheduleCreation(entityID, m.ReadString(), m, s.Tick);
                         break;
                     default:
                         Console.Error.WriteLine("Error reading snapshot: invalid EntitySnapshotType: " + snapshotType);
@@ -60,16 +60,17 @@ namespace FTW.Engine.Client
                 }
             }
 
+            if (s.Tick > GameClient.Instance.LatestSnapshotTick)
+                GameClient.Instance.LatestSnapshotTick = s.Tick;
+
             if (s.Creations.Count != 0 || s.Deletions.Count != 0)
-                Enqueue(s, m.Timestamp.Value);
+                Enqueue(s);
         }
 
-        private static void Enqueue(Snapshot s, uint timestamp)
+        private static void Enqueue(Snapshot s)
         {
-            if (timestamp < GameClient.Instance.FrameTime - GameClient.Instance.LerpDelay)
-                Console.WriteLine("skipping snapshot that is {0} ms too late", GameClient.Instance.FrameTime - GameClient.Instance.LerpDelay - timestamp);//s.Apply(); // well this was too late. I'm sure we'll do SOMETHING with it, however
-            else
-                Queue[timestamp] = s;
+            if (s.Tick >= GameClient.Instance.CurrentTick)
+                Queue[s.Tick] = s;
         }
 
         private static SortedList<uint, Snapshot> Queue = new SortedList<uint, Snapshot>();
@@ -78,13 +79,13 @@ namespace FTW.Engine.Client
         {
             while ( Queue.Count > 0 )
             {
-                uint time = Queue.Keys[0];
+                uint tick = Queue.Keys[0];
 
-                if (time > GameClient.Instance.FrameTime - GameClient.Instance.LerpDelay)
+                if (tick > GameClient.Instance.CurrentTick)
                     break;
                 else
                 {
-                    Queue[time].Apply();
+                    Queue[tick].Apply();
                     Queue.RemoveAt(0);
                 }
             }
@@ -102,15 +103,17 @@ namespace FTW.Engine.Client
                 ent.Initialize();
         }
 
-        private Snapshot()
+        private Snapshot(uint tick)
         {
-
+            Tick = tick;
         }
+
+        public uint Tick { get; private set; }
 
         private List<NetworkedEntity> Creations = new List<NetworkedEntity>();
         private List<ushort> Deletions = new List<ushort>();
 
-        private void ScheduleCreation(ushort entityID, string type, InboundMessage m)
+        private void ScheduleCreation(ushort entityID, string type, InboundMessage m, uint tick)
         {
             NetworkedEntity ent = NetworkedEntity.Create(type, entityID);
             if (ent == null)
@@ -118,7 +121,7 @@ namespace FTW.Engine.Client
                 Console.Error.WriteLine("Snapshot tried to create unrecognised entity type: " + type);
                 return;
             }
-            ent.ReadSnapshot(m, false);
+            ent.ReadSnapshot(m, tick, false);
             Creations.Add(ent);
         }
     }

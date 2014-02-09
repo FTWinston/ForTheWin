@@ -29,9 +29,9 @@ namespace FTW.Engine.Shared
         }
         protected NetworkedEntity entity; protected bool? relatedClient;
 
-        public uint LastChanged { get; protected set; }
+        public DateTime LastChanged { get; protected set; }
 #elif CLIENT
-        public abstract void PerformRead(InboundMessage m);
+        public abstract void PerformRead(InboundMessage m, uint tick);
 #endif
     }
 
@@ -68,72 +68,71 @@ namespace FTW.Engine.Shared
         {
             this.interpolate = interpolate;
             fromVal = default(T); toVal = default(T);
-            fromTime = 0; toTime = 1;
+            fromTick = 0; toTick = 1;
         }
 
         protected T fromVal, toVal;
-        protected uint fromTime, toTime;
+        protected uint fromTick, toTick;
         protected SortedList<uint, T> queuedValues = new SortedList<uint, T>();
         public T Value
         {
             get
             {
-                if (toTime < GameClient.Instance.ServerTime)
+                if (toTick < GameClient.Instance.CurrentTick)
                 {
                     fromVal = toVal;
-                    fromTime = toTime;
+                    fromTick = toTick;
 
                     // is there a queued value to get?
                     while ( queuedValues.Count > 0 )
                     {
-                        toTime = queuedValues.Keys[0];
-                        toVal = queuedValues[toTime];
+                        toTick = queuedValues.Keys[0];
+                        toVal = queuedValues[toTick];
                         queuedValues.RemoveAt(0);
 
                         // ok we got this one value, but it's already out-of-date
-                        if (toTime < GameClient.Instance.ServerTime)
+                        if (toTick < GameClient.Instance.CurrentTick)
                         {
                             fromVal = toVal;
-                            fromTime = toTime;
+                            fromTick = toTick;
                         }
                         else
                             break;
                     }
                 }
 
-                if (interpolate && fromTime < toTime)
-                    return Lerp(fromVal, toVal, (float)(GameClient.Instance.ServerTime - fromTime) / (toTime - fromTime));
+                if (interpolate && fromTick < toTick)
+                    return Lerp(fromVal, toVal, (float)(GameClient.Instance.CurrentTick - fromTick) / (toTick - fromTick));
                 else
                     return toVal;
             }
         }
 
-        public override void PerformRead(InboundMessage m)
+        public override void PerformRead(InboundMessage m, uint tick)
         {
             T val = ReadFrom(m);
 
-            uint messageTime = m.Timestamp.Value;
-            if (messageTime < GameClient.Instance.ServerTime)
+            if (tick < GameClient.Instance.CurrentTick)
             {
                 // can interpolate from this instead of our previous value. Liable to "jump" ... do we want?
-                if (messageTime > fromTime)
+                if (tick > fromTick)
                 {
                     fromVal = val;
-                    fromTime = messageTime;
+                    fromTick = tick;
                 }
             }
-            else if (messageTime < toTime)
+            else if (tick < toTick)
             {
                 // usurp the current "to" value, and put it back into the queue. Liable to "jump" ... do we want?
-                if (toTime > messageTime)
-                    queuedValues[toTime] = toVal;
+                if (toTick > tick)
+                    queuedValues[toTick] = toVal;
                 toVal = val;
-                toTime = messageTime;
+                toTick = tick;
             }
             else
             {
                 // put this into the queue, for use later
-                queuedValues[messageTime] = val;
+                queuedValues[tick] = val;
             }
         }
 

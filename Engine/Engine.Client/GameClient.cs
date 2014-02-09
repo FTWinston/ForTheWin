@@ -36,7 +36,7 @@ namespace FTW.Engine.Client
             {
                 if (val > 0 && val <= 1000)
                 {
-                    GameClient.Instance.LerpDelay = (uint)val;
+                    GameClient.Instance.LerpDelay = TimeSpan.FromMilliseconds(val);
                     return true;
                 }
                 return false;
@@ -46,7 +46,7 @@ namespace FTW.Engine.Client
             // read variables from config...
 
 
-            LerpDelay = (uint)var.NumericValue;
+            LerpDelay = TimeSpan.FromMilliseconds(var.NumericValue);
         }
 
         protected abstract void SetupVariableDefaults();
@@ -97,25 +97,22 @@ namespace FTW.Engine.Client
             NetInfo = new NetworkInfo();
 #endif
 
-            dt = 100;
-            nextFrameTime = GetTime();
-            FrameTime = lastFrameTime = GetTime() - dt;
+            dt = TimeSpan.FromMilliseconds(100);
+            nextFrameTime = DateTime.Now;
+            FrameTime = lastFrameTime = DateTime.Now.Subtract(dt);
         }
 
         public event EventHandler Disconnected;
 
-        protected internal uint TickInterval = 30;
+        protected internal TimeSpan TickInterval { get; internal set; }
+        public uint CurrentTick { get; private set; }
+        internal uint LatestSnapshotTick { get; set; }
 
-        public uint FrameTime { get; private set; }
-        public uint ServerTime { get; private set; }
-        internal uint LerpDelay { get; private set; }
-        private uint lastFrameTime, nextFrameTime, dt;
-
-        private uint GetTime()
-        {
-            throw new NotImplementedException();
-            // RakNet.RakNet.GetTime()
-        }
+        public DateTime FrameTime { get; private set; }
+        public DateTime ServerTime { get; private set; }
+        internal TimeSpan LerpDelay { get; private set; }
+        private DateTime lastFrameTime, nextFrameTime;
+        private TimeSpan dt;
 
 #if NET_INFO
         public NetworkInfo NetInfo { get; private set; }
@@ -124,8 +121,8 @@ namespace FTW.Engine.Client
         // this should really be a GameFrame type of affair, shouldn't it?
         public void Update()
         {
-            FrameTime = GetTime();
-            ServerTime = FrameTime - LerpDelay;
+            FrameTime = DateTime.Now;
+            ServerTime = FrameTime.Subtract(LerpDelay);
 
             Connection.RetrieveUpdates();
             Snapshot.CheckQueue();
@@ -151,16 +148,18 @@ namespace FTW.Engine.Client
                 lastFrameTime = FrameTime;
             }
 
+            CurrentTick++;
+
 #if NET_INFO
             if ( NetInfo.Enabled )
                 NetInfo.Prune();
 #endif
             PreUpdate();
             SendUpdate();
-            GameFrame(dt / 1000.0); // convert milliseconds to seconds
+            GameFrame(dt.TotalSeconds); // convert milliseconds to seconds
             PostUpdate();
 
-            nextFrameTime += TickInterval;
+            nextFrameTime.Add(TickInterval);
             lastFrameTime = FrameTime;
         }
 
@@ -173,6 +172,7 @@ namespace FTW.Engine.Client
             OutboundMessage m = OutboundMessage.CreateUnreliable((byte)EngineMessage.ClientUpdate);
             
             // write the "latest snapshot" info to the message
+            m.Write(LatestSnapshotTick);
 
             WriteUpdate(m);
             SendMessage(m);

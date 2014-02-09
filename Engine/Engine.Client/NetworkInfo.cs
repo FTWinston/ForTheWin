@@ -24,22 +24,24 @@ namespace FTW.Engine.Client
 
         private void Add(Message m, bool outgoing)
         {
-            var packet = new NetworkInfo.PacketInfo() { Outgoing = outgoing, Type = m.Type, ActualTimestamp = GameClient.Instance.FrameTime, Size = m.SizeInBits };
+            var packet = new NetworkInfo.PacketInfo() { Outgoing = outgoing, Type = m.Type, Tick = GameClient.Instance.CurrentTick, Size = m.SizeInBits };
             int pos = data.BinarySearch(packet);
             data.Insert(pos < 0 ? ~pos : pos, packet);
         }
 
-        public uint DataDuration = 10000;
+        public double DataDuration = 10;
 
         public void Prune()
         {
-            uint cutoff = GameClient.Instance.FrameTime - DataDuration;
+            uint cutoff = GameClient.Instance.CurrentTick - (uint)(DataDuration / GameClient.Instance.TickInterval.TotalSeconds);
             for (int i = 0; i < data.Count; i++)
-                if (data[i].ActualTimestamp < cutoff)
+                if (data[i].Tick < cutoff)
                 {
                     data.RemoveAt(i);
                     i--;
                 }
+                else
+                    break;
         }
 
         List<PacketInfo> data = new List<PacketInfo>();
@@ -48,14 +50,14 @@ namespace FTW.Engine.Client
 
         public struct PacketInfo : IComparable<PacketInfo>
         {
-            public uint ActualTimestamp;
+            public uint Tick;
             public int Size; // in BITS
             public byte Type;
             public bool Outgoing;
 
             public int CompareTo(PacketInfo other)
             {
-                return ActualTimestamp.CompareTo(other.ActualTimestamp);
+                return Tick.CompareTo(other.Tick);
             }
         }
     }

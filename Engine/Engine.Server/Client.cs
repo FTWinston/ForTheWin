@@ -11,7 +11,7 @@ namespace FTW.Engine.Server
         protected Client(long id)
         {
             NeedsFullUpdate = true;
-            SnapshotInterval = 50; // this should be a Variable
+            SnapshotInterval = TimeSpan.FromMilliseconds(50); // this should be a Variable
             AllClients.Add(id, this);
         }
 
@@ -21,9 +21,10 @@ namespace FTW.Engine.Server
             set { SetVariable("name", GetUniqueName(value)); }
         }
         public long ID { get; private set; }
-        internal uint LastSnapshotTime { get; set; }
-        internal uint NextSnapshotTime { get; set; }
-        internal uint SnapshotInterval { get; set; }
+        internal DateTime LastSnapshotTime { get; set; }
+        internal DateTime NextSnapshotTime { get; set; }
+        internal TimeSpan SnapshotInterval { get; set; }
+        internal uint LastAcknowledgedTick { get; set; }
         internal bool NeedsFullUpdate { get; set; }
         internal bool FullyConnected { get; set; }
         private SortedList<ushort, bool> KnownEntities = new SortedList<ushort, bool>();
@@ -155,7 +156,7 @@ namespace FTW.Engine.Server
         private void SendSnapshot()
         {
             OutboundMessage m = OutboundMessage.CreateUnreliable((byte)EngineMessage.Snapshot);
-            m.Write(GameServer.Instance.FrameTime);
+            m.Write(GameServer.Instance.CurrentTick);
 
             // now step through all entities, decide what to send. Will either be:
             // No change (sends nothing)
@@ -226,7 +227,7 @@ namespace FTW.Engine.Server
             {
                 float f;
                 if (float.TryParse(val, out f) && f != 0f)
-                    SnapshotInterval = (uint)(1000f / f);
+                    SnapshotInterval = TimeSpan.FromSeconds(1f / f);
             }
 
             variables[name] = val;
