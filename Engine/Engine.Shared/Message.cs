@@ -32,7 +32,8 @@ namespace FTW.Engine.Shared
         public InboundMessage(OutboundMessage m)
         {
             Msg = m.Msg;
-            Msg.Position = 0;
+            Msg.Position = 8; // skip the first byte, cos that's the type
+            Type = m.Type;
             Connection = null;
         }
 
