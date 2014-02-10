@@ -109,7 +109,8 @@ namespace FTW.Engine.Shared
         public void SendToAllExcept(OutboundMessage message, Connection exclude)
         {
             var recipients = server.Connections.Where(con => con != exclude.Remote).ToList();
-            server.SendMessage(message.Msg, recipients, DeliveryMethod(message), 0);
+            if (recipients.Count != 0)
+                server.SendMessage(message.Msg, recipients, DeliveryMethod(message), 0);
         }
 
         public void SendToAll(OutboundMessage message)
