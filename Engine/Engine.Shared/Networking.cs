@@ -123,7 +123,11 @@ namespace FTW.Engine.Shared
         internal override Connection GetConnection(NetConnection con)
         {
             Connection c;
-            Connections.TryGetValue(con.RemoteUniqueIdentifier, out c);
+            if ( Connections.TryGetValue(con.RemoteUniqueIdentifier, out c) )
+                return c;
+
+            c = new Connection(con);
+            Connections.Add(con.RemoteUniqueIdentifier, c);
             return c;
         }
 
