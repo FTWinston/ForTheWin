@@ -182,15 +182,13 @@ namespace FTW.Engine.Server
             Console.WriteLine("Server has started");
             isPaused = false;
 
-            TimeSpan dt = TickInterval;
+            TimeSpan dt = TickInterval = TimeSpan.FromSeconds(1.0 / 33);
             FrameTime = DateTime.Now;
             DateTime lastFrameTime = FrameTime.Subtract(dt);
             DateTime? pauseTime = null;
 
             while (IsRunning)
             {
-                CurrentTick++;
-
                 if (Paused)
                 {
                     if (!pauseTime.HasValue)
@@ -205,6 +203,7 @@ namespace FTW.Engine.Server
                 else
                     dt = FrameTime - lastFrameTime;
 
+                CurrentTick++;
                 ReceiveMessages();
 
                 PreUpdate();
@@ -215,7 +214,7 @@ namespace FTW.Engine.Server
                 if (frameTimeRemaining.Ticks > 0)
                 {
                     dt = TickInterval;
-                    Thread.Sleep(frameTimeRemaining.Milliseconds);
+                    Thread.Sleep(frameTimeRemaining);
                 }
                 else
                     dt = FrameTime - lastFrameTime;
@@ -309,6 +308,7 @@ namespace FTW.Engine.Server
                         // that sends a "name change" to everyone else, and a special one back to you that actaully updates the variable
                         o = OutboundMessage.CreateReliable((byte)EngineMessage.InitialData, false, SequenceChannel.System);
                         o.Write(NetworkedEntity.NetworkTableHash);
+                        o.Write(CurrentTick);
                         o.Write(c.Name);
 
                         List<Client> otherClients = Client.GetAllExcept(c);

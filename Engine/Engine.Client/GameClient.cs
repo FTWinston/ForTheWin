@@ -237,6 +237,8 @@ namespace FTW.Engine.Client
                             return true;
                         }
 
+                        CurrentTick = m.ReadUInt();
+
                         string name = m.ReadString();
                         Name.ForceValue(name);
                         Console.WriteLine("My name, corrected by server: " + name);
