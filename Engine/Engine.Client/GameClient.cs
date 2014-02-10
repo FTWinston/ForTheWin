@@ -237,7 +237,7 @@ namespace FTW.Engine.Client
                             return true;
                         }
 
-                        CurrentTick = m.ReadUInt();
+                        CurrentTick = m.ReadUInt() - (uint)(LerpDelay.TotalSeconds / TickInterval.TotalSeconds);
 
                         string name = m.ReadString();
                         Name.ForceValue(name);

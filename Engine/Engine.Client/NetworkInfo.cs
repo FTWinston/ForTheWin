@@ -34,14 +34,10 @@ namespace FTW.Engine.Client
         public void Prune()
         {
             uint cutoff = GameClient.Instance.CurrentTick - (uint)(DataDuration / GameClient.Instance.TickInterval.TotalSeconds);
-            for (int i = 0; i < data.Count; i++)
-                if (data[i].Tick < cutoff)
-                {
-                    data.RemoveAt(i);
-                    i--;
-                }
-                else
-                    break;
+            while(data[0].Tick < cutoff)
+            {
+                data.RemoveAt(0);
+            }
         }
 
         List<PacketInfo> data = new List<PacketInfo>();

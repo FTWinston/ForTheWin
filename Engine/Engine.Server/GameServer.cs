@@ -186,6 +186,7 @@ namespace FTW.Engine.Server
             FrameTime = DateTime.Now;
             DateTime lastFrameTime = FrameTime.Subtract(dt);
             DateTime? pauseTime = null;
+            CurrentTick = 10;
 
             while (IsRunning)
             {
