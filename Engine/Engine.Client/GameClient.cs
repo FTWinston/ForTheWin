@@ -97,7 +97,7 @@ namespace FTW.Engine.Client
             NetInfo = new NetworkInfo();
 #endif
 
-            dt = TimeSpan.FromMilliseconds(100);
+            dt = TickInterval = TimeSpan.FromSeconds(1.0 / 33);
             nextFrameTime = DateTime.Now;
             FrameTime = lastFrameTime = DateTime.Now.Subtract(dt);
         }
@@ -127,7 +127,7 @@ namespace FTW.Engine.Client
             Connection.RetrieveUpdates();
             Snapshot.CheckQueue();
 
-            if ( nextFrameTime > FrameTime )
+            if (nextFrameTime > FrameTime || !FullyConnected)
                 return;
 
             /*if (Paused)
@@ -269,7 +269,8 @@ namespace FTW.Engine.Client
                             }
                         }
 
-                        GameClient.Instance.FullyConnected = true;
+                        nextFrameTime = DateTime.Now;
+                        FullyConnected = true;
                         return true;
                     }
                 case EngineMessage.ClientConnected:

@@ -119,6 +119,12 @@ namespace FTW.Engine.Shared
                 {
                     fromVal = val;
                     fromTick = tick;
+
+                    if (fromTick > toTick)
+                    {
+                        toTick = fromTick;
+                        toVal = fromVal;
+                    }
                 }
             }
             else if (tick < toTick)

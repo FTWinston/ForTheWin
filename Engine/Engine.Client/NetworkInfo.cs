@@ -34,7 +34,7 @@ namespace FTW.Engine.Client
         public void Prune()
         {
             uint cutoff = GameClient.Instance.CurrentTick - (uint)(DataDuration / GameClient.Instance.TickInterval.TotalSeconds);
-            while(data[0].Tick < cutoff)
+            while(data.Count > 0 && data[0].Tick < cutoff)
             {
                 data.RemoveAt(0);
             }
