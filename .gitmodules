@@ -1,3 +1,6 @@
 [submodule "Libraries/lidgren"]
 	path = Libraries/lidgren
 	url = git@github.com:FTWinston/lidgren.git
+[submodule "Libraries/artemis"]
+	path = Libraries/artemis
+	url = git@github.com:FTWinston/artemis35.git

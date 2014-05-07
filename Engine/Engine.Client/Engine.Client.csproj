@@ -85,6 +85,10 @@
     <Compile Include="Snapshot.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Libraries\artemis\Artemis_XNA_INDEPENDENT\Artemis.csproj">
+      <Project>{22c89af2-e1cf-4976-91b9-7d33773dc6e7}</Project>
+      <Name>Artemis</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Engine.Shared\Engine.Shared.csproj">
       <Project>{48DB214A-092C-46FC-8DE9-B8292A238786}</Project>
       <Name>Engine.Shared</Name>
