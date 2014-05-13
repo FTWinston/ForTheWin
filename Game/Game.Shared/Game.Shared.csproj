@@ -50,6 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Components.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -57,6 +58,10 @@
     <ProjectReference Include="..\..\Engine\Engine.Shared\Engine.Shared.csproj">
       <Project>{48DB214A-092C-46FC-8DE9-B8292A238786}</Project>
       <Name>Engine.Shared</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Libraries\artemis\Artemis_XNA_INDEPENDENT\Artemis.csproj">
+      <Project>{22C89AF2-E1CF-4976-91B9-7D33773DC6E7}</Project>
+      <Name>Artemis</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

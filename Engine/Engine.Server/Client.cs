@@ -155,9 +155,11 @@ namespace FTW.Engine.Server
 
         private void SendSnapshot()
         {
+            throw new NotImplementedException();
+            
             OutboundMessage m = OutboundMessage.CreateUnreliable((byte)EngineMessage.Snapshot);
             m.Write(GameServer.Instance.CurrentTick);
-
+            /*
             // now step through all entities, decide what to send. Will either be:
             // No change (sends nothing)
             // New entity / full update of entity (Full)
@@ -215,6 +217,7 @@ namespace FTW.Engine.Server
 
             Send(m);
             NeedsFullUpdate = false;
+            */
         }
 
         private SortedList<string, string> variables = new SortedList<string, string>();

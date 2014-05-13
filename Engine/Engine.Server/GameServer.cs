@@ -107,8 +107,9 @@ namespace FTW.Engine.Server
         protected virtual bool Initialize()
         {
             Console.WriteLine("Initializing...");
+            /*
             NetworkedEntity.InitializeTypes();
-
+            */
             if (IsMultiplayer)
             {
                 Networking = new ServerNetworking(NetworkPort, IsDedicated ? MaxClients : (MaxClients - 1));
@@ -163,9 +164,10 @@ namespace FTW.Engine.Server
                 Client.LocalClient = null;
 
             Client.AllClients.Clear();
+            /*
             Entity.AllEntities.Clear();
             Entity.NetworkedEntities.Clear();
-
+            */
             InboundMessage.ToLocalClient.Clear();
             InboundMessage.ToLocalServer.Clear();
 
@@ -308,7 +310,9 @@ namespace FTW.Engine.Server
                         // when you try to change the name, it always fails, but sends a "name change" to the server
                         // that sends a "name change" to everyone else, and a special one back to you that actaully updates the variable
                         o = OutboundMessage.CreateReliable((byte)EngineMessage.InitialData, false, SequenceChannel.System);
+                        /*
                         o.Write(NetworkedEntity.NetworkTableHash);
+                        */
                         o.Write(CurrentTick);
                         o.Write(c.Name);
 
@@ -440,6 +444,7 @@ namespace FTW.Engine.Server
         /// <param name="dt">Frame duration to simulate, in seconds</param>
         protected virtual void GameFrame(double dt)
         {
+            /*
             int i; Entity e;
             for (i = 0; i < Entity.AllEntities.Count; i++)
             {
@@ -459,9 +464,9 @@ namespace FTW.Engine.Server
                 if (!e.IsDeleted)
                     e.PostThink(dt);
             }
-
+            */
             Client.SendSnapshots();
-
+            /*
             for (i = 0; i < Entity.AllEntities.Count; i++)
             {
                 e = Entity.AllEntities[i];
@@ -471,6 +476,7 @@ namespace FTW.Engine.Server
                     i--;
                 }
             }
+            */
         }
 
         public virtual string ValidatePlayerName(string name) { return name.Trim(); }

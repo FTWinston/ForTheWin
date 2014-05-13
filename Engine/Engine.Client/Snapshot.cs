@@ -10,6 +10,9 @@ namespace FTW.Engine.Client
     {
         public static void Read(InboundMessage m)
         {
+            throw new NotImplementedException();
+
+            /*
             // As we're only using timestamps, how should we determine (when trying to apply it) if we're MISSING a snapshot, or not?
             // Rather than have a frame number in the snapshot, we can compare the time difference to the server frame interval variable.
             // That would struggle when the variable changes ... or would it? If the variable change wasn't applied until the relevant snapshot came in, we might get away with it.
@@ -65,8 +68,9 @@ namespace FTW.Engine.Client
 
             if (s.Creations.Count != 0 || s.Deletions.Count != 0)
                 Enqueue(s);
+            */
         }
-
+        /*
         private static void Enqueue(Snapshot s)
         {
             if (s.Tick >= GameClient.Instance.CurrentTick)
@@ -74,9 +78,11 @@ namespace FTW.Engine.Client
         }
 
         private static SortedList<uint, Snapshot> Queue = new SortedList<uint, Snapshot>();
-
+        */
         internal static void CheckQueue()
         {
+            throw new NotImplementedException();
+            /*
             while ( Queue.Count > 0 )
             {
                 uint tick = Queue.Keys[0];
@@ -89,8 +95,9 @@ namespace FTW.Engine.Client
                     Queue.RemoveAt(0);
                 }
             }
+            */
         }
-
+        /*
         private void Apply()
         {
             foreach (var id in Deletions)
@@ -124,5 +131,6 @@ namespace FTW.Engine.Client
             ent.ReadSnapshot(m, tick, false);
             Creations.Add(ent);
         }
+        */
     }
 }

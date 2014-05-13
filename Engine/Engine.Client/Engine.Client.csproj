@@ -67,16 +67,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\Shared Code\EntityShared.cs">
-      <Link>EntityShared.cs</Link>
-    </Compile>
-    <Compile Include="..\Shared Code\NetworkField.cs">
-      <Link>NetworkField.cs</Link>
-    </Compile>
     <Compile Include="..\Shared Code\Variable.cs">
       <Link>Variable.cs</Link>
     </Compile>
-    <Compile Include="ClientEntity.cs" />
     <Compile Include="ClientList.cs" />
     <Compile Include="GameClient.cs" />
     <Compile Include="NetworkInfo.cs" />

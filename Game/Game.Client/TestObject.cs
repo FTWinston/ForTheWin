@@ -9,6 +9,7 @@ using SFML.Window;
 
 namespace Game.Client
 {
+    /*
     public abstract class TestObject : NetworkedEntity, Drawable
     {
         public TestObject(string networkType)
@@ -101,4 +102,5 @@ namespace Game.Client
             }
         }
     }
+    */
 }

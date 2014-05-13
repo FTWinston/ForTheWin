@@ -58,14 +58,20 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="NetworkedComponent.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Message.cs" />
+    <Compile Include="NetworkedComponentAttribute.cs" />
     <Compile Include="Networking.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServerBase.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Libraries\artemis\Artemis_XNA_INDEPENDENT\Artemis.csproj">
+      <Project>{22C89AF2-E1CF-4976-91B9-7D33773DC6E7}</Project>
+      <Name>Artemis</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Libraries\lidgren\Lidgren.Network.csproj">
       <Project>{49ba1c69-6104-41ac-a5d8-b54fa9f696e8}</Project>
       <Name>Lidgren.Network</Name>

@@ -81,18 +81,19 @@ namespace FTW.Engine.Client
 
             if (Disconnected != null)
                 Disconnected(this, EventArgs.Empty);
-
+            /*
             Entity.AllEntities.Clear();
             Entity.NetworkedEntities.Clear();
-
+            */
             Connection = null;
             FullyConnected = false;
         }
 
         protected virtual void Initialize()
         {
+            /*
             NetworkedEntity.InitializeTypes();
-
+            */
 #if NET_INFO
             NetInfo = new NetworkInfo();
 #endif
@@ -192,6 +193,7 @@ namespace FTW.Engine.Client
 
         private void GameFrame(double dt)
         {
+            /*
             int i; Entity e;
             for (i = 0; i < Entity.AllEntities.Count; i++)
             {
@@ -211,6 +213,7 @@ namespace FTW.Engine.Client
                 if (!e.IsDeleted)
                     e.PostThink(dt);
             }
+            */
         }
 
         internal void HandleMessage(InboundMessage m)
@@ -229,6 +232,7 @@ namespace FTW.Engine.Client
             {
                 case EngineMessage.InitialData:
                     {
+                        /*
                         byte[] hash = m.ReadBytes(16);
                         if (!NetworkedEntity.CheckNetworkTableHash(hash))
                         {
@@ -236,7 +240,7 @@ namespace FTW.Engine.Client
                             Disconnect();
                             return true;
                         }
-
+                        */
                         CurrentTick = m.ReadUInt() - (uint)(LerpDelay.TotalSeconds / TickInterval.TotalSeconds);
 
                         string name = m.ReadString();

@@ -18,7 +18,7 @@ namespace Game.Server
         protected override bool Initialize()
         {
             bool retVal = base.Initialize();
-            
+            /*
             var test = new Obstacle();
             test.positionX.Value = 50;
             test.positionY.Value = 50;
@@ -26,7 +26,7 @@ namespace Game.Server
             test = new Obstacle();
             test.positionX.Value = 300;
             test.positionY.Value = 300;
-            
+            */
             return retVal;
         }
 
@@ -37,6 +37,7 @@ namespace Game.Server
 
         protected override void UpdateReceived(Client c, InboundMessage m)
         {
+            /*
             Player player;
             if (!playerObjects.TryGetValue(c.ID, out player))
                 return;
@@ -56,6 +57,7 @@ namespace Game.Server
                 player.sx = Player.speed;
             else
                 player.sx = 0;
+            */
         }
 
         protected override bool MessageReceived(Client c, InboundMessage m)
@@ -73,29 +75,36 @@ namespace Game.Server
             if (base.ConsoleCommand(firstWord, theRest))
                 return true;
 
+            /*
             if (firstWord == "test")
             {
                 new Obstacle();
                 return true;
             }
+            */
+
             // ...
             return false;
         }
-
+        /*
         SortedList<long, Player> playerObjects = new SortedList<long, Player>();
-
+        */
         protected override void ClientConnected(Client c)
         {
             base.ClientConnected(c);
+            /*
             playerObjects.Add(c.ID, new Player() { Client = c });
+            */
         }
 
         protected override void ClientDisconnected(Client c, bool manualDisconnect)
         {
             base.ClientDisconnected(c, manualDisconnect);
+            /*
             var player = playerObjects[c.ID];
             playerObjects.Remove(c.ID);
             player.Delete();
+            */
         }
     }
 }

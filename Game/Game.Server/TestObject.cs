@@ -7,6 +7,7 @@ using FTW.Engine.Shared;
 
 namespace Game.Server
 {
+    /*
     public abstract class TestObject : NetworkedEntity
     {
         public TestObject(string networkType)
@@ -76,4 +77,5 @@ namespace Game.Server
 
         public static double speed = 140;
     }
+    */
 }

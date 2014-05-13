@@ -25,7 +25,7 @@ namespace FTW.Engine.Shared
 
         FirstGameMessageID
     }
-
+    /*
     public enum EntitySnapshotType : byte
     {
         Full,
@@ -33,7 +33,7 @@ namespace FTW.Engine.Shared
         Delete,
         Replace,
     }
-
+    */
     [Flags]
     public enum VariableFlags : byte
     {
